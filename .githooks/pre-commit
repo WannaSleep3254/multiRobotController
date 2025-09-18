@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# 리포 루트/파일 경로
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+# AddressMap.json 위치에 맞게 한 줄만 남기세요.
+ADDR="$REPO_ROOT/config/AddressMap.json"
+#ADDR="$REPO_ROOT/res/AddressMap.json"
+
+VALIDATOR="$REPO_ROOT/tools/validate_address_map_win.py"
+
+# AddressMap.json(or validator) 변경이 스테이징된 경우에만 검사
+if ! git diff --cached --name-only | grep -E -q '^AddressMap\.json$|^res/AddressMap\.json$|^tools/validate_address_map_win\.py$'; then
+  exit 0
+fi
+
+echo "[pre-commit] Validating AddressMap.json ..."
+if command -v python >/dev/null 2>&1; then
+  python "$VALIDATOR" "$ADDR" --max-queue 16
+elif command -v py >/dev/null 2>&1; then
+  py -3 "$VALIDATOR" "$ADDR" --max-queue 16
+else
+  echo "[pre-commit] Python not found. Install Python or adjust the hook."
+  exit 1
+fi

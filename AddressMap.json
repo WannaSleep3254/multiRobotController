@@ -1,0 +1,96 @@
+{
+  "coils": {
+    "PUBLISH_REQ": 100,
+    "FAULT_RESET_REQ": 101,
+    "PAUSE_REQ": 102,
+    "RESUME_REQ": 103,
+    "PARAM_COMMIT": 104,
+    "ABORT_REQ": 105,
+    "HOME_REQ": 106,
+    "GRIP_OPEN_REQ": 107,
+    "GRIP_CLOSE_REQ": 108,
+    "VACUUM_ON_REQ": 109,
+    "VACUUM_OFF_REQ": 110
+  },
+  "discrete_inputs": {
+    "ROBOT_READY": 100,
+    "PICK_DONE": 101,
+    "ROBOT_BUSY": 102,
+    "SAFE_DOOR": 103,
+    "LIGHT_CURTAIN": 104,
+    "E_STOP": 105,
+    "ALARM_ACTIVE": 106,
+    "SERVO_ON": 107,
+    "COLLISION_DET": 108,
+    "TEACH_MODE": 109,
+    "AUTO_MODE": 110,
+    "STATUS_SUMMARY": 120,
+    "SAFE_SUMMARY": 121
+  },
+  "holding": {
+    "TARGET_POSE_BASE": 132,   "_comment" : "132..143 (float×6)",
+    "SEQ_ID": 144,
+    "PAYLOAD_CKSUM": 145,
+    "SPEED_PCT": 146,
+    "ACC_PCT": 147,
+    "TOOL_ID": 148,
+    "FRAME_ID": 149,
+    "CMD_TIMEOUT_MS": 150,
+    "READY_TIMEOUT_MS": 151,
+    "HB_PC": 152,
+
+    "TARGET_POSE_STAGING_2_BASE": 164, "_comment" : "164..175 (float×6)",
+    "TARGET_QUEUE_BASE": 176,          "_comment" : "176+(n×12)..",
+    "TARGET_QUEUE_STRIDE": 12
+  },
+  "input_registers": {
+    "CURR_POSE_BASE": 132,             "_comment" : "132..143 (float×6)",
+    "ROBOT_STATUS_CODE": 144,
+    "ERROR_CODE": 145,
+    "ERROR_FLAGS": 146,
+    "ROBOT_MODE": 147,
+    "SEQ_ID_ECHO": 148,
+    "MAP_SCHEMA_VER": 149,
+    "FEATURE_FLAGS": 150,
+    "MAGIC_0x1234": 151,
+    "HB_ROBOT": 152,
+    "CYCLE_COUNT": 153,
+    "LAST_DONE_TICK_BASE": 154,        "_comment" : "154..155 (u32)",
+    "LAST_ERROR_TICK_BASE": 156,       "_comment" : "156..157 (u32)",
+    "ACTIVE_POSE_ECHO_BASE": 158,      "_comment" : "158..169 (float×6)",
+    "LATCH_POSE_BASE": 170,             "_comment" : "170..181 (float×6)"
+  },
+
+  "reserved": {
+    "discrete_inputs": [
+      { "start": 111, "end": 119, "purpose": "future_handshake_safety" },
+      { "start": 122, "end": 139, "purpose": "status_summary_expansion" },
+      { "start": 140, "end": 159, "purpose": "general_reserved" }
+    ],
+    "coils": [
+      { "start": 111, "end": 119, "purpose": "commands_expansion" },
+      { "start": 120, "end": 139, "purpose": "general_reserved" },
+      { "start": 140, "end": 159, "purpose": "general_reserved" }
+    ],
+    "holding": [
+      { "start": 153, "end": 163, "purpose": "param_extension_reserved" }
+    ],
+    "input_registers": [
+      { "start": 182, "end": 191, "purpose": "latch_extension_reserved" },
+      { "start": 192, "end": 9999, "purpose": "general_reserved" }
+    ]
+  },
+
+  "meta": {
+    "schema_version": 3,
+    "word_order": "HI_LO",
+    "pose_axes": 6,
+    "float32_words_per_axis": 2,
+    "next_free": {
+      "di": 122,         "_comment" : "다음 배정 시작 제안 (120~121 사용 중)",
+      "coils": 111,      "_comment" : "100~110 사용, 111부터 확장",
+      "holding": 153,    "_comment" : "132~152 사용, 153부터 확장",
+      "input_regs": 182,  "_comment" : "132~181 사용, 182부터 확장"
+    }
+  }
+}

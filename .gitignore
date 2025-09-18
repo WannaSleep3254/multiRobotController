@@ -1,0 +1,86 @@
+# --- C/C++ objects & libs ---
+*.o
+*.obj
+*.lo
+*.slo
+*.a
+*.la
+*.lib
+*.dll
+*.dylib
+*.so
+*.so.*
+
+# --- Compilers/Linkers (Windows/MSVC/MinGW) ---
+*.pdb
+*.ilk
+*.idb
+*.exp
+*.lib
+*.exe
+
+# --- Qt / Autogen ---
+*_autogen/
+moc_*
+ui_*.h
+qrc_*.cpp
+object_script.*.Release
+object_script.*.Debug
+*.qmlc
+*.jsc
+
+# --- CMake ---
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Testing/
+cmake_install.cmake
+install_manifest.txt
+_compile_commands.json
+compile_commands.json
+CMakeUserPresets.json
+CMakeUserPresets.json.user
+_build/
+_build-*/
+_deps/
+
+# --- Build dirs (Qt Creator / CLion / etc.) ---
+build/
+build-*/
+cmake-build-*/
+out/
+bin/
+lib/
+
+# --- IDE / Editor ---
+*.user
+*.pro.user
+*.pro.user.*
+*.qmlproject.user*
+*.qbs.user
+*.qbs.user.*
+.vscode/
+.idea/
+*.autosave
+
+# --- Logs / Temp ---
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# --- Python helpers (tools) ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+
+# --- Keep important tracked JSONs (safety) ---
+#! NEVER ignore AddressMap.json or *.json globally
+!AddressMap.json
+!res/AddressMap.json
