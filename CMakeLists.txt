@@ -12,6 +12,8 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets SerialBus Core Gu
 
 # ---- core library
 add_library(multiRobotController_core STATIC
+    src/core/network/Server.cpp
+    src/core/network/Server.h
     src/core/modbus/ModbusClient.cpp
     src/core/modbus/ModbusClient.h
     src/core/orchestrator/Orchestrator.cpp
@@ -31,6 +33,7 @@ target_include_directories(multiRobotController_core
       src/core/modbus
       src/core/orchestrator
       src/core/models
+      src/core/network
 )
 
 # ---- app executable
