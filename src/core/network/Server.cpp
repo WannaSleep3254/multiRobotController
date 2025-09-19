@@ -48,6 +48,8 @@ void Server::onNewConnection()
 
         emit log(QString("[NET] +conn %1:%2 (count=%3)")
                      .arg(s->peerAddress().toString()).arg(s->peerPort()).arg(m_clients.size()));
+
+        emit clientConnected(s);  // ★ 추가: 여기서 즉시 알림
     }
 }
 

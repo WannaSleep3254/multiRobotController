@@ -25,11 +25,25 @@ VisionServer::VisionServer(QObject* parent)
     connect(m_srv, &Server::stopped,           this, &VisionServer::stopped);
     connect(m_srv, &Server::peerCountChanged,  this, &VisionServer::peerCountChanged);
     connect(m_srv, &Server::lineReceived,      this, &VisionServer::onLine);
+
+    // ★ 추가: 접속 즉시 화이트리스트 검사
+    connect(m_srv, &Server::clientConnected,   this, &VisionServer::onClientConnected);
 }
 
-bool VisionServer::start(quint16 port)                { return start(QHostAddress::Any, port); }
-bool VisionServer::start(const QHostAddress& a, quint16 p) { return m_srv->start(a, p); }
-void VisionServer::stop()                              { m_srv->stop(); }
+bool VisionServer::start(quint16 port)
+{
+    return start(QHostAddress::Any, port);
+}
+
+bool VisionServer::start(const QHostAddress& a, quint16 p)
+{
+    return m_srv->start(a, p);
+}
+
+void VisionServer::stop()
+{
+    m_srv->stop();
+}
 
 QString VisionServer::peerIp(QTcpSocket* s) const
 {
@@ -271,4 +285,25 @@ QVariantMap VisionServer::metricsFor(const QTcpSocket* s) const
     m["ratelimit_block"] = static_cast<qulonglong>(st.rateLimitBlock);
     m["tokens"]          = st.tokens;
     return m;
+}
+
+void VisionServer::onClientConnected(QTcpSocket* s)
+{
+    if (!s || !m_ef.enforceWhitelist) return;
+
+    const QString ip = peerIp(s);
+    const bool allowed = m_ef.whitelistIPs.contains(ip);
+
+    if (!allowed) {
+        if (m_ef.logReject)
+            emit log(QString("[SEC] reject (early whitelist): %1").arg(ip));
+
+        if (m_ef.closeOnReject) {
+            // 접속 즉시 차단
+            s->disconnect(this);
+            s->close();
+        }
+        // 필요하면 여기서 '거부 사유'를 소켓에 한 줄 써줄 수도 있지만,
+        // 보안/공격자에게 힌트가 될 수 있어 보통은 바로 끊는 걸 권장합니다.
+    }
 }

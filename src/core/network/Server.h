@@ -32,6 +32,7 @@ signals:
     void stopped();
     void peerCountChanged(int count);
     void lineReceived(QTcpSocket* from, const QByteArray& line);
+    void clientConnected(QTcpSocket* s);
 
 private slots:
     void onNewConnection();

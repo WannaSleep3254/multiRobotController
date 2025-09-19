@@ -11,6 +11,20 @@
 #include "Server.h"        // core/network/Server.h
 #include "PickListModel.h" // PickPose 선언용
 
+/*
+VisionServer* vs = new VisionServer(this);
+
+// 접속 즉시 화이트리스트 검사 활성화
+VisionServer::EarlyFilterOptions ef;
+ef.enforceWhitelist = true;
+ef.whitelistIPs     = {"192.168.0.50", "192.168.0.60"}; // 허용 IP
+ef.closeOnReject    = true;   // 미허용 즉시 차단
+ef.logReject        = true;   // 로그 남김
+vs->setEarlyFilterOptions(ef);
+
+// 서버 시작
+vs->start(QHostAddress::Any, 50000);
+ */
 class VisionServer : public QObject
 {
     Q_OBJECT
@@ -114,5 +128,20 @@ private:
         quint64 whitelistBlock = 0;
         quint64 rateLimitBlock = 0;
     } m_global;
+
+public:
+    struct EarlyFilterOptions {
+        bool            enforceWhitelist = false;     // true면 접속 즉시 화이트리스트 검사
+        QSet<QString>   whitelistIPs;                 // 허용 IP 목록 ("192.168.0.50" 등)
+        bool            closeOnReject   = true;       // 미허용이면 바로 close()
+        bool            logReject       = true;       // 로그 남길지 여부
+    };
+    void setEarlyFilterOptions(const EarlyFilterOptions& o) { m_ef = o; }
+    EarlyFilterOptions earlyFilterOptions() const { return m_ef; }
+private slots:
+    void onClientConnected(QTcpSocket* s);            // ★ 접속 즉시 검사 슬롯
+private:
+    EarlyFilterOptions m_ef;                          // ★ 옵션 보관
+
 };
 #endif // VISIONSERVER_H
