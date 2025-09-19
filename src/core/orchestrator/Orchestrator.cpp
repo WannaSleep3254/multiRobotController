@@ -81,6 +81,7 @@ void Orchestrator::start()
     if (m_state != State::Idle)
         return;
 
+    m_currentRow = -1;
 //    m_state = State::WaitRobotReady;
     emit log("[RUN] Orchestrator started", LogLevel::Info);
     setState(State::WaitRobotReady);
@@ -95,6 +96,9 @@ void Orchestrator::stop()
 
     m_bus->writeCoil(A_PUBLISH_REQ, false);
     m_currentRow = -1;
+    if(m_model)
+        m_model->setActiveRow(-1);
+
     m_lastReady = false;
     m_lastBusy  = false;
     m_lastDone  = false;
@@ -142,12 +146,28 @@ void Orchestrator::cycle()
         break; }
 
     case State::PublishTarget: {
-        if (m_currentRow+1 >= m_model->rowCount()) {
+
+        const int total = m_model->rowCount();
+        if (total == 0) {
             emit log("[FSM] No targets. Waiting...", LogLevel::Debug);
             return;
         }
-        m_currentRow++;
+        if (m_currentRow+1 >= total) {
+            if (m_repeat) {
+                    // wrap to start
+                        m_currentRow = 0;
+                } else {
+                    emit log("[FSM] Reached end of list. Waiting...", LogLevel::Info);
+                    return;
+                }
+        } else {
+           ++m_currentRow;
+        }
+        if(m_model)
+            m_model->setActiveRow(m_currentRow);
+
         const auto pt = m_model->getRow(m_currentRow);
+        emit currentRowChanged(m_currentRow);
 
         QVector<quint16> regs;
         regs.reserve(12);

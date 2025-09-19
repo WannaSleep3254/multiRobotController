@@ -25,6 +25,7 @@ public slots:
 signals:
     void log(const QString& line, Orchestrator::LogLevel level = Orchestrator::LogLevel::Info);
     void stateChanged(int state, QString name);
+    void currentRowChanged(int row);
 
 private slots:
     void cycle();
@@ -48,6 +49,7 @@ private:
     QTimer* m_timer{nullptr};
     int m_currentRow{-1};
 
+    bool m_repeat{false};
     QElapsedTimer m_stateTick;
 
     // AddressMap.json 기반 주소
@@ -75,6 +77,9 @@ private:
     // 상태 전용 헬퍼: 여기서만 상태를 바꾸고, 시그널/로그를 함께 처리
     void setState(State s);
     static QString stateName(State s);
+
+public:
+    void setRepeat(bool on) { m_repeat = on;}
 };
 
 #endif // ORCHESTRATOR_H

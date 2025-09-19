@@ -23,6 +23,11 @@ public:
 
     PickPose getRow(int r) const;
 
+    void setActiveRow(int r); // 선택 행 강조 표시)
+
+private:
+    int m_activeRow{-1};
+
 private:
     QVector<PickPose> m_data;
 };

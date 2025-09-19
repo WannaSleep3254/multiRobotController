@@ -1,12 +1,34 @@
 #include "PickListModel.h"
 #include <QVariant>
+#include <QBrush>
+#include <QColor>// for QColor
 
 PickListModel::PickListModel(QObject *parent)
     : QAbstractTableModel(parent)
     , m_data({
+/*
         {100.0,  50.0, 300.0, 180.0, 0.0, 90.0},
         {120.0,  55.0, 302.0, 180.0, 0.0, 90.0},
         {140.0,  60.0, 305.0, 180.0, 0.0, 90.0}
+*/
+//      {260.0,  -100.0, 400.0, -170.0, 0.0, -90.0},
+      //{255.0,   103.0, 400.0, -175.0, 0.0, -50.0},
+          {0.0,  0.0, 5.0, -180.0, 0.0, -90.0},
+          {0.0,  100.0, 5.0, -180.0, 0.0, -90.0},
+          {0.0,  200.0, 5.0, -180.0, 0.0, -90.0},
+          {0.0,  300.0, 5.0, -180.0, 0.0, -90.0},
+          {0.0,  400.0, 5.0, -180.0, 0.0, -90.0},
+          {0.0,  500.0, 5.0, -180.0, 0.0, -90.0},
+
+          {0.0,  500.0, 5.0, -180.0, 0.0, -90.0},
+          {0.0,  400.0, 5.0, -180.0, 0.0, -90.0},
+          {0.0,  300.0, 5.0, -180.0, 0.0, -90.0},
+          {0.0,  200.0, 5.0, -180.0, 0.0, -90.0},
+          {0.0,  100.0, 5.0, -180.0, 0.0, -90.0},
+          {0.0,  0.0, 5.0, -180.0, 0.0, -90.0},
+//      {260.0,  -100.0, 400.0, -170.0, 0.0, -90.0},
+//      {260.0,  -100.0, 400.0, -170.0, 0.0, -90.0},
+//      {260.0,  -100.0, 400.0, -170.0, 0.0, -90.0},
     })
 {
 
@@ -25,6 +47,10 @@ int PickListModel::columnCount(const QModelIndex& parent) const {
 QVariant PickListModel::data(const QModelIndex& idx, int role) const {
     if (!idx.isValid() || idx.row() < 0 || idx.row() >= m_data.size())
         return {};
+
+    if(role == Qt::BackgroundRole && idx.row() == m_activeRow) {
+        return QBrush(QColor("#FFF4CE")); // yellow-400
+    }
 
     if (role == Qt::DisplayRole) {
         const auto& p = m_data[idx.row()];
@@ -64,10 +90,22 @@ void PickListModel::add(const PickPose& p) {
 void PickListModel::clear() {
     beginResetModel();
     m_data.clear();
+    m_activeRow = -1;
     endResetModel();
 }
 
 PickPose PickListModel::getRow(int r) const {
     // 필요시 범위 체크 강화
     return m_data[r];
+}
+
+void PickListModel::setActiveRow(int r) {
+    int old = m_activeRow;
+    m_activeRow = r;
+    if(old >= 0 && old < m_data.size()) {
+        emit dataChanged(index(old,0), index(old, columnCount()-1), {Qt::BackgroundRole});
+    }
+    if(m_activeRow >= 0 && m_activeRow < m_data.size()) {
+        emit dataChanged(index(m_activeRow,0), index(m_activeRow, columnCount()-1), {Qt::BackgroundRole});
+    }
 }

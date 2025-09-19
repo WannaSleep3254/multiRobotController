@@ -92,7 +92,23 @@ MainWindow::MainWindow(QWidget *parent)
                 if(ui->plainLog)
                     ui->plainLog->appendPlainText(QString("[FSM] %1").arg(name));
             });
+    connect(m_orch, &Orchestrator::currentRowChanged, this,
+            [this](int row){
+                if(row > 0)
+                    ui->tableView->scrollTo(m_model->index(row,0), QAbstractItemView::PositionAtCenter);
+            });
+
     m_orch->applyAddressMap(m_addr);
+
+
+    // UI에 체크박스 추가(디자이너에서 추가해도 됨)
+    QCheckBox* chkRepeat = new QCheckBox("Repeat targets", this);
+    statusBar()->addPermanentWidget(chkRepeat);
+    connect(chkRepeat, &QCheckBox::toggled, this, [this](bool on){
+        // Orchestrator에 public setter가 있으면 사용. 현재 예시는 private라면 공개로 바꿔야 함.
+        m_orch->setRepeat(on); // 만약 setRepeat이 private이면 public slots: void setRepeat(bool);
+        ui->plainLog->appendHtml(QString("<span style='color:blue;'>[UI] Repeat: %1</span>").arg(on ? "ON":"OFF"));
+    });
 }
 
 MainWindow::~MainWindow()
