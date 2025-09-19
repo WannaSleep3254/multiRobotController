@@ -1,4 +1,4 @@
-# testController
+# multiRobotController
 
 Qt + Modbus 기반 **BinPicking 로봇/PLC 연동 테스트 컨트롤러**
 로봇과 PLC 간의 handshake 시퀀스를 시뮬레이션하고, Pick pose 리스트를 Publish하는 테스트/디버깅용 툴입니다.
@@ -8,37 +8,62 @@ Qt + Modbus 기반 **BinPicking 로봇/PLC 연동 테스트 컨트롤러**
 ## 📂 Directory Structure
 
 ```bash
-wannasleep3254-testcontroller/
-├── README.md
-├── AddressMap.json          # 기본 주소 매핑
-├── CMakeLists.txt
-├── LICENSE
-├── config/
-│   └── AddressMap.json
-├── src/
-│   ├── app/                 # GUI (Qt Widgets)
-│   │   ├── main.cpp
-│   │   ├── mainwindow.cpp
-│   │   ├── mainwindow.h
-│   │   └── mainwindow.ui
-│   ├── core/
-│   │   ├── modbus/          # Modbus TCP 통신
-│   │   │   ├── ModbusClient.cpp
-│   │   │   └── ModbusClient.h
-│   │   ├── models/          # Pick pose 관리
-│   │   │   ├── PickListModel.cpp
-│   │   │   └── PickListModel.h
-│   │   └── orchestrator/    # FSM 기반 오케스트레이터
-│   │       ├── Orchestrator.cpp
-│   │       └── Orchestrator.h
-│   └── resources/
-│       ├── AddressMap.json
-│       └── resources.qrc
-├── tools/
-│   ├── validate_address_map_v2.py
-│   └── validate_address_map_win.py
-└── .githooks/
-    └── pre-commit
+wannasleep3254-multiRobotController/
+├─ CMakeLists.txt
+├─ cmake/                         # (옵션) 툴체인/프리셋/Find*.cmake
+├─ docs/                          # 설계/시퀀스/FSM/통신명세
+│   ├─ handshake_fsm.md
+│   └─ vision_protocol.md
+├─ scripts/                       # 런처/배포/프리커밋 검증
+│   ├─ run_dev.sh
+│   └─ validate_address_map.py
+├─ resources/
+│   ├─ qml/                       # (옵션) QML 사용하는 경우
+│   ├─ icons/
+│   ├─ styles.qss
+│   ├─ resources.qrc              # 리소스 묶음
+│   └─ map/
+│       ├─ AddressMap.json        # 공통 or 기본 맵
+│       ├─ AddressMap_A.json      # 로봇 A용 (필요시)
+│       ├─ AddressMap_B.json      # 로봇 B용 (필요시)
+│       └─ AddressMap_C.json      # 로봇 C용 (필요시)
+├─ config/
+│   ├─ app.json                   # UI/로그/포트 등 앱 설정
+│   └─ robots.json                # 각 로봇의 IP/Port/맵 경로/초기속도 등
+├─ src/
+│   ├─ app/                       # GUI/엔트리포인트
+│   │   ├─ main.cpp
+│   │   ├─ mainwindow.cpp
+│   │   ├─ mainwindow.h
+│   │   └─ mainwindow.ui
+│   ├─ core/
+│   │   ├─ models/
+│   │   │   ├─ PickListModel.cpp
+│   │   │   └─ PickListModel.h
+│   │   ├─ modbus/
+│   │   │   ├─ ModbusClient.cpp
+│   │   │   └─ ModbusClient.h
+│   │   ├─ orchestrator/
+│   │   │   ├─ Orchestrator.cpp
+│   │   │   └─ Orchestrator.h
+│   │   ├─ vision/                # TCP 서버(수신측)
+│   │   │   ├─ Server.cpp         # (기존 generic server) 또는 server.cpp
+│   │   │   ├─ Server.h
+│   │   │   ├─ VisionServer.cpp   # Server 상속/조합해 JSON 파싱/라우팅
+│   │   │   └─ VisionServer.h
+│   │   ├─ robots/                # 다중 로봇 컨텍스트/팩토리
+│   │   │   ├─ RobotContext.h     # ModbusClient+Orch+Model 묶음
+│   │   │   └─ RobotManager.(h|cpp) # ID→컨텍스트 라우팅, 시작/정지 일괄제어
+│   │   └─ util/                  # 공용 유틸(인코딩/로깅/변환)
+│   │       ├─ FloatPacking.h
+│   │       └─ JsonHelpers.(h|cpp)
+│   └─ plugins/                   # (옵션) 향후 확장: 로봇/비전 어댑터
+├─ tests/                         # 유닛/통합 테스트
+│   ├─ test_modbus.cpp
+│   ├─ test_vision_server.cpp
+│   └─ CMakeLists.txt
+└─ third_party/                   # (옵션) 외부 라이브러리
+
 ```
 
 ---
@@ -54,13 +79,13 @@ wannasleep3254-testcontroller/
 ### Build (Linux / Windows)
 
 ```bash
-git clone https://github.com/WannaSleep3254/testController.git
-cd testController
+git clone https://github.com/WannaSleep3254/multiRobotController.git
+cd multiRobotController
 cmake -B build -S .
 cmake --build build
 ```
 
-빌드 후 `build/testController` 실행 파일 생성.
+빌드 후 `build/multiRobotController` 실행 파일 생성.
 
 ---
 
