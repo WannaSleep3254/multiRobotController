@@ -11,6 +11,8 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets SerialBus Core Gui)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets SerialBus Core Gui)
 
 # ---- core library
+find_package(Qt6 REQUIRED COMPONENTS Core)
+
 add_library(multiRobotController_core STATIC
     src/core/network/Server.cpp
     src/core/network/Server.h
@@ -20,6 +22,7 @@ add_library(multiRobotController_core STATIC
     src/core/orchestrator/Orchestrator.h
     src/core/models/PickListModel.cpp
     src/core/models/PickListModel.h
+    src/core/vision/VisionServer.h src/core/vision/VisionServer.cpp
 )
 target_link_libraries(multiRobotController_core
     PRIVATE
@@ -27,6 +30,7 @@ target_link_libraries(multiRobotController_core
       Qt${QT_VERSION_MAJOR}::Gui
       Qt${QT_VERSION_MAJOR}::SerialBus
 )
+target_link_libraries(multiRobotController_core PRIVATE Qt6::Core)
 target_include_directories(multiRobotController_core
     PUBLIC                  # 공개 헤더 루트
       src/core
