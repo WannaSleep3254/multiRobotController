@@ -4,6 +4,7 @@
 #include <QTcpSocket>
 #include <QSet>
 #include <QHash>
+#include <QHostAddress>
 
 class Server : public QTcpServer
 {
@@ -13,6 +14,7 @@ public:
 
     // listen 제어
     bool start(const QHostAddress& bindAddr, quint16 port);
+    inline bool start(quint16 port) { return start(QHostAddress::Any, port); }
     void stop();
 
     quint16 port() const { return serverPort(); }

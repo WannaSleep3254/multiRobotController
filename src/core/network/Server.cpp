@@ -1,10 +1,10 @@
-#include "server.h"
+#include "Server.h"
 #include <QNetworkInterface>
 #include <QDebug>
 
 Server::Server(QObject* parent) : QTcpServer(parent)
 {
-
+    connect(this, &QTcpServer::newConnection, this, &Server::onNewConnection);
 }
 
 bool Server::start(const QHostAddress& bindAddr, quint16 port)
@@ -14,7 +14,7 @@ bool Server::start(const QHostAddress& bindAddr, quint16 port)
         emit log(QString("[ERR] listen failed: %1").arg(errorString()));
         return false;
     }
-    connect(this, &QTcpServer::newConnection, this, &Server::onNewConnection);
+
     emit started(serverAddress(), serverPort());
     emit log(QString("[OK] listening on %1:%2").arg(serverAddress().toString()).arg(serverPort()));
     return true;

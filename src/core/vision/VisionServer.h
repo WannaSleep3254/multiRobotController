@@ -7,6 +7,7 @@
 #include <QTcpSocket>
 #include <QSet>
 #include <QHash>
+#include <QJsonObject>
 
 #include "Server.h"        // core/network/Server.h
 #include "PickListModel.h" // PickPose 선언용
