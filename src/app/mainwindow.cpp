@@ -1,13 +1,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 
-#if false
-#include "ModbusClient.h"
-#include "Orchestrator.h"
-#include "PickListModel.h"
-#else
 #include "RobotManager.h"
-#endif
 
 #include <QFile>
 #include <QDir>
@@ -52,13 +46,8 @@ MainWindow::MainWindow(QWidget *parent)
         else    ui->plainLog->appendPlainText("[UI] Debug logs: OFF");
     });
     m_showDebugLogs = m_chkShowDebug->isChecked();
-#if false
-    // --- PickListModel 설정 ---
-    m_model = new PickListModel(this);
-    ui->tableView->setModel(m_model);
-#else
-    m_mgr = new RobotManager(this);
 
+    m_mgr = new RobotManager(this);
     connect(m_mgr, &RobotManager::log, this,
             [this](const QString& line, Common::LogLevel level){
                 QString prefix;
@@ -68,10 +57,8 @@ MainWindow::MainWindow(QWidget *parent)
                 case Common::LogLevel::Warn:  prefix = "[WARN] "; break;
                 case Common::LogLevel::Error: prefix = "[ERR] "; break;
                 }
-                //ui->plainLog->appendPlainText(prefix + line);
                 onLog(prefix + line, level);
             });
-#endif
     connect(ui->btnConnect, &QPushButton::clicked, this, &MainWindow::onConnect);
     connect(ui->btnDisconnect, &QPushButton::clicked, this, &MainWindow::onDisconnect);
     connect(ui->btnStart, &QPushButton::clicked, this, &MainWindow::onStart);
@@ -80,47 +67,6 @@ MainWindow::MainWindow(QWidget *parent)
     // --- ModbusClient 및 Orchestrator 설정 ---
     loadAddressMap();
 
-#if false
-    m_bus = new ModbusClient(this);
-    //connect(m_bus, &ModbusClient::log, this, &MainWindow::onLog);
-    //connect(m_bus, SIGNAL(log(QString)), this, SLOT(onLog(QString)));
-    connect(m_bus, &ModbusClient::log2, this,
-            [this](const QString& line, int level) {
-                // ModbusClient의 log2()는 int 레벨로 구분
-                Orchestrator::LogLevel lvl = Orchestrator::LogLevel::Info;
-                switch (level) {
-                case 0: lvl = Orchestrator::LogLevel::Debug; break;
-                case 1: lvl = Orchestrator::LogLevel::Info;  break;
-                case 2: lvl = Orchestrator::LogLevel::Warn;  break;
-                case 3: lvl = Orchestrator::LogLevel::Error; break;
-                default: break;
-                }
-                onLog(line, lvl);
-            });
-    connect(m_bus, &ModbusClient::heartbeat, this, &MainWindow::onHeartbeat);
-
-    m_orch = new Orchestrator(m_bus, m_model, this);
-    //connect(m_orch, &Orchestrator::log, this, &MainWindow::onLog);
-    connect(m_orch, SIGNAL(log(QString,Orchestrator::LogLevel)),
-            this, SLOT(onLog(QString,Orchestrator::LogLevel)));
-    connect(m_orch, &Orchestrator::stateChanged, this,
-            [this](int /*state*/, const QString& name){
-                // FSM 상태 표시 업데이트
-                //statusBar()->showMessage(QString("FSM: %1").arg(name));
-                m_fsmLabel->setText(QString("FSM: %1").arg(name));
-                setFsmLedColor(name);
-                if(ui->plainLog)
-                    ui->plainLog->appendPlainText(QString("[FSM] %1").arg(name));
-            });
-    connect(m_orch, &Orchestrator::currentRowChanged, this,
-            [this](int row){
-                if(row > 0)
-                    ui->tableView->scrollTo(m_model->index(row,0), QAbstractItemView::PositionAtCenter);
-            });
-
-    m_orch->applyAddressMap(m_addr);
-#else
-//    connect(m_mgr, &RobotManager::log, this, &MainWindow::onLog);
     connect(m_mgr, &RobotManager::heartbeat, this, &MainWindow::onHeartbeat);
     connect(m_mgr, &RobotManager::stateChanged, this,
             [this](const QString& /*id*/, int /*state*/, const QString& name){
@@ -134,19 +80,14 @@ MainWindow::MainWindow(QWidget *parent)
                 if(row > 0)
                     ui->tableView->scrollTo(m_mgr->model("A")->index(row,0), QAbstractItemView::PositionAtCenter);
             });
-#endif
 
     // UI에 체크박스 추가(디자이너에서 추가해도 됨)
     QCheckBox* chkRepeat = new QCheckBox("Repeat targets", this);
     statusBar()->addPermanentWidget(chkRepeat);
     connect(chkRepeat, &QCheckBox::toggled, this, [this](bool on){
-#if false
-        m_orch->setRepeat(on); // 만약 setRepeat이 private이면 public slots: void setRepeat(bool);
-#else
         if (m_mgr) {
             m_mgr->setRepeat("A", on);
         }
-#endif
         ui->plainLog->appendHtml(QString("<span style='color:blue;'>[UI] Repeat: %1</span>").arg(on ? "ON":"OFF"));
     });
 }
@@ -185,54 +126,32 @@ void MainWindow::onConnect()
 {
     const QString host = ui->editHost->text();
     const int port = ui->spinPort->value();
-#if false
-    if(m_bus->connectTo(host, port))
-    {
-        onLog(QString("Connected to %1:%2").arg(host).arg(port));
-    }
-    else
-    {
-        onLog(QString("Connect Failed to %1:%2").arg(host).arg(port));
-    }
-#else
+
     m_mgr->addRobot("A", host, port, m_addr, this);
     ui->tableView->setModel(m_mgr->model("A"));
     onLog(QString("Connected to %1:%2").arg(host).arg(port));
-#endif
 }
 
 
 void MainWindow::onDisconnect()
 {
-#if false
-    m_bus->disconnectFrom();
-#else
     if(m_mgr) {
         m_mgr->disconnect("A");
     }
-#endif
 }
 
 void MainWindow::onStart()
 {
-#if false
-    m_orch->start();
-#else
     if(m_mgr) {
         m_mgr->start("A");
     }
-#endif
 }
 
 void MainWindow::onStop()
 {
-#if false
-    m_orch->stop();
-#else
     if(m_mgr) {
         m_mgr->stop("A");
     }
-#endif
 }
 
 void MainWindow::onHeartbeat(bool ok)

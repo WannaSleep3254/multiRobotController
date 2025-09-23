@@ -5,9 +5,6 @@
 #include <QPointer>
 #include "LogLevel.h"
 
-//class ModbusClient;
-//class Orchestrator;
-//class PickListModel;
 class RobotManager;
 
 class QLabel;
@@ -42,9 +39,7 @@ private:
 
 private:
     Ui::MainWindow *ui;
-//    QPointer<ModbusClient> m_bus;
-//    QPointer<Orchestrator> m_orch;
-//    QPointer<PickListModel> m_model;
+
     QPointer<RobotManager> m_mgr;
     QVariantMap m_addr; // parsed AddressMap.json
 
