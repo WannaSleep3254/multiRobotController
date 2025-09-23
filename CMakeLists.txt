@@ -16,13 +16,22 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
 add_library(multiRobotController_core STATIC
     src/core/network/Server.cpp
     src/core/network/Server.h
+
     src/core/modbus/ModbusClient.cpp
     src/core/modbus/ModbusClient.h
+
     src/core/orchestrator/Orchestrator.cpp
     src/core/orchestrator/Orchestrator.h
+
+    src/core/models/Pose6D.h
     src/core/models/PickListModel.cpp
     src/core/models/PickListModel.h
-    src/core/vision/VisionServer.h src/core/vision/VisionServer.cpp
+
+    src/core/robots/RobotManager.h
+    src/core/robots/RobotManager.cpp
+
+    src/core/vision/VisionServer.h
+    src/core/vision/VisionServer.cpp
 )
 target_link_libraries(multiRobotController_core
     PRIVATE
@@ -38,6 +47,7 @@ target_include_directories(multiRobotController_core
       src/core/orchestrator
       src/core/models
       src/core/network
+      src/core/robots
 )
 
 # ---- app executable

@@ -80,7 +80,7 @@ QVariant PickListModel::headerData(int section, Qt::Orientation orientation, int
     return section + 1;
 }
 
-void PickListModel::add(const PickPose& p) {
+void PickListModel::add(const Pose6D &p) {
     const int row = m_data.size();
     beginInsertRows(QModelIndex(), row, row);
     m_data.push_back(p);
@@ -94,7 +94,7 @@ void PickListModel::clear() {
     endResetModel();
 }
 
-PickPose PickListModel::getRow(int r) const {
+Pose6D PickListModel::getRow(int r) const {
     // 필요시 범위 체크 강화
     return m_data[r];
 }

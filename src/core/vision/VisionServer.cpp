@@ -162,7 +162,7 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
     const auto extras = collectExtras(obj);
 
     if (type == "pose") {
-        PickPose p{};
+        Pose6D p{};
         if (!parsePoseObj(obj, p)) {
             ++st.jsonErr; ++m_global.jsonErr;
             sendAck(from, seq, "error", "missing_fields");
@@ -177,12 +177,12 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
     }
 
     if (type == "poses") {
-        QList<PickPose> list;
+        QList<Pose6D> list;
         const auto arr = obj.value("items").toArray();
         list.reserve(arr.size());
         for (const auto& v : arr) {
             const auto o = v.toObject();
-            PickPose p{};
+            Pose6D p{};
             if (!parsePoseObj(o, p)) continue;
             list.push_back(p);
         }
@@ -206,7 +206,7 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
     ++st.ackErr; ++m_global.ackErr;
 }
 
-bool VisionServer::parsePoseObj(const QJsonObject& o, PickPose& out) const
+bool VisionServer::parsePoseObj(const QJsonObject& o, Pose6D &out) const
 {
     if (!o.contains("x") || !o.contains("y") || !o.contains("z") ||
         !o.contains("rx") || !o.contains("ry") || !o.contains("rz"))

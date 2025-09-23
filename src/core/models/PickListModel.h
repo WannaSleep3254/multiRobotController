@@ -2,10 +2,7 @@
 #define PICKLISTMODEL_H
 
 #include <QAbstractTableModel>
-
-struct PickPose {
-    double x,y,z, rx,ry,rz;
-};
+#include "Pose6D.h"
 
 class PickListModel : public QAbstractTableModel
 {
@@ -18,10 +15,10 @@ public:
     QVariant data(const QModelIndex& idx, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
-    void add(const PickPose& p);
+    void add(const Pose6D& p);
     void clear();
 
-    PickPose getRow(int r) const;
+    Pose6D getRow(int r) const;
 
     void setActiveRow(int r); // 선택 행 강조 표시)
 
@@ -29,7 +26,7 @@ private:
     int m_activeRow{-1};
 
 private:
-    QVector<PickPose> m_data;
+    QVector<Pose6D> m_data;
 };
 
 #endif // PICKLISTMODEL_H

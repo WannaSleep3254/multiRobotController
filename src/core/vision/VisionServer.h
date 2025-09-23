@@ -10,8 +10,7 @@
 #include <QJsonObject>
 
 #include "Server.h"        // core/network/Server.h
-#include "PickListModel.h" // PickPose 선언용
-
+#include "Pose6D.h"        // core/vision/Pose6D.h
 /*
 VisionServer* vs = new VisionServer(this);
 
@@ -67,9 +66,9 @@ public:
 
 signals:
     // 단건/다건 좌표 수신
-    void poseReceived(const QString& robotId, const PickPose& pose,
+    void poseReceived(const QString& robotId, const Pose6D& pose,
                       quint32 seq, const QVariantMap& extras);
-    void posesReceived(const QString& robotId, const QList<PickPose>& poses,
+    void posesReceived(const QString& robotId, const QList<Pose6D>& poses,
                        quint32 seq, const QVariantMap& extras);
 
     // 상태/로그
@@ -83,7 +82,7 @@ private slots:
 
 private:
     // 내부 헬퍼
-    bool parsePoseObj(const QJsonObject& o, PickPose& out) const;
+    bool parsePoseObj(const QJsonObject& o, Pose6D& out) const;
     QVariantMap collectExtras(const QJsonObject& o) const;
     void sendAck(QTcpSocket* to, quint32 seq, const QString& status,
                  const QString& message = QString());
