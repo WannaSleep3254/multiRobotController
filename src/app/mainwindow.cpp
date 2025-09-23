@@ -9,11 +9,12 @@
 #include <QJsonObject>
 #include <QMessageBox>
 #include <QTimer>
-#include <QDebug>
 #include <QStatusBar>
 #include <QLabel>
 #include <QFrame>
 #include <QCheckBox>
+
+//#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)

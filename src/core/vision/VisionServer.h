@@ -10,7 +10,7 @@
 #include <QJsonObject>
 
 #include "Server.h"        // core/network/Server.h
-#include "Pose6D.h"        // core/vision/Pose6D.h
+#include "Pose6D.h"        // core/models/Pose6D.h
 /*
 VisionServer* vs = new VisionServer(this);
 

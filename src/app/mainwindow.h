@@ -6,7 +6,6 @@
 #include "LogLevel.h"
 
 class RobotManager;
-
 class QLabel;
 class QFrame;
 class QCheckBox;
