@@ -14,8 +14,6 @@
 #include <QFrame>
 #include <QCheckBox>
 
-//#include <QDebug>
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -197,10 +195,10 @@ void MainWindow::setFsmLedColor(const QString& name)
     // 색상 매핑
     // Idle / Ready / PublishTarget / WaitPickStart / WaitPickDone / WaitDoneClear
     QString color = "#9ca3af"; // 기본 회색 (Idle)
-    if (name.contains("Ready", Qt::CaseInsensitive))        color = "#3b82f6"; // 파랑
-    else if (name.contains("Publish", Qt::CaseInsensitive))  color = "#8b5cf6"; // 보라
-    else if (name.contains("WaitPickStart", Qt::CaseInsensitive)) color = "#f59e0b"; // 주황
-    else if (name.contains("WaitPickDone", Qt::CaseInsensitive))  color = "#10b981"; // 초록(진행 완료 대기)
-    else if (name.contains("WaitDoneClear", Qt::CaseInsensitive)) color = "#22c55e"; // 초록(클리어 대기)
+    if (name.contains("Ready",              Qt::CaseInsensitive))   color = "#3b82f6"; // 파랑
+    else if (name.contains("Publish",       Qt::CaseInsensitive))   color = "#8b5cf6"; // 보라
+    else if (name.contains("WaitPickStart", Qt::CaseInsensitive))   color = "#f59e0b"; // 주황
+    else if (name.contains("WaitPickDone",  Qt::CaseInsensitive))   color = "#10b981"; // 초록(진행 완료 대기)
+    else if (name.contains("WaitDoneClear", Qt::CaseInsensitive))   color = "#22c55e"; // 초록(클리어 대기)
     m_fsmLed->setStyleSheet(QString("background:%1;border-radius:6px;").arg(color));
 }
