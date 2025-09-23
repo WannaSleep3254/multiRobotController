@@ -13,8 +13,7 @@ ModbusClient::ModbusClient(QObject *parent)
     connect(m_client, &QModbusClient::stateChanged, this, &ModbusClient::onStateChanged);
     connect(m_client, &QModbusClient::errorOccurred, this, [this](QModbusDevice::Error e){
         emit error(QString("Modbus error %1: %2").arg(e).arg(m_client->errorString()));
-//        emit log(QString("[ERR] %1").arg(m_client->errorString()));
-        emit log2(QString("[ERR] %1").arg(m_client->errorString()), 3); // Error
+        emit log(QString("%1").arg(m_client->errorString()), Common::LogLevel::Error); // Error
     });
     connect(m_ping, &QTimer::timeout, this, &ModbusClient::onTimeoutPing);
 
@@ -54,13 +53,12 @@ void ModbusClient::onStateChanged(int s)
 {
     if (s == QModbusDevice::ConnectedState) {
         emit connected();
-        emit log("[OK] Connected");
-        emit log2("[OK] Connected", 1);   // Info
+
+        emit log("[OK] Connected", Common::LogLevel::Info);   // Info
     }
     else if (s == QModbusDevice::UnconnectedState) {
         emit disconnected();
-        emit log("[OK] Disconnected");
-        emit log2("[OK] Disconnected", 2); // Warn(연결 끊김 표시)
+        emit log("[OK] Disconnected", Common::LogLevel::Warn); // Warn(연결 끊김 표시)
         emit heartbeat(false);
     }
 }

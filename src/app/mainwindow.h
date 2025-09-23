@@ -1,9 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "Orchestrator.h"
 #include <QMainWindow>
 #include <QPointer>
+#include "LogLevel.h"
 
 //class ModbusClient;
 //class Orchestrator;
@@ -35,7 +35,7 @@ private slots:
     void onStop();
     void onHeartbeat(bool ok);
     void onLog(const QString& line);
-    void onLog(const QString& line, Orchestrator::LogLevel level);
+    void onLog(const QString& line, Common::LogLevel level);
 
 private:
     void loadAddressMap();

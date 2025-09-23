@@ -83,7 +83,7 @@ void Orchestrator::start()
 
     m_currentRow = -1;
 //    m_state = State::WaitRobotReady;
-    emit log("[RUN] Orchestrator started", LogLevel::Info);
+    emit log("[RUN] Orchestrator started", Common::LogLevel::Info);
     setState(State::WaitRobotReady);
     m_timer->start();
     m_stateTick.restart();
@@ -103,7 +103,7 @@ void Orchestrator::stop()
     m_lastBusy  = false;
     m_lastDone  = false;
     m_seq = 0;
-    emit log("[RUN] Orchestrator stopped", LogLevel::Info);
+    emit log("[RUN] Orchestrator stopped", Common::LogLevel::Info);
 }
 
 void Orchestrator::applyAddressMap(const QVariantMap& m)
@@ -126,7 +126,7 @@ void Orchestrator::applyAddressMap(const QVariantMap& m)
 
     emit log(QString("[ADDR] READY=%1 BUSY=%2 DONE=%3 COIL_PUBLISH=%4 TARGET_BASE=%5")
                  .arg(A_ROBOT_READY).arg(A_ROBOT_BUSY).arg(A_PICK_DONE).arg(A_PUBLISH_REQ).arg(A_TARGET_BASE)
-             , LogLevel::Info);
+             , Common::LogLevel::Info);
 }
 
 void Orchestrator::cycle()
@@ -140,7 +140,7 @@ void Orchestrator::cycle()
         m_bus->readDiscreteInputs(qMin(A_ROBOT_READY, A_ROBOT_BUSY),
                                   qAbs(A_ROBOT_BUSY - A_ROBOT_READY) + 1);
         if (m_stateTick.elapsed() > A_READY_TIMEOUT_MS) {
-            emit log("[WARN] WaitRobotReady timeout", LogLevel::Debug);
+            emit log("[WARN] WaitRobotReady timeout", Common::LogLevel::Debug);
             m_stateTick.restart();
         }
         break; }
@@ -149,7 +149,7 @@ void Orchestrator::cycle()
 
         const int total = m_model->rowCount();
         if (total == 0) {
-            emit log("[FSM] No targets. Waiting...", LogLevel::Debug);
+            emit log("[FSM] No targets. Waiting...", Common::LogLevel::Debug);
             return;
         }
         if (m_currentRow+1 >= total) {
@@ -157,7 +157,7 @@ void Orchestrator::cycle()
                     // wrap to start
                         m_currentRow = 0;
                 } else {
-                    emit log("[FSM] Reached end of list. Waiting...", LogLevel::Info);
+                    emit log("[FSM] Reached end of list. Waiting...", Common::LogLevel::Info);
                     return;
                 }
         } else {
@@ -196,7 +196,7 @@ void Orchestrator::cycle()
                      .arg(A_TARGET_BASE).arg(A_TARGET_BASE + regs.size() - 1)
                      .arg(pt.x,0,'f',3).arg(pt.y,0,'f',3).arg(pt.z,0,'f',3)
                      .arg(pt.rx,0,'f',3).arg(pt.ry,0,'f',3).arg(pt.rz,0,'f',3)
-                 , LogLevel::Info);
+                 , Common::LogLevel::Info);
 
         //m_state = State::WaitPickStart;
         setState(State::WaitPickStart);     // BUSY 상승 대기
@@ -241,6 +241,6 @@ void Orchestrator::setState(Orchestrator::State s)
     const auto next = stateName(s);
     m_state = s;
 
-    emit log(QString("[FSM] %1 → %2").arg(prev, next), LogLevel::Info);
+    emit log(QString("[FSM] %1 → %2").arg(prev, next), Common::LogLevel::Info);
     emit stateChanged(static_cast<int>(s), next);
 }

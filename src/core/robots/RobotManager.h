@@ -1,13 +1,13 @@
 #ifndef ROBOTMANAGER_H
 #define ROBOTMANAGER_H
 
-#include "Orchestrator.h"
-#include "Pose6D.h"
 #include <QObject>
 #include <QMap>
 #include <QPointer>
 #include <QVariantMap>
-#include <Pose6D.h>
+
+#include "Pose6D.h"
+#include "LogLevel.h"
 
 class QAbstractItemModel;
 class PickListModel;
@@ -55,7 +55,8 @@ signals:
     void stateChanged(const QString& id, int state, const QString& name);
     void currentRowChanged(const QString& id, int row);
 
-    void log(const QString& line, int level); // 0=Debug,1=Info,2=Warn,3=Error
+//    void log(const QString& line, int level); // 0=Debug,1=Info,2=Warn,3=Error
+    void log(const QString& line, Common::LogLevel level = Common::LogLevel::Info);
 
 private:
     QMap<QString, RobotContext> m_ctx; // "A","B","C" → 컨텍스트

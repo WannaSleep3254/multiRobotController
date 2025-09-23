@@ -20,6 +20,8 @@ add_library(multiRobotController_core STATIC
     src/core/modbus/ModbusClient.cpp
     src/core/modbus/ModbusClient.h
 
+    src/core/common/LogLevel.h
+
     src/core/orchestrator/Orchestrator.cpp
     src/core/orchestrator/Orchestrator.h
 
@@ -44,6 +46,7 @@ target_include_directories(multiRobotController_core
     PUBLIC                  # 공개 헤더 루트
       src/core
       src/core/modbus
+      src/core/common
       src/core/orchestrator
       src/core/models
       src/core/network

@@ -2,6 +2,7 @@
 #define MODBUSCLIENT_H
 
 #include <QObject>
+#include "LogLevel.h"
 
 class QModbusClient;
 class QTimer;
@@ -31,8 +32,8 @@ signals:
     void connected();
     void disconnected();
     void error(const QString& msg);
-    void log(const QString& line);
-    void log2(const QString& line, int level);      // 0=Debug, 1=Info, 2=Warn, 3=Error
+//    void log(const QString& line);
+    void log(const QString& line, Common::LogLevel level);      // 0=Debug, 1=Info, 2=Warn, 3=Error
     void heartbeat(bool ok);
 
     void coilsRead(int start, QVector<bool> data);

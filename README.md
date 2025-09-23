@@ -31,32 +31,34 @@ wannasleep3254-multiRobotController/
 │   ├─ app.json                   # UI/로그/포트 등 앱 설정
 │   └─ robots.json                # 각 로봇의 IP/Port/맵 경로/초기속도 등
 ├─ src/
-│   ├─ app/                       # GUI/엔트리포인트
-│   │   ├─ main.cpp
-│   │   ├─ mainwindow.cpp
-│   │   ├─ mainwindow.h
-│   │   └─ mainwindow.ui
+│   ├─ app/
+│   │  ├─ main.cpp
+│   │  ├─ mainwindow.cpp
+│   │  ├─ mainwindow.h
+│   │  └─ mainwindow.ui
 │   ├─ core/
-│   │   ├─ models/
-│   │   │   ├─ PickListModel.cpp
-│   │   │   └─ PickListModel.h
-│   │   ├─ modbus/
-│   │   │   ├─ ModbusClient.cpp
-│   │   │   └─ ModbusClient.h
-│   │   ├─ orchestrator/
-│   │   │   ├─ Orchestrator.cpp
-│   │   │   └─ Orchestrator.h
-│   │   ├─ vision/                # TCP 서버(수신측)
-│   │   │   ├─ Server.cpp         # (기존 generic server) 또는 server.cpp
-│   │   │   ├─ Server.h
-│   │   │   ├─ VisionServer.cpp   # Server 상속/조합해 JSON 파싱/라우팅
-│   │   │   └─ VisionServer.h
-│   │   ├─ robots/                # 다중 로봇 컨텍스트/팩토리
-│   │   │   ├─ RobotContext.h     # ModbusClient+Orch+Model 묶음
-│   │   │   └─ RobotManager.(h|cpp) # ID→컨텍스트 라우팅, 시작/정지 일괄제어
-│   │   └─ util/                  # 공용 유틸(인코딩/로깅/변환)
-│   │       ├─ FloatPacking.h
-│   │       └─ JsonHelpers.(h|cpp)
+│   │  ├─ models/
+│   │  │  ├─ PickListModel.cpp
+│   │  │  ├─ PickListModel.h
+│   │  │  └─ Pose6D.h              # ★ 공용 좌표 타입 (신규)
+│   │  ├─ modbus/
+│   │  │  ├─ ModbusClient.cpp
+│   │  │  └─ ModbusClient.h
+│   │  ├─ orchestrator/
+│   │  │  ├─ Orchestrator.cpp
+│   │  │  └─ Orchestrator.h
+│   │  ├─ network/                 # ★ Server.* 위치(접속/라인 분리/브로드캐스트)
+│   │  │  ├─ Server.cpp
+│   │  │  └─ Server.h
+│   │  ├─ vision/                  # 비전 수신기(구조체 파서/라우팅)
+│   │  │  ├─ VisionServer.cpp
+│   │  │  └─ VisionServer.h
+│   │  ├─ robots/                  # ★ 다로봇 관리
+│   │  │  ├─ RobotManager.cpp
+│   │  │  └─ RobotManager.h
+│   │  └─ util/                  # 공용 유틸(인코딩/로깅/변환)
+│   │     ├─ FloatPacking.h
+│   │     └─ JsonHelpers.(h|cpp)
 │   └─ plugins/                   # (옵션) 향후 확장: 로봇/비전 어댑터
 ├─ tests/                         # 유닛/통합 테스트
 │   ├─ test_modbus.cpp

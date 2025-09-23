@@ -5,6 +5,8 @@
 #include <QVariant>
 #include <QElapsedTimer>
 
+#include "LogLevel.h"
+
 class ModbusClient;
 class PickListModel;
 class QTimer;
@@ -14,7 +16,7 @@ class Orchestrator : public QObject
     Q_OBJECT
 public:
     explicit Orchestrator(ModbusClient* bus, PickListModel* model, QObject* parent=nullptr);
-    enum class LogLevel { Debug, Info, Warn, Error };
+//    enum class LogLevel { Debug, Info, Warn, Error };
 
 public slots:
     void start();
@@ -23,7 +25,8 @@ public slots:
     void applyAddressMap(const QVariantMap& m);
 
 signals:
-    void log(const QString& line, Orchestrator::LogLevel level = Orchestrator::LogLevel::Info);
+//    void log(const QString& line, Orchestrator::LogLevel level = Orchestrator::LogLevel::Info);
+    void log(const QString& line, Common::LogLevel level = Common::LogLevel::Info);
     void stateChanged(int state, QString name);
     void currentRowChanged(int row);
 

@@ -59,14 +59,18 @@ MainWindow::MainWindow(QWidget *parent)
 #else
     m_mgr = new RobotManager(this);
 
-    connect(m_mgr, &RobotManager::log, this, [this](const QString& line, int level){
-        // level별 표시 (Info/Warning/Error)
-        switch(level) {
-        case 1: ui->plainLog->appendPlainText("[WARN] " + line); break;
-        case 2: ui->plainLog->appendPlainText("[ERR] " + line); break;
-        default: ui->plainLog->appendPlainText(line); break;
-        }
-    });
+    connect(m_mgr, &RobotManager::log, this,
+            [this](const QString& line, Common::LogLevel level){
+                QString prefix;
+                switch(level) {
+                case Common::LogLevel::Debug: prefix = "[DBG] "; break;
+                case Common::LogLevel::Info:  prefix = ""; break;
+                case Common::LogLevel::Warn:  prefix = "[WARN] "; break;
+                case Common::LogLevel::Error: prefix = "[ERR] "; break;
+                }
+                //ui->plainLog->appendPlainText(prefix + line);
+                onLog(prefix + line, level);
+            });
 #endif
     connect(ui->btnConnect, &QPushButton::clicked, this, &MainWindow::onConnect);
     connect(ui->btnDisconnect, &QPushButton::clicked, this, &MainWindow::onDisconnect);
@@ -242,25 +246,25 @@ void MainWindow::onLog(const QString& line)
     ui->plainLog->appendHtml(html);
 }
 
-void MainWindow::onLog(const QString& line, Orchestrator::LogLevel level)
+void MainWindow::onLog(const QString& line, Common::LogLevel level)
 {
     // Debug 레벨 필터링
-    if (level == Orchestrator::LogLevel::Debug && !m_showDebugLogs)
+    if (level == Common::LogLevel::Debug && !m_showDebugLogs)
         return;
 
     // QPlainTextEdit은 색상을 못 넣으니, 단순 접두어로 레벨 표기
     QString html;
     switch (level) {
-    case Orchestrator::LogLevel::Debug:
+    case Common::LogLevel::Debug:
         html = QString("<span style='color:gray;font-style:italic;'>[DBG] %1</span>").arg(line);
         break;
-    case Orchestrator::LogLevel::Info:
+    case Common::LogLevel::Info:
         html = QString("<span style='color:black;'>%1</span>").arg(line);
         break;
-    case Orchestrator::LogLevel::Warn:
+    case Common::LogLevel::Warn:
         html = QString("<span style='color:orange;font-weight:bold;'>[WARN] %1</span>").arg(line);
         break;
-    case Orchestrator::LogLevel::Error:
+    case Common::LogLevel::Error:
         html = QString("<span style='color:red;font-weight:bold;text-decoration:underline;'>[ERR] %1</span>").arg(line);
         break;
     }

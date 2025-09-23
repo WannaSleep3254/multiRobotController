@@ -29,7 +29,7 @@ void RobotManager::addRobot(const QString& id, const QString& host, int port,
             [this, id](int row){
                 emit currentRowChanged(id, row);
             });
-
+/*
     connect(ctx.orch, SIGNAL(log(QString,Orchestrator::LogLevel)),
             this, SIGNAL(log(QString,Orchestrator::LogLevel)));
 
@@ -40,6 +40,9 @@ void RobotManager::addRobot(const QString& id, const QString& host, int port,
     connect(ctx.bus, &ModbusClient::log2, this, [this](const QString& line, int level){
         emit log(line, level);
     });
+*/
+    connect(ctx.orch, SIGNAL(log(QString,Common::LogLevel)), this, SIGNAL(log(QString,Common::LogLevel)));
+    connect(ctx.bus,  SIGNAL(log(QString,Common::LogLevel)), this, SIGNAL(log(QString,Common::LogLevel)));
 }
 
 void RobotManager::enqueuePose(const QString& id, const Pose6D &p) {
