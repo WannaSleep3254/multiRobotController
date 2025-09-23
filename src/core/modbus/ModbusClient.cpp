@@ -13,7 +13,7 @@ ModbusClient::ModbusClient(QObject *parent)
     connect(m_client, &QModbusClient::stateChanged, this, &ModbusClient::onStateChanged);
     connect(m_client, &QModbusClient::errorOccurred, this, [this](QModbusDevice::Error e){
         emit error(QString("Modbus error %1: %2").arg(e).arg(m_client->errorString()));
-        emit log(QString("[ERR] %1").arg(m_client->errorString()));
+//        emit log(QString("[ERR] %1").arg(m_client->errorString()));
         emit log2(QString("[ERR] %1").arg(m_client->errorString()), 3); // Error
     });
     connect(m_ping, &QTimer::timeout, this, &ModbusClient::onTimeoutPing);

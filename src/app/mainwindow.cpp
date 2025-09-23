@@ -1,9 +1,13 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 
+#if false
 #include "ModbusClient.h"
 #include "Orchestrator.h"
 #include "PickListModel.h"
+#else
+#include "RobotManager.h"
+#endif
 
 #include <QFile>
 #include <QDir>
@@ -48,11 +52,22 @@ MainWindow::MainWindow(QWidget *parent)
         else    ui->plainLog->appendPlainText("[UI] Debug logs: OFF");
     });
     m_showDebugLogs = m_chkShowDebug->isChecked();
-
+#if false
     // --- PickListModel 설정 ---
     m_model = new PickListModel(this);
     ui->tableView->setModel(m_model);
+#else
+    m_mgr = new RobotManager(this);
 
+    connect(m_mgr, &RobotManager::log, this, [this](const QString& line, int level){
+        // level별 표시 (Info/Warning/Error)
+        switch(level) {
+        case 1: ui->plainLog->appendPlainText("[WARN] " + line); break;
+        case 2: ui->plainLog->appendPlainText("[ERR] " + line); break;
+        default: ui->plainLog->appendPlainText(line); break;
+        }
+    });
+#endif
     connect(ui->btnConnect, &QPushButton::clicked, this, &MainWindow::onConnect);
     connect(ui->btnDisconnect, &QPushButton::clicked, this, &MainWindow::onDisconnect);
     connect(ui->btnStart, &QPushButton::clicked, this, &MainWindow::onStart);
@@ -61,6 +76,7 @@ MainWindow::MainWindow(QWidget *parent)
     // --- ModbusClient 및 Orchestrator 설정 ---
     loadAddressMap();
 
+#if false
     m_bus = new ModbusClient(this);
     //connect(m_bus, &ModbusClient::log, this, &MainWindow::onLog);
     //connect(m_bus, SIGNAL(log(QString)), this, SLOT(onLog(QString)));
@@ -99,14 +115,34 @@ MainWindow::MainWindow(QWidget *parent)
             });
 
     m_orch->applyAddressMap(m_addr);
-
+#else
+//    connect(m_mgr, &RobotManager::log, this, &MainWindow::onLog);
+    connect(m_mgr, &RobotManager::heartbeat, this, &MainWindow::onHeartbeat);
+    connect(m_mgr, &RobotManager::stateChanged, this,
+            [this](const QString& /*id*/, int /*state*/, const QString& name){
+                m_fsmLabel->setText(QString("FSM: %1").arg(name));
+                setFsmLedColor(name);
+                if(ui->plainLog)
+                    ui->plainLog->appendPlainText(QString("[FSM] %1").arg(name));
+            });
+    connect(m_mgr, &RobotManager::currentRowChanged, this,
+            [this](const QString& /*id*/, int row){
+                if(row > 0)
+                    ui->tableView->scrollTo(m_mgr->model("A")->index(row,0), QAbstractItemView::PositionAtCenter);
+            });
+#endif
 
     // UI에 체크박스 추가(디자이너에서 추가해도 됨)
     QCheckBox* chkRepeat = new QCheckBox("Repeat targets", this);
     statusBar()->addPermanentWidget(chkRepeat);
     connect(chkRepeat, &QCheckBox::toggled, this, [this](bool on){
-        // Orchestrator에 public setter가 있으면 사용. 현재 예시는 private라면 공개로 바꿔야 함.
+#if false
         m_orch->setRepeat(on); // 만약 setRepeat이 private이면 public slots: void setRepeat(bool);
+#else
+        if (m_mgr) {
+            m_mgr->setRepeat("A", on);
+        }
+#endif
         ui->plainLog->appendHtml(QString("<span style='color:blue;'>[UI] Repeat: %1</span>").arg(on ? "ON":"OFF"));
     });
 }
@@ -145,6 +181,7 @@ void MainWindow::onConnect()
 {
     const QString host = ui->editHost->text();
     const int port = ui->spinPort->value();
+#if false
     if(m_bus->connectTo(host, port))
     {
         onLog(QString("Connected to %1:%2").arg(host).arg(port));
@@ -153,22 +190,45 @@ void MainWindow::onConnect()
     {
         onLog(QString("Connect Failed to %1:%2").arg(host).arg(port));
     }
+#else
+    m_mgr->addRobot("A", host, port, m_addr, this);
+    ui->tableView->setModel(m_mgr->model("A"));
+    onLog(QString("Connected to %1:%2").arg(host).arg(port));
+#endif
 }
 
 
 void MainWindow::onDisconnect()
 {
+#if false
     m_bus->disconnectFrom();
+#else
+    if(m_mgr) {
+        m_mgr->disconnect("A");
+    }
+#endif
 }
 
 void MainWindow::onStart()
 {
+#if false
     m_orch->start();
+#else
+    if(m_mgr) {
+        m_mgr->start("A");
+    }
+#endif
 }
 
 void MainWindow::onStop()
 {
+#if false
     m_orch->stop();
+#else
+    if(m_mgr) {
+        m_mgr->stop("A");
+    }
+#endif
 }
 
 void MainWindow::onHeartbeat(bool ok)

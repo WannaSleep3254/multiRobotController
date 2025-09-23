@@ -1,12 +1,15 @@
 #ifndef ROBOTMANAGER_H
 #define ROBOTMANAGER_H
 
+#include "Orchestrator.h"
 #include "Pose6D.h"
 #include <QObject>
 #include <QMap>
 #include <QPointer>
 #include <QVariantMap>
+#include <Pose6D.h>
 
+class QAbstractItemModel;
 class PickListModel;
 class ModbusClient;
 class Orchestrator;
@@ -41,7 +44,18 @@ public:
     void stopAll();
 
     // UI 바인딩용
-    PickListModel* model(const QString& id) const;
+    QAbstractItemModel *model(const QString& id) const;
+
+    void disconnect(const QString& id);
+    void setRepeat(const QString&id, bool on);
+
+signals:
+    void heartbeat(bool ok);
+//    void heartbeat(const QString& id, bool ok);
+    void stateChanged(const QString& id, int state, const QString& name);
+    void currentRowChanged(const QString& id, int row);
+
+    void log(const QString& line, int level); // 0=Debug,1=Info,2=Warn,3=Error
 
 private:
     QMap<QString, RobotContext> m_ctx; // "A","B","C" → 컨텍스트

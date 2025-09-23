@@ -35,7 +35,6 @@ signals:
     void log2(const QString& line, int level);      // 0=Debug, 1=Info, 2=Warn, 3=Error
     void heartbeat(bool ok);
 
-
     void coilsRead(int start, QVector<bool> data);
     void holdingRead(int start, QVector<quint16> data);
     void inputRead(int start, QVector<quint16> data);

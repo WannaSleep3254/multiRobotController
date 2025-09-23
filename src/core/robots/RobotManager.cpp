@@ -3,7 +3,10 @@
 #include "ModbusClient.h"
 #include "Orchestrator.h"
 
-RobotManager::RobotManager(QObject* parent) : QObject(parent) {}
+RobotManager::RobotManager(QObject* parent) : QObject(parent)
+{
+
+}
 
 void RobotManager::addRobot(const QString& id, const QString& host, int port,
                             const QVariantMap& addr, QObject* owner) {
@@ -16,6 +19,27 @@ void RobotManager::addRobot(const QString& id, const QString& host, int port,
     ctx.orch->applyAddressMap(addr);
     ctx.bus->connectTo(host, port);
     m_ctx.insert(id, ctx);
+
+    connect(ctx.bus, &ModbusClient::heartbeat, this, &RobotManager::heartbeat);
+    connect(ctx.orch, &Orchestrator::stateChanged, this,
+            [this, id](int state, const QString& name){
+                emit stateChanged(id, state, name);
+            });
+    connect(ctx.orch, &Orchestrator::currentRowChanged, this,
+            [this, id](int row){
+                emit currentRowChanged(id, row);
+            });
+
+    connect(ctx.orch, SIGNAL(log(QString,Orchestrator::LogLevel)),
+            this, SIGNAL(log(QString,Orchestrator::LogLevel)));
+
+    connect(ctx.bus, &ModbusClient::log, this, [this](const QString& line){
+        emit log(line, 1); // Info);
+    });
+
+    connect(ctx.bus, &ModbusClient::log2, this, [this](const QString& line, int level){
+        emit log(line, level);
+    });
 }
 
 void RobotManager::enqueuePose(const QString& id, const Pose6D &p) {
@@ -51,6 +75,26 @@ void RobotManager::stopAll() {
     for (auto& c : m_ctx) c.orch->stop();
 }
 
-PickListModel* RobotManager::model(const QString& id) const {
+QAbstractItemModel* RobotManager::model(const QString& id) const {
     return m_ctx.contains(id) ? m_ctx[id].model : nullptr;
+}
+
+void RobotManager::disconnect(const QString& id)
+{
+    if(!m_ctx.contains(id))
+        return;
+
+    if(m_ctx[id].bus) {
+        m_ctx[id].bus->disconnectFrom();
+    }
+}
+
+void RobotManager::setRepeat(const QString&id, bool on)
+{
+    if(!m_ctx.contains(id))
+        return;
+
+    if(m_ctx[id].orch) {
+        m_ctx[id].orch->setRepeat(on);
+    }
 }
