@@ -60,15 +60,29 @@ void RobotPanel::setManager(RobotManager* mgr)
 {
     if (m_mgr == mgr) return;
     m_mgr = mgr;
-    if (m_mgr) {
-        // RobotManager가 heartbeat 신호를 리레이하도록 만들어뒀다면 여기에 연결
-        connect(m_mgr, SIGNAL(heartbeat(bool)), this, SLOT(onHeartbeat(bool)));
-        connect(m_mgr, &RobotManager::currentRowChanged, this,
-                [this](const QString& /*id*/, int row){
-                    if(row > 0)
-                        m_table->scrollTo(m_mgr->model(m_id)->index(row,0), QAbstractItemView::PositionAtCenter);
-                });
-    }
+
+    if (!m_mgr)
+        return;
+
+    // RobotManager가 heartbeat 신호를 리레이하도록 만들어뒀다면 여기에 연결
+    connect(m_mgr, &RobotManager::heartbeat, this,
+            [this](const QString& rid, bool ok){
+                if (rid == m_id) onHeartbeat(ok);
+            });
+
+    connect(m_mgr, &RobotManager::currentRowChanged, this,
+            [this](const QString& /*id*/, int row){
+                if(row > 0)
+                    m_table->scrollTo(m_mgr->model(m_id)->index(row,0), QAbstractItemView::PositionAtCenter);
+            });
+    connect(m_mgr, &RobotManager::connectionChanged, this,
+            [this](const QString& rid, bool up){
+                if (rid == m_id) onHeartbeat(up);
+            });
+
+    if (!m_id.isEmpty())
+        onHeartbeat(m_mgr->isConnected(m_id));
+
     bindModel();
 }
 
@@ -77,6 +91,8 @@ void RobotPanel::setRobotId(const QString& id)
     if (m_id == id) return;
     m_id = id;
     bindModel();
+    if (m_mgr)
+        onHeartbeat(m_mgr->isConnected(m_id));  // 즉시 LED 동기화
 }
 
 void RobotPanel::setEndpoint(const QString& host, int port, const QVariantMap& addr) {

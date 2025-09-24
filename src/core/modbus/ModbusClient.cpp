@@ -60,7 +60,7 @@ void ModbusClient::onStateChanged(int s)
 {
     if (s == QModbusDevice::ConnectedState) {
         emit connected();
-
+        emit heartbeat(true);
         emit log("[OK] Connected", Common::LogLevel::Info);   // Info
     }
     else if (s == QModbusDevice::UnconnectedState) {
@@ -195,4 +195,8 @@ void ModbusClient::writeHoldingBlock(int start, const QVector<quint16>& values)
     if (reply) {
         connect(reply, &QModbusReply::finished, reply, &QObject::deleteLater);
     }
+}
+
+bool ModbusClient::isConnected() const {
+    return m_client && m_client->state() == QModbusDevice::ConnectedState;
 }

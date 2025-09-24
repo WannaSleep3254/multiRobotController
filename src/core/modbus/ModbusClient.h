@@ -27,6 +27,7 @@ public:
     void writeHolding(int addr, quint16 value);
     void writeHoldingBlock(int start, const QVector<quint16>& values);
 
+    bool isConnected() const;
 
 signals:
     void connected();

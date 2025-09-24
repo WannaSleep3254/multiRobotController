@@ -20,10 +20,13 @@ void RobotManager::addRobot(const QString& id, const QString& host, int port,
     ctx.orch->applyAddressMap(addr);
 
     qDebug()<<host<<port;
-    //ctx.bus->connectTo(host, port);
     m_ctx.insert(id, ctx);
 
-    connect(ctx.bus, &ModbusClient::heartbeat, this, &RobotManager::heartbeat);
+    m_busToId.insert(ctx.bus, id);
+    connect(ctx.bus, &ModbusClient::heartbeat,   this, &RobotManager::onBusHeartbeat,   Qt::UniqueConnection);
+    connect(ctx.bus, &ModbusClient::connected,   this, &RobotManager::onBusConnected,   Qt::UniqueConnection);
+    connect(ctx.bus, &ModbusClient::disconnected,this, &RobotManager::onBusDisconnected,Qt::UniqueConnection);
+
     connect(ctx.orch, &Orchestrator::stateChanged, this,
             [this, id](int state, const QString& name){
                 emit stateChanged(id, state, name);
@@ -151,4 +154,31 @@ void RobotManager::reconnect(const QString& id, const QString& host, int port)
     QTimer::singleShot(0, this, [this, id, host, port]{
         m_ctx[id].bus->connectTo(host, port);
     });
+}
+
+bool RobotManager::isConnected(const QString& id) const
+{
+    if (!m_ctx.contains(id) || !m_ctx[id].bus) return false;
+    return m_ctx[id].bus->isConnected();  // 아래 ModbusClient 보강 참고
+}
+
+void RobotManager::onBusHeartbeat(bool ok)
+{
+    auto* bus = qobject_cast<QObject*>(sender());
+    const QString id = m_busToId.value(bus);
+    if (!id.isEmpty()) emit heartbeat(id, ok);
+}
+
+void RobotManager::onBusConnected()
+{
+    auto* bus = qobject_cast<QObject*>(sender());
+    const QString id = m_busToId.value(bus);
+    if (!id.isEmpty()) emit connectionChanged(id, true);
+}
+
+void RobotManager::onBusDisconnected()
+{
+    auto* bus = qobject_cast<QObject*>(sender());
+    const QString id = m_busToId.value(bus);
+    if (!id.isEmpty()) emit connectionChanged(id, false);
 }
