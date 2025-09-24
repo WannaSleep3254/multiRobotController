@@ -142,6 +142,7 @@ void RobotPanel::onRepeatToggled(bool on)
 
 void RobotPanel::onHeartbeat(bool ok)
 {
+    qDebug()<<"[RP] Heartbeat"<<m_id<<ok;
     m_led->setStyleSheet(ok ? "background:#22c55e;border-radius:6px;"
                             : "background:#ef4444;border-radius:6px;");
 }
