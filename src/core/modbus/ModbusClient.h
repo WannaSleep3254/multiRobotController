@@ -33,7 +33,7 @@ signals:
     void connected();
     void disconnected();
     void error(const QString& msg);
-//    void log(const QString& line);
+
     void log(const QString& line, Common::LogLevel level);      // 0=Debug, 1=Info, 2=Warn, 3=Error
     void heartbeat(bool ok);
 
@@ -41,7 +41,6 @@ signals:
     void holdingRead(int start, QVector<quint16> data);
     void inputRead(int start, QVector<quint16> data);
     void discreteInputsRead(int start, QVector<bool> data);
-
 
 private slots:
     void onStateChanged(int s);

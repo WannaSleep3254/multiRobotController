@@ -57,15 +57,14 @@ public:
     void reconnect(const QString& id, const QString& host, int port);
     bool isConnected(const QString& id) const;
 
-//signals:
-public Q_SIGNAL:
-    Q_SIGNAL void heartbeat(const QString& id, bool ok);
-    Q_SIGNAL void connectionChanged(const QString& id, bool connected);
-    Q_SIGNAL void stateChanged(const QString& id, int state, const QString& name);
-    Q_SIGNAL void currentRowChanged(const QString& id, int row);
-    Q_SIGNAL void log(const QString& line, Common::LogLevel level = Common::LogLevel::Info);
+signals:
+    void heartbeat(const QString& id, bool ok);
+    void connectionChanged(const QString& id, bool connected);
+    void stateChanged(const QString& id, int state, const QString& name);
+    void currentRowChanged(const QString& id, int row);
+    void log(const QString& line, Common::LogLevel level = Common::LogLevel::Info);
 
-private Q_SLOTS:
+private slots:
     void onBusHeartbeat(bool ok);
     void onBusConnected();
     void onBusDisconnected();
@@ -74,6 +73,7 @@ private:
     QMap<QString, RobotContext> m_ctx; // "A","B","C" → 컨텍스트
     QHash<QObject*, QString> m_busToId; // ModbusClient* → id("A","B" 등)
 
+    void hookSignals(const QString& id, ModbusClient* bus, Orchestrator* orch);
 };
 
 #endif // ROBOTMANAGER_H

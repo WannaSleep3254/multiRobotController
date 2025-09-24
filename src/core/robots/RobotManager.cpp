@@ -19,25 +19,9 @@ void RobotManager::addRobot(const QString& id, const QString& host, int port,
     ctx.addr  = addr;
     ctx.orch->applyAddressMap(addr);
 
-    qDebug()<<host<<port;
     m_ctx.insert(id, ctx);
 
-    m_busToId.insert(ctx.bus, id);
-    connect(ctx.bus, &ModbusClient::heartbeat,   this, &RobotManager::onBusHeartbeat,   Qt::UniqueConnection);
-    connect(ctx.bus, &ModbusClient::connected,   this, &RobotManager::onBusConnected,   Qt::UniqueConnection);
-    connect(ctx.bus, &ModbusClient::disconnected,this, &RobotManager::onBusDisconnected,Qt::UniqueConnection);
-
-    connect(ctx.orch, &Orchestrator::stateChanged, this,
-            [this, id](int state, const QString& name){
-                emit stateChanged(id, state, name);
-            });
-    connect(ctx.orch, &Orchestrator::currentRowChanged, this,
-            [this, id](int row){
-                emit currentRowChanged(id, row);
-            });
-
-    connect(ctx.orch, SIGNAL(log(QString,Common::LogLevel)), this, SIGNAL(log(QString,Common::LogLevel)));
-    connect(ctx.bus,  SIGNAL(log(QString,Common::LogLevel)), this, SIGNAL(log(QString,Common::LogLevel)));
+    hookSignals(id, ctx.bus, ctx.orch);
 
     QTimer::singleShot(0, this, [this, id, host, port]{
         if (!m_ctx.contains(id) || !m_ctx[id].bus) return;
@@ -132,6 +116,7 @@ void RobotManager::addOrConnect(const QString& id, const QString& host, int port
             qWarning()<<"[RM] invalid addr_map"<<id; return;
         }
         m_ctx.insert(id, ctx);
+        hookSignals(id, ctx.bus, ctx.orch);
     } else {
         // 주소맵 변경이 필요하면 여기서 재적용
         m_ctx[id].addr = addr;
@@ -173,12 +158,34 @@ void RobotManager::onBusConnected()
 {
     auto* bus = qobject_cast<QObject*>(sender());
     const QString id = m_busToId.value(bus);
-    if (!id.isEmpty()) emit connectionChanged(id, true);
+    if (!id.isEmpty())
+        emit connectionChanged(id, true);
 }
 
 void RobotManager::onBusDisconnected()
 {
     auto* bus = qobject_cast<QObject*>(sender());
     const QString id = m_busToId.value(bus);
-    if (!id.isEmpty()) emit connectionChanged(id, false);
+    if (!id.isEmpty())
+        emit connectionChanged(id, false);
+}
+
+void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrator* orch)
+{
+    if (!bus || !orch) return;
+
+    m_busToId.insert(bus, id);
+    connect(bus, &ModbusClient::heartbeat,   this, &RobotManager::onBusHeartbeat);
+    connect(bus, &ModbusClient::connected,   this, &RobotManager::onBusConnected);
+    connect(bus, &ModbusClient::disconnected,this, &RobotManager::onBusDisconnected);
+    connect(bus, SIGNAL(log(QString,Common::LogLevel)), this, SIGNAL(log(QString,Common::LogLevel)));
+    connect(orch, &Orchestrator::stateChanged, this,
+            [this, id](int state, const QString& name){
+                emit stateChanged(id, state, name);
+    });
+    connect(orch, &Orchestrator::currentRowChanged, this,
+            [this, id](int row){
+                emit currentRowChanged(id, row);
+    });
+    connect(orch, SIGNAL(log(QString,Common::LogLevel)), this, SIGNAL(log(QString,Common::LogLevel)));
 }
