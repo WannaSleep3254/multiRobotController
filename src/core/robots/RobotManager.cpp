@@ -179,10 +179,9 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
     connect(bus, &ModbusClient::heartbeat,   this, &RobotManager::onBusHeartbeat);
     connect(bus, &ModbusClient::connected,   this, &RobotManager::onBusConnected);
     connect(bus, &ModbusClient::disconnected,this, &RobotManager::onBusDisconnected);
-    connect(bus, SIGNAL(log(QString,Common::LogLevel)), this, SIGNAL(log(QString,Common::LogLevel)));
     connect(bus, &ModbusClient::log, this,[this, id](const QString& line, Common::LogLevel lv) {
         emit logByRobot(id, line, lv);   // ★ 패널용
-        emit log(line, lv);              // ★ 전체용 (기존 유지)
+        emit log(QString("%1 (%2)").arg(line,id), lv);              // ★ 전체용
     });
     // Orchestrator 시그널
     connect(orch, &Orchestrator::stateChanged, this,
@@ -193,9 +192,8 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
             [this, id](int row){
                 emit currentRowChanged(id, row);
     });
-    connect(orch, SIGNAL(log(QString,Common::LogLevel)), this, SIGNAL(log(QString,Common::LogLevel)));
     connect(orch, &Orchestrator::log, this, [this, id](const QString& line, Common::LogLevel lv) {
         emit logByRobot(id, line, lv);   // ★ 패널용
-        emit log(line, lv);              // ★ 전체용
+        emit log(QString("%1 (%2)").arg(line,id), lv);              // ★ 전체용
     });
 }
