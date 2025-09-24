@@ -40,6 +40,7 @@ private:
     QSplitter*   m_split = nullptr;
     RobotPanel*  m_panelA = nullptr;
     RobotPanel*  m_panelB = nullptr;
+    RobotPanel*  m_panelC = nullptr;
 
     void loadRobotsFromConfig();
 

@@ -44,13 +44,17 @@ MainWindow::MainWindow(QWidget *parent)
     m_split  = new QSplitter(Qt::Horizontal, this);
     m_panelA = new RobotPanel(this);
     m_panelB = new RobotPanel(this);
+    m_panelC = new RobotPanel(this);
     m_panelA->setManager(m_mgr);
     m_panelB->setManager(m_mgr);
+    m_panelC->setManager(m_mgr);
     m_panelA->setRobotId("A");
     m_panelB->setRobotId("B");
+    m_panelC->setRobotId("C");
 
     m_split->addWidget(m_panelA);
     m_split->addWidget(m_panelB);
+    m_split->addWidget(m_panelC);
 
     ui->horizontalLayout->addWidget(m_split);
 
