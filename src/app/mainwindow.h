@@ -9,6 +9,8 @@ class RobotManager;
 class QLabel;
 class QFrame;
 class QCheckBox;
+class RobotPanel;
+class QSplitter;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -25,22 +27,41 @@ public:
     ~MainWindow();
 
 private slots:
+#if false
     void onConnect();
     void onDisconnect();
     void onStart();
     void onStop();
+#endif
     void onHeartbeat(bool ok);
     void onLog(const QString& line);
     void onLog(const QString& line, Common::LogLevel level);
+#if false
+    void onConnect_A();
+    void onDisconnect_A();
+    void onStart_A();
+    void onStop_A();
 
+    void onConnect_B();
+    void onDisconnect_B();
+    void onStart_B();
+    void onStop_B();
+#endif
+#if false
 private:
     void loadAddressMap();
-
+#endif
 private:
     Ui::MainWindow *ui;
 
     QPointer<RobotManager> m_mgr;
     QVariantMap m_addr; // parsed AddressMap.json
+
+    QSplitter*   m_split = nullptr;
+    RobotPanel*  m_panelA = nullptr;
+    RobotPanel*  m_panelB = nullptr;
+
+    void loadRobotsFromConfig();
 
 private:
     QLabel* m_fsmLabel{nullptr};

@@ -7,12 +7,18 @@
 #include <QDir>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
+
 #include <QMessageBox>
 #include <QTimer>
 #include <QStatusBar>
 #include <QLabel>
 #include <QFrame>
 #include <QCheckBox>
+#include <QDebug>
+
+#include "widgets/RobotPanel.h"
+#include <QSplitter>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -21,7 +27,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     setWindowTitle("BinPicking Modbus Controller");
-
+    ui->tableView->hide();
+#if false
     // --- 상태 표시줄에 FSM 상태 표시 ---
     m_fsmLed = new QFrame(this);
     m_fsmLed->setFixedSize(12,12);
@@ -38,14 +45,15 @@ MainWindow::MainWindow(QWidget *parent)
     statusBar()->addPermanentWidget(m_fsmLed);
     statusBar()->addPermanentWidget(m_fsmLabel);
     statusBar()->addPermanentWidget(m_chkShowDebug);
-
+#endif
+#if false
     connect(m_chkShowDebug, &QCheckBox::toggled, this, [this](bool on){
         m_showDebugLogs = on;
         if (on) ui->plainLog->appendPlainText("[UI] Debug logs: ON");
         else    ui->plainLog->appendPlainText("[UI] Debug logs: OFF");
     });
     m_showDebugLogs = m_chkShowDebug->isChecked();
-
+#endif
     m_mgr = new RobotManager(this);
     connect(m_mgr, &RobotManager::log, this,
             [this](const QString& line, Common::LogLevel level){
@@ -58,6 +66,7 @@ MainWindow::MainWindow(QWidget *parent)
                 }
                 onLog(prefix + line, level);
             });
+#if false
     connect(ui->btnConnect, &QPushButton::clicked, this, &MainWindow::onConnect);
     connect(ui->btnDisconnect, &QPushButton::clicked, this, &MainWindow::onDisconnect);
     connect(ui->btnStart, &QPushButton::clicked, this, &MainWindow::onStart);
@@ -89,13 +98,78 @@ MainWindow::MainWindow(QWidget *parent)
         }
         ui->plainLog->appendHtml(QString("<span style='color:blue;'>[UI] Repeat: %1</span>").arg(on ? "ON":"OFF"));
     });
+#endif
+    m_split  = new QSplitter(Qt::Horizontal, this);
+    m_panelA = new RobotPanel(this);
+    m_panelB = new RobotPanel(this);
+    m_panelA->setManager(m_mgr);
+    m_panelB->setManager(m_mgr);
+    m_panelA->setRobotId("A");
+    m_panelB->setRobotId("B");
+
+    m_split->addWidget(m_panelA);
+    m_split->addWidget(m_panelB);
+#if false
+    QPushButton* btnConnect_A = new QPushButton("Connect A", this);
+    connect(btnConnect_A, &QPushButton::clicked, this, &MainWindow::onConnect_A);
+
+    QPushButton* btnDisconnect_A = new QPushButton("Disconnect A", this);
+    connect(btnDisconnect_A, &QPushButton::clicked, this, &MainWindow::onDisconnect_A);
+
+    QPushButton* btnStart_A = new QPushButton("Start A", this);
+    connect(btnStart_A, &QPushButton::clicked, this, &MainWindow::onStart_A);
+
+    QPushButton* btnStop_A = new QPushButton("Stop A", this);
+    connect(btnStop_A, &QPushButton::clicked, this, &MainWindow::onStop_A);
+
+    QPushButton* btnConnect_B = new QPushButton("Connect B", this);
+    connect(btnConnect_B, &QPushButton::clicked, this, &MainWindow::onConnect_B);
+
+    QPushButton* btnDisconnect_B = new QPushButton("Disconnect B", this);
+    connect(btnDisconnect_B, &QPushButton::clicked, this, &MainWindow::onDisconnect_B);
+
+    QPushButton* btnStart_B = new QPushButton("Start B", this);
+    connect(btnStart_B, &QPushButton::clicked, this, &MainWindow::onStart_B);
+
+    QPushButton* btnStop_B = new QPushButton("Stop B", this);
+    connect(btnStop_B, &QPushButton::clicked, this, &MainWindow::onStop_B);
+
+
+    QHBoxLayout* topLayout = new QHBoxLayout();
+    topLayout->addWidget(btnConnect_A);
+    topLayout->addWidget(btnDisconnect_A);
+    topLayout->addWidget(btnStart_A);
+    topLayout->addWidget(btnStop_A);
+    topLayout->addStretch();
+
+    QHBoxLayout* botLayout = new QHBoxLayout();
+    botLayout->addWidget(btnConnect_B);
+    botLayout->addWidget(btnDisconnect_B);
+    botLayout->addWidget(btnStart_B);
+    botLayout->addWidget(btnStop_B);
+    botLayout->addStretch();
+
+    QWidget* topWidget = new QWidget(this);
+    topWidget->setLayout(topLayout);
+
+    QWidget* botWidget = new QWidget(this);
+    botWidget->setLayout(botLayout);
+
+    ui->verticalLayout->addWidget(topWidget);
+    ui->verticalLayout->addWidget(botWidget);
+#endif
+    ui->verticalLayout->addWidget(m_split);
+
+    //setCentralWidget(m_split);
+//    loadAddressMap();
+    loadRobotsFromConfig();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
 }
-
+#if false
 void MainWindow::loadAddressMap()
 {
     QFile f(":map/AddressMap.json");
@@ -119,8 +193,8 @@ void MainWindow::loadAddressMap()
         }
     }
 }
-
-
+#endif
+#if false
 void MainWindow::onConnect()
 {
     const QString host = ui->editHost->text();
@@ -130,7 +204,6 @@ void MainWindow::onConnect()
     ui->tableView->setModel(m_mgr->model("A"));
     onLog(QString("Connected to %1:%2").arg(host).arg(port));
 }
-
 
 void MainWindow::onDisconnect()
 {
@@ -152,7 +225,7 @@ void MainWindow::onStop()
         m_mgr->stop("A");
     }
 }
-
+#endif
 void MainWindow::onHeartbeat(bool ok)
 {
     ui->ledConnection->setStyleSheet(ok ? "background:#22c55e;border-radius:6px;" : "background:#ef4444;border-radius:6px;");
@@ -202,3 +275,115 @@ void MainWindow::setFsmLedColor(const QString& name)
     else if (name.contains("WaitDoneClear", Qt::CaseInsensitive))   color = "#22c55e"; // 초록(클리어 대기)
     m_fsmLed->setStyleSheet(QString("background:%1;border-radius:6px;").arg(color));
 }
+
+void MainWindow::loadRobotsFromConfig()
+{
+    QFile f(":/config/robots.json");    // 리소스/파일 경로에 맞게 조정
+    if (!f.open(QIODevice::ReadOnly))
+    {
+        //onLog("[ERR] robots.json open failed");
+        qDebug()<<"[ERR] robots.json open failed";
+        return;
+    }
+    qDebug()<<"robots.json open";
+    const auto doc = QJsonDocument::fromJson(f.readAll());
+
+    if (!doc.isObject())
+        return;
+
+    qDebug()<<"robots.json parsed";
+    const auto arr = doc.object().value("robots").toArray();
+    for (const auto& v : arr) {
+        const auto o = v.toObject();
+        const QString id   = o.value("id").toString();
+        const QString host = o.value("host").toString();
+        const int     port = o.value("port").toInt();
+        const QString addr_map  = o.value("addr_map").toString();
+
+        QVariantMap addr;
+        QFile mf(addr_map);
+        if (mf.open(QIODevice::ReadOnly)) {
+            auto d = QJsonDocument::fromJson(mf.readAll());
+            if (d.isObject())
+            {
+                addr = d.object().toVariantMap();
+                qDebug()<<"Address map loaded from"<<addr_map;
+            }
+            else
+            {
+                qDebug()<<"Address map format error";
+            }
+        }
+//        qDebug()<<"[OK] Robot"<<id<<"added"<<host<<port;
+//        m_mgr->addRobot(id, host, port, addr, this);
+        if (id == "A") { m_panelA->setEndpoint(host, port, addr); m_panelA->setRobotId("A"); }
+        if (id == "B") { m_panelB->setEndpoint(host, port, addr); m_panelB->setRobotId("B"); }
+
+        onLog(QString("[OK] Robot %1 added (%2:%3)").arg(id, host).arg(port));
+    }
+}
+#if false
+void MainWindow::onConnect_A()
+{
+    const QString host = "192.168.57.121";
+    const int port = 502;
+
+    m_mgr->addRobot("A", host, port, m_addr, this);
+    ui->tableView->setModel(m_mgr->model("A"));
+    onLog(QString("Connected to %1:%2").arg(host).arg(port));
+}
+
+
+void MainWindow::onDisconnect_A()
+{
+    if(m_mgr) {
+        m_mgr->disconnect("A");
+    }
+}
+
+void MainWindow::onStart_A()
+{
+    if(m_mgr) {
+        m_mgr->start("A");
+    }
+}
+
+void MainWindow::onStop_A()
+{
+    if(m_mgr) {
+        m_mgr->stop("A");
+    }
+}
+
+void MainWindow::onConnect_B()
+{
+    const QString host = "192.168.57.122";
+    const int port = 502;
+
+    m_mgr->addRobot("B", host, port, m_addr, this);
+    ui->tableView->setModel(m_mgr->model("B"));
+    onLog(QString("Connected to %1:%2").arg(host).arg(port));
+}
+
+
+void MainWindow::onDisconnect_B()
+{
+    if(m_mgr) {
+        m_mgr->disconnect("B");
+    }
+}
+
+void MainWindow::onStart_B()
+{
+    if(m_mgr) {
+        m_mgr->start("B");
+    }
+}
+
+void MainWindow::onStop_B()
+{
+    if(m_mgr) {
+        m_mgr->stop("B");
+    }
+}
+#endif

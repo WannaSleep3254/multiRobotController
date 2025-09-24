@@ -27,6 +27,13 @@ ModbusClient::~ModbusClient()
 
 bool ModbusClient::connectTo(const QString& host, int port)
 {
+    if(!m_client)
+        return false;
+
+    if(host.isEmpty() || port <= 0 || port > 65535) {
+        emit error("Invalid host or port");
+        return false;
+    }
     if (m_client->state() == QModbusDevice::ConnectedState)
         return true;
 

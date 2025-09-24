@@ -1,0 +1,6 @@
+{
+  "robots": [
+    { "id": "A", "host": "192.168.57.121", "port": 502, "addr_map": ":/map/AddressMap_A.json" },
+    { "id": "B", "host": "192.168.57.122", "port": 502, "addr_map": ":/map/AddressMap_B.json" }
+  ]
+}

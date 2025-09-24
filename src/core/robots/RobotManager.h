@@ -46,8 +46,15 @@ public:
     // UI 바인딩용
     QAbstractItemModel *model(const QString& id) const;
 
+    void connectTo(const QString& id, const QString& host, int port);
     void disconnect(const QString& id);
     void setRepeat(const QString&id, bool on);
+
+    bool hasRobot(const QString& id) const;
+    void addOrConnect(const QString& id, const QString& host, int port,
+                      const QVariantMap& addr, QObject* owner); // 패널에서 호출
+    // 선택: 이미 추가된 로봇의 호스트/포트만 바꿔 재연결
+    void reconnect(const QString& id, const QString& host, int port);
 
 signals:
     void heartbeat(bool ok);
@@ -60,6 +67,7 @@ signals:
 
 private:
     QMap<QString, RobotContext> m_ctx; // "A","B","C" → 컨텍스트
+
 };
 
 #endif // ROBOTMANAGER_H

@@ -56,9 +56,14 @@ target_include_directories(multiRobotController_core
 # ---- app executable
 set(APP_SOURCES
     src/app/main.cpp
+
     src/app/mainwindow.cpp
     src/app/mainwindow.h
     src/app/mainwindow.ui
+
+    src/app/widgets/RobotPanel.cpp
+    src/app/widgets/RobotPanel.h
+
     src/resources/resources.qrc
 )
 

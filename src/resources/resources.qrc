@@ -1,5 +1,10 @@
 <RCC>
     <qresource prefix="/map">
         <file>AddressMap.json</file>
+        <file>AddressMap_A.json</file>
+        <file>AddressMap_B.json</file>
+    </qresource>
+    <qresource prefix="/config">
+        <file>robots.json</file>
     </qresource>
 </RCC>
