@@ -62,7 +62,13 @@ signals:
     void connectionChanged(const QString& id, bool connected);
     void stateChanged(const QString& id, int state, const QString& name);
     void currentRowChanged(const QString& id, int row);
-    void log(const QString& line, Common::LogLevel level = Common::LogLevel::Info);
+
+    void log(const QString& line,
+             Common::LogLevel level = Common::LogLevel::Info);
+
+    void logByRobot(const QString& id,
+                    const QString& line,
+                    Common::LogLevel level = Common::LogLevel::Info);
 
 private slots:
     void onBusHeartbeat(bool ok);

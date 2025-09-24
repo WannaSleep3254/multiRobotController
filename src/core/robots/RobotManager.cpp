@@ -173,12 +173,18 @@ void RobotManager::onBusDisconnected()
 void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrator* orch)
 {
     if (!bus || !orch) return;
-
+    // 역참조용 맵에 등록
     m_busToId.insert(bus, id);
+    // ModbusClient 시그널
     connect(bus, &ModbusClient::heartbeat,   this, &RobotManager::onBusHeartbeat);
     connect(bus, &ModbusClient::connected,   this, &RobotManager::onBusConnected);
     connect(bus, &ModbusClient::disconnected,this, &RobotManager::onBusDisconnected);
     connect(bus, SIGNAL(log(QString,Common::LogLevel)), this, SIGNAL(log(QString,Common::LogLevel)));
+    connect(bus, &ModbusClient::log, this,[this, id](const QString& line, Common::LogLevel lv) {
+        emit logByRobot(id, line, lv);   // ★ 패널용
+        emit log(line, lv);              // ★ 전체용 (기존 유지)
+    });
+    // Orchestrator 시그널
     connect(orch, &Orchestrator::stateChanged, this,
             [this, id](int state, const QString& name){
                 emit stateChanged(id, state, name);
@@ -188,4 +194,8 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 emit currentRowChanged(id, row);
     });
     connect(orch, SIGNAL(log(QString,Common::LogLevel)), this, SIGNAL(log(QString,Common::LogLevel)));
+    connect(orch, &Orchestrator::log, this, [this, id](const QString& line, Common::LogLevel lv) {
+        emit logByRobot(id, line, lv);   // ★ 패널용
+        emit log(line, lv);              // ★ 전체용
+    });
 }

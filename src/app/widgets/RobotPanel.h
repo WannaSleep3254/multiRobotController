@@ -1,11 +1,13 @@
 #pragma once
 #include <QWidget>
 #include <QPointer>
+#include "LogLevel.h"
 
 class QTableView;
 class QPushButton;
 class QCheckBox;
 class QLabel;
+class QPlainTextEdit;
 class RobotManager;
 
 class RobotPanel : public QWidget {
@@ -27,6 +29,7 @@ private slots:
 
 private:
     void bindModel(); // RobotManager의 모델을 TableView에 바인딩
+    void appendLog(const QString& line, Common::LogLevel lv);
 
 private:
     QString m_id;
@@ -43,4 +46,5 @@ private:
     QPushButton* m_btnStop = nullptr;
     QCheckBox*   m_chkRepeat = nullptr;
     QLabel*      m_led = nullptr;   // 연결 상태 LED
+    QPlainTextEdit* m_logView = nullptr;   // ★ 패널용 로그창
 };

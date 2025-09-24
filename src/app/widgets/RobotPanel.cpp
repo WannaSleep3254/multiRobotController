@@ -7,6 +7,8 @@
 #include <QLabel>
 #include <QAbstractItemView>
 #include <QHeaderView>
+#include <QPlainTextEdit>
+
 #include "RobotManager.h"
 
 static QLabel* makeLed(QWidget* parent) {
@@ -30,6 +32,10 @@ RobotPanel::RobotPanel(QWidget* parent) : QWidget(parent)
     m_chkRepeat     = new QCheckBox("Repeat targets", this);
     m_led           = makeLed(this);
 
+    m_logView = new QPlainTextEdit(this);   // ★
+    m_logView->setReadOnly(true);
+    m_logView->setMaximumBlockCount(2000);  // 메모리 제한 (필요시)
+
     auto* row1 = new QHBoxLayout;
     row1->addWidget(m_btnConnect);
     row1->addWidget(m_btnDisconnect);
@@ -47,6 +53,7 @@ RobotPanel::RobotPanel(QWidget* parent) : QWidget(parent)
     lay->addLayout(row1);
     lay->addLayout(row2);
     lay->addWidget(m_table);
+    lay->addWidget(m_logView);              // ★ 테이블 아래에 로그창
     setLayout(lay);
 
     connect(m_btnConnect,    &QPushButton::clicked, this, &RobotPanel::onConnect);
@@ -80,6 +87,11 @@ void RobotPanel::setManager(RobotManager* mgr)
                 if (rid == m_id) onHeartbeat(up);
             });
 
+    connect(m_mgr, &RobotManager::logByRobot, this,
+            [this](const QString& rid, const QString& line, Common::LogLevel lv){
+                if (rid == m_id) appendLog(line, lv);
+            });
+
     if (!m_id.isEmpty())
         onHeartbeat(m_mgr->isConnected(m_id));
 
@@ -105,6 +117,22 @@ void RobotPanel::bindModel()
     // RobotManager::model(...)이 QAbstractItemModel* 또는 PickListModel*를 돌려준다고 가정
     auto* model = m_mgr->model(m_id);
     m_table->setModel(static_cast<QAbstractItemModel*>(model));
+}
+
+void RobotPanel::appendLog(const QString& line, Common::LogLevel lv)
+{
+    QString prefix;
+    switch (lv) {
+    case Common::LogLevel::Warn:  prefix = "[WARN] ";
+        break;
+    case Common::LogLevel::Error: prefix = "[ERR] ";
+        break;
+    case Common::LogLevel::Debug: prefix = "[DBG] ";
+        break;
+    default:
+        break;
+    }
+    m_logView->appendPlainText(prefix + line);
 }
 
 void RobotPanel::onConnect()
