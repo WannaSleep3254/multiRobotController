@@ -83,6 +83,10 @@ private:
 
 public:
     void setRepeat(bool on) { m_repeat = on;}
+    bool isAddressMapValid() const {
+        return (A_ROBOT_READY >= 0 && A_ROBOT_BUSY >= 0 && A_PICK_DONE >= 0 &&
+                A_PUBLISH_REQ >= 0 && A_TARGET_BASE >= 0);
+    }
 };
 
 #endif // ORCHESTRATOR_H

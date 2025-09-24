@@ -124,12 +124,18 @@ void RobotManager::addOrConnect(const QString& id, const QString& host, int port
         ctx.orch  = new Orchestrator(ctx.bus, ctx.model, owner);
         ctx.addr  = addr;
         ctx.orch->applyAddressMap(addr);
-
+        if (!ctx.orch->isAddressMapValid())
+        {
+            qWarning()<<"[RM] invalid addr_map"<<id; return;
+        }
         m_ctx.insert(id, ctx);
     } else {
         // 주소맵 변경이 필요하면 여기서 재적용
         m_ctx[id].addr = addr;
-        if (m_ctx[id].orch) m_ctx[id].orch->applyAddressMap(addr);
+        if (m_ctx[id].orch)
+        {
+            m_ctx[id].orch->applyAddressMap(addr);
+        }
     }
 
     // 연결은 다음 틱에 (즉시 시그널로 인한 UAF/레이스 방지)

@@ -27,7 +27,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     setWindowTitle("BinPicking Modbus Controller");
-    ui->tableView->hide();
 
     m_mgr = new RobotManager(this);
     connect(m_mgr, &RobotManager::log, this,
@@ -53,9 +52,9 @@ MainWindow::MainWindow(QWidget *parent)
     m_split->addWidget(m_panelA);
     m_split->addWidget(m_panelB);
 
-    ui->verticalLayout->addWidget(m_split);
+    ui->horizontalLayout->addWidget(m_split);
 
-    loadRobotsFromConfig();
+    QTimer::singleShot(0, this, [this]{ loadRobotsFromConfig(); });
 }
 
 MainWindow::~MainWindow()
