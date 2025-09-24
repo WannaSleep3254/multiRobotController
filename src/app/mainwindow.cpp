@@ -28,32 +28,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     setWindowTitle("BinPicking Modbus Controller");
     ui->tableView->hide();
-#if false
-    // --- 상태 표시줄에 FSM 상태 표시 ---
-    m_fsmLed = new QFrame(this);
-    m_fsmLed->setFixedSize(12,12);
-    m_fsmLed->setFrameShape(QFrame::NoFrame);
-    m_fsmLed->setStyleSheet("background:#9ca3af;border-radius:6px;");
 
-    m_fsmLabel = new QLabel("FSM: Idle", this);
-    m_fsmLabel->setMinimumWidth(220);
-    m_fsmLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-
-    m_chkShowDebug = new QCheckBox("Debug logs", this);
-    m_chkShowDebug->setChecked(false);
-
-    statusBar()->addPermanentWidget(m_fsmLed);
-    statusBar()->addPermanentWidget(m_fsmLabel);
-    statusBar()->addPermanentWidget(m_chkShowDebug);
-#endif
-#if false
-    connect(m_chkShowDebug, &QCheckBox::toggled, this, [this](bool on){
-        m_showDebugLogs = on;
-        if (on) ui->plainLog->appendPlainText("[UI] Debug logs: ON");
-        else    ui->plainLog->appendPlainText("[UI] Debug logs: OFF");
-    });
-    m_showDebugLogs = m_chkShowDebug->isChecked();
-#endif
     m_mgr = new RobotManager(this);
     connect(m_mgr, &RobotManager::log, this,
             [this](const QString& line, Common::LogLevel level){
@@ -66,39 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
                 }
                 onLog(prefix + line, level);
             });
-#if false
-    connect(ui->btnConnect, &QPushButton::clicked, this, &MainWindow::onConnect);
-    connect(ui->btnDisconnect, &QPushButton::clicked, this, &MainWindow::onDisconnect);
-    connect(ui->btnStart, &QPushButton::clicked, this, &MainWindow::onStart);
-    connect(ui->btnStop, &QPushButton::clicked, this, &MainWindow::onStop);
 
-    // --- ModbusClient 및 Orchestrator 설정 ---
-    loadAddressMap();
-
-    connect(m_mgr, &RobotManager::heartbeat, this, &MainWindow::onHeartbeat);
-    connect(m_mgr, &RobotManager::stateChanged, this,
-            [this](const QString& /*id*/, int /*state*/, const QString& name){
-                m_fsmLabel->setText(QString("FSM: %1").arg(name));
-                setFsmLedColor(name);
-                if(ui->plainLog)
-                    ui->plainLog->appendPlainText(QString("[FSM] %1").arg(name));
-            });
-    connect(m_mgr, &RobotManager::currentRowChanged, this,
-            [this](const QString& /*id*/, int row){
-                if(row > 0)
-                    ui->tableView->scrollTo(m_mgr->model("A")->index(row,0), QAbstractItemView::PositionAtCenter);
-            });
-
-    // UI에 체크박스 추가(디자이너에서 추가해도 됨)
-    QCheckBox* chkRepeat = new QCheckBox("Repeat targets", this);
-    statusBar()->addPermanentWidget(chkRepeat);
-    connect(chkRepeat, &QCheckBox::toggled, this, [this](bool on){
-        if (m_mgr) {
-            m_mgr->setRepeat("A", on);
-        }
-        ui->plainLog->appendHtml(QString("<span style='color:blue;'>[UI] Repeat: %1</span>").arg(on ? "ON":"OFF"));
-    });
-#endif
     m_split  = new QSplitter(Qt::Horizontal, this);
     m_panelA = new RobotPanel(this);
     m_panelB = new RobotPanel(this);
@@ -109,59 +52,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_split->addWidget(m_panelA);
     m_split->addWidget(m_panelB);
-#if false
-    QPushButton* btnConnect_A = new QPushButton("Connect A", this);
-    connect(btnConnect_A, &QPushButton::clicked, this, &MainWindow::onConnect_A);
 
-    QPushButton* btnDisconnect_A = new QPushButton("Disconnect A", this);
-    connect(btnDisconnect_A, &QPushButton::clicked, this, &MainWindow::onDisconnect_A);
-
-    QPushButton* btnStart_A = new QPushButton("Start A", this);
-    connect(btnStart_A, &QPushButton::clicked, this, &MainWindow::onStart_A);
-
-    QPushButton* btnStop_A = new QPushButton("Stop A", this);
-    connect(btnStop_A, &QPushButton::clicked, this, &MainWindow::onStop_A);
-
-    QPushButton* btnConnect_B = new QPushButton("Connect B", this);
-    connect(btnConnect_B, &QPushButton::clicked, this, &MainWindow::onConnect_B);
-
-    QPushButton* btnDisconnect_B = new QPushButton("Disconnect B", this);
-    connect(btnDisconnect_B, &QPushButton::clicked, this, &MainWindow::onDisconnect_B);
-
-    QPushButton* btnStart_B = new QPushButton("Start B", this);
-    connect(btnStart_B, &QPushButton::clicked, this, &MainWindow::onStart_B);
-
-    QPushButton* btnStop_B = new QPushButton("Stop B", this);
-    connect(btnStop_B, &QPushButton::clicked, this, &MainWindow::onStop_B);
-
-
-    QHBoxLayout* topLayout = new QHBoxLayout();
-    topLayout->addWidget(btnConnect_A);
-    topLayout->addWidget(btnDisconnect_A);
-    topLayout->addWidget(btnStart_A);
-    topLayout->addWidget(btnStop_A);
-    topLayout->addStretch();
-
-    QHBoxLayout* botLayout = new QHBoxLayout();
-    botLayout->addWidget(btnConnect_B);
-    botLayout->addWidget(btnDisconnect_B);
-    botLayout->addWidget(btnStart_B);
-    botLayout->addWidget(btnStop_B);
-    botLayout->addStretch();
-
-    QWidget* topWidget = new QWidget(this);
-    topWidget->setLayout(topLayout);
-
-    QWidget* botWidget = new QWidget(this);
-    botWidget->setLayout(botLayout);
-
-    ui->verticalLayout->addWidget(topWidget);
-    ui->verticalLayout->addWidget(botWidget);
-#endif
     ui->verticalLayout->addWidget(m_split);
 
-    //setCentralWidget(m_split);
-//    loadAddressMap();
     loadRobotsFromConfig();
 }
 
@@ -169,63 +62,7 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
-#if false
-void MainWindow::loadAddressMap()
-{
-    QFile f(":map/AddressMap.json");
-    if(!f.open(QIODevice::ReadOnly)) {
-        onLog("AddressMap.json not found, using defaults.");
-        return;
-    }
-    else {
-        onLog("AddressMap.json loaded.");
-    }
 
-    const auto doc = QJsonDocument::fromJson(f.readAll());
-    m_addr = doc.object().toVariantMap();
-    if(!m_addr.contains("meta")) {
-        onLog("AddressMap.json format error, using defaults.");
-    }
-    else {
-        int schema = m_addr.value("meta").toMap().value("schema").toInt();
-        if (schema!=3) {
-            onLog(QString("AddressMap.json schema version mismatch(%1), using defaults.").arg(schema));
-        }
-    }
-}
-#endif
-#if false
-void MainWindow::onConnect()
-{
-    const QString host = ui->editHost->text();
-    const int port = ui->spinPort->value();
-
-    m_mgr->addRobot("A", host, port, m_addr, this);
-    ui->tableView->setModel(m_mgr->model("A"));
-    onLog(QString("Connected to %1:%2").arg(host).arg(port));
-}
-
-void MainWindow::onDisconnect()
-{
-    if(m_mgr) {
-        m_mgr->disconnect("A");
-    }
-}
-
-void MainWindow::onStart()
-{
-    if(m_mgr) {
-        m_mgr->start("A");
-    }
-}
-
-void MainWindow::onStop()
-{
-    if(m_mgr) {
-        m_mgr->stop("A");
-    }
-}
-#endif
 void MainWindow::onHeartbeat(bool ok)
 {
     ui->ledConnection->setStyleSheet(ok ? "background:#22c55e;border-radius:6px;" : "background:#ef4444;border-radius:6px;");
@@ -314,76 +151,9 @@ void MainWindow::loadRobotsFromConfig()
                 qDebug()<<"Address map format error";
             }
         }
-//        qDebug()<<"[OK] Robot"<<id<<"added"<<host<<port;
-//        m_mgr->addRobot(id, host, port, addr, this);
         if (id == "A") { m_panelA->setEndpoint(host, port, addr); m_panelA->setRobotId("A"); }
         if (id == "B") { m_panelB->setEndpoint(host, port, addr); m_panelB->setRobotId("B"); }
-
         onLog(QString("[OK] Robot %1 added (%2:%3)").arg(id, host).arg(port));
     }
 }
-#if false
-void MainWindow::onConnect_A()
-{
-    const QString host = "192.168.57.121";
-    const int port = 502;
 
-    m_mgr->addRobot("A", host, port, m_addr, this);
-    ui->tableView->setModel(m_mgr->model("A"));
-    onLog(QString("Connected to %1:%2").arg(host).arg(port));
-}
-
-
-void MainWindow::onDisconnect_A()
-{
-    if(m_mgr) {
-        m_mgr->disconnect("A");
-    }
-}
-
-void MainWindow::onStart_A()
-{
-    if(m_mgr) {
-        m_mgr->start("A");
-    }
-}
-
-void MainWindow::onStop_A()
-{
-    if(m_mgr) {
-        m_mgr->stop("A");
-    }
-}
-
-void MainWindow::onConnect_B()
-{
-    const QString host = "192.168.57.122";
-    const int port = 502;
-
-    m_mgr->addRobot("B", host, port, m_addr, this);
-    ui->tableView->setModel(m_mgr->model("B"));
-    onLog(QString("Connected to %1:%2").arg(host).arg(port));
-}
-
-
-void MainWindow::onDisconnect_B()
-{
-    if(m_mgr) {
-        m_mgr->disconnect("B");
-    }
-}
-
-void MainWindow::onStart_B()
-{
-    if(m_mgr) {
-        m_mgr->start("B");
-    }
-}
-
-void MainWindow::onStop_B()
-{
-    if(m_mgr) {
-        m_mgr->stop("B");
-    }
-}
-#endif
