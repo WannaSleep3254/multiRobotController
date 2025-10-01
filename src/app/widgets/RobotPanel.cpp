@@ -8,6 +8,7 @@
 #include <QAbstractItemView>
 #include <QHeaderView>
 #include <QPlainTextEdit>
+#include <QFileDialog>
 
 #include "RobotManager.h"
 
@@ -29,6 +30,8 @@ RobotPanel::RobotPanel(QWidget* parent) : QWidget(parent)
     m_btnDisconnect = new QPushButton("Disconnect", this);
     m_btnStart      = new QPushButton("Start", this);
     m_btnStop       = new QPushButton("Stop", this);
+    m_btnLoadCsv    = new QPushButton("Load CSV", this);
+    m_btnClear      = new QPushButton("Clear", this);
     m_chkRepeat     = new QCheckBox("Repeat targets", this);
     m_led           = makeLed(this);
 
@@ -46,6 +49,9 @@ RobotPanel::RobotPanel(QWidget* parent) : QWidget(parent)
     auto* row2 = new QHBoxLayout;
     row2->addWidget(m_btnStart);
     row2->addWidget(m_btnStop);
+    row2->addSpacing(12);
+    row2->addWidget(m_btnLoadCsv);   // ★
+    row2->addWidget(m_btnClear);     // ★
     row2->addStretch();
     row2->addWidget(m_chkRepeat);
 
@@ -61,6 +67,9 @@ RobotPanel::RobotPanel(QWidget* parent) : QWidget(parent)
     connect(m_btnStart,      &QPushButton::clicked, this, &RobotPanel::onStart);
     connect(m_btnStop,       &QPushButton::clicked, this, &RobotPanel::onStop);
     connect(m_chkRepeat,     &QCheckBox::toggled,   this, &RobotPanel::onRepeatToggled);
+
+    connect(m_btnLoadCsv,    &QPushButton::clicked, this, &RobotPanel::onLoadCsv); // ★
+    connect(m_btnClear,      &QPushButton::clicked, this, &RobotPanel::onClear);   // ★
 }
 
 void RobotPanel::setManager(RobotManager* mgr)
@@ -76,12 +85,22 @@ void RobotPanel::setManager(RobotManager* mgr)
             [this](const QString& rid, bool ok){
                 if (rid == m_id) onHeartbeat(ok);
             });
-
+#if false
     connect(m_mgr, &RobotManager::currentRowChanged, this,
             [this](const QString& /*id*/, int row){
                 if(row > 0)
                     m_table->scrollTo(m_mgr->model(m_id)->index(row,0), QAbstractItemView::PositionAtCenter);
             });
+#else
+    connect(m_mgr, &RobotManager::currentRowChanged, this,
+            [this](const QString& rid, int row){
+                if (rid != m_id) return;                 // ★ 내 패널만
+                if (row < 0) return;
+                auto* mdl = m_mgr->model(m_id);
+                if (!mdl) return;                        // ★ 널 가드
+                m_table->scrollTo(mdl->index(row,0), QAbstractItemView::PositionAtCenter);
+            });
+#endif
     connect(m_mgr, &RobotManager::connectionChanged, this,
             [this](const QString& rid, bool up){
                 if (rid == m_id) onHeartbeat(up);
@@ -113,8 +132,13 @@ void RobotPanel::setEndpoint(const QString& host, int port, const QVariantMap& a
 
 void RobotPanel::bindModel()
 {
-    if (!m_mgr || m_id.isEmpty()) return;
-    // RobotManager::model(...)이 QAbstractItemModel* 또는 PickListModel*를 돌려준다고 가정
+    if (!m_mgr || m_id.isEmpty())
+    {
+        qDebug()<<"No manager or ID";
+        return;
+    }
+    qDebug()<<"Binding model for robot"<<m_id;
+
     auto* model = m_mgr->model(m_id);
     m_table->setModel(static_cast<QAbstractItemModel*>(model));
 }
@@ -172,4 +196,24 @@ void RobotPanel::onHeartbeat(bool ok)
 {
     m_led->setStyleSheet(ok ? "background:#22c55e;border-radius:6px;"
                             : "background:#ef4444;border-radius:6px;");
+}
+
+void RobotPanel::onLoadCsv()
+{
+    if (!m_mgr || m_id.isEmpty()) return;
+    QString path = QFileDialog::getOpenFileName(this, "Load pose CSV", QString(),
+                                                "CSV/TXT (*.csv *.txt);;All (*.*)");
+    if (path.isEmpty()) return;
+    QString err;
+    if (!m_mgr->loadCsvToModel(m_id, path, &err)) {
+        appendLog(QString("CSV load failed: %1").arg(err), Common::LogLevel::Error);
+        return;
+    }
+    bindModel(); // 새 모델 데이터 반영
+}
+
+void RobotPanel::onClear()
+{
+    if (!m_mgr || m_id.isEmpty()) return;
+    m_mgr->clearPoseList(m_id);
 }

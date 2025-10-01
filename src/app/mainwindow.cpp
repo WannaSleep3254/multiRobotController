@@ -45,9 +45,11 @@ MainWindow::MainWindow(QWidget *parent)
     m_panelA = new RobotPanel(this);
     m_panelB = new RobotPanel(this);
     m_panelC = new RobotPanel(this);
+
     m_panelA->setManager(m_mgr);
     m_panelB->setManager(m_mgr);
     m_panelC->setManager(m_mgr);
+
     m_panelA->setRobotId("A");
     m_panelB->setRobotId("B");
     m_panelC->setRobotId("C");
@@ -156,6 +158,12 @@ void MainWindow::loadRobotsFromConfig()
         }
         if (id == "A") { m_panelA->setEndpoint(host, port, addr); m_panelA->setRobotId("A"); }
         if (id == "B") { m_panelB->setEndpoint(host, port, addr); m_panelB->setRobotId("B"); }
+        const QString poseCsv = o.value("pose_csv").toString();
+        if (!poseCsv.isEmpty()) {
+            QString err;
+            m_mgr->loadCsvToModel(id, poseCsv, &err, this);  // ★ 컨텍스트/모델 자동 준비 + 로드
+            if (!err.isEmpty()) qDebug() << "[WARN] CSV load:" << err;
+        }
         onLog(QString("[OK] Robot %1 added (%2:%3)").arg(id, host).arg(port));
     }
 }

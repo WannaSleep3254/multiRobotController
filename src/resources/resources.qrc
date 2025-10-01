@@ -4,6 +4,10 @@
         <file>AddressMap_A.json</file>
         <file>AddressMap_B.json</file>
     </qresource>
+	<qresource prefix="/pose">
+        <file>poses_A.csv</file>
+		<file>poses_B.csv</file>
+    </qresource>
     <qresource prefix="/config">
         <file>robots.json</file>
     </qresource>

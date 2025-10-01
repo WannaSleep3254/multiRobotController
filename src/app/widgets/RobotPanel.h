@@ -27,6 +27,9 @@ private slots:
     void onRepeatToggled(bool on);
     void onHeartbeat(bool ok);
 
+    void onLoadCsv();      // ★ CSV 로드
+    void onClear();        // ★ 리스트 지우기
+
 private:
     void bindModel(); // RobotManager의 모델을 TableView에 바인딩
     void appendLog(const QString& line, Common::LogLevel lv);
@@ -41,6 +44,10 @@ private:
 
     QTableView*  m_table = nullptr;
     QPushButton* m_btnConnect = nullptr;
+
+    QPushButton* m_btnLoadCsv = nullptr;
+    QPushButton* m_btnClear   = nullptr;
+
     QPushButton* m_btnDisconnect = nullptr;
     QPushButton* m_btnStart = nullptr;
     QPushButton* m_btnStop = nullptr;

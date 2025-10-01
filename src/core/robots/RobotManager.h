@@ -45,6 +45,7 @@ public:
 
     // UI 바인딩용
     QAbstractItemModel *model(const QString& id) const;
+    PickListModel* pickModel(const QString& id) const;
 
     void connectTo(const QString& id, const QString& host, int port);
     void disconnect(const QString& id);
@@ -56,6 +57,11 @@ public:
     // 선택: 이미 추가된 로봇의 호스트/포트만 바꿔 재연결
     void reconnect(const QString& id, const QString& host, int port);
     bool isConnected(const QString& id) const;
+
+    // ★ 좌표 리스트 주입/관리
+    void setPoseList(const QString& id, const QVector<Pose6D>& list);
+    void clearPoseList(const QString& id);
+    bool loadCsvToModel(const QString& id, const QString& filePath, QString* errMsg=nullptr, QObject* owner=nullptr);
 
 signals:
     void heartbeat(const QString& id, bool ok);

@@ -17,6 +17,7 @@ public:
 
     void add(const Pose6D& p);
     void clear();
+    void setAll(const QVector<Pose6D>& list);  // ★ 전체 교체
 
     Pose6D getRow(int r) const;
 

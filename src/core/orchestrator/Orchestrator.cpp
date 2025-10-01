@@ -131,8 +131,7 @@ void Orchestrator::applyAddressMap(const QVariantMap& m)
 
 void Orchestrator::cycle()
 {
-    qDebug()<<"[FSM] cycle, state="<<int(m_state);
-
+//    qDebug()<<"[FSM] cycle, state="<<int(m_state);
     switch(m_state) {
     case State::Idle: return;
 
@@ -146,7 +145,7 @@ void Orchestrator::cycle()
         break; }
 
     case State::PublishTarget: {
-
+#if false
         const int total = m_model->rowCount();
         if (total == 0) {
             emit log("[FSM] No targets. Waiting...", Common::LogLevel::Debug);
@@ -167,6 +166,31 @@ void Orchestrator::cycle()
             m_model->setActiveRow(m_currentRow);
 
         const auto pt = m_model->getRow(m_currentRow);
+#else
+        const int total = m_model ? m_model->rowCount() : 0;
+        if (total <= 0) {
+            emit log("[FSM] No targets. Waiting...", Common::LogLevel::Debug);
+            return;
+        }
+        if (m_currentRow+1 >= total) {
+            if (m_repeat) {
+                m_currentRow = 0;
+            } else {
+                emit log("[FSM] Reached end of list. Waiting...", Common::LogLevel::Info);
+                return;
+            }
+        } else {
+            ++m_currentRow;
+        }
+        if (m_currentRow < 0 || m_currentRow >= total) {
+            emit log("[FSM] Invalid row index, skip publish", Common::LogLevel::Warn);
+            return;
+        }
+        if (m_model)
+            m_model->setActiveRow(m_currentRow);
+
+        const auto pt = m_model->getRow(m_currentRow);
+#endif
         emit currentRowChanged(m_currentRow);
 
         QVector<quint16> regs;
