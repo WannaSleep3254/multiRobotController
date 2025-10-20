@@ -61,11 +61,53 @@ MainWindow::MainWindow(QWidget *parent)
     ui->horizontalLayout->addWidget(m_split);
 
     QTimer::singleShot(0, this, [this]{ loadRobotsFromConfig(); });
+    initVisionServer();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::initVisionServer()
+{
+    // 1) VisionServer 생성
+    m_visionServer = new VisionServer(this);
+
+    // 2) 서버 옵션 설정
+    VisionServer::Options opt;
+    opt.enforceWhitelist = true;
+    opt.whitelistIPs = {"192.168.57.100", "127.0.0.1"};
+    opt.maxConnections = 8;
+    opt.ratePerSec = 50;   // 초당 50 라인 제한
+    opt.rateBurst = 100;   // 최대 버스트 100라인
+    m_visionServer->setOptions(opt);
+
+    // 3) 토큰 (선택사항)
+    m_visionServer->setAuthToken("ccNC2025");
+
+    // 4) 서버 시작
+    if (m_visionServer->start(54615))
+        onLog("[VS] VisionServer started on port 5555");
+    else
+        onLog("[VS] VisionServer failed to start");
+
+
+    // 7) 좌표 수신 시 로봇으로 발행
+    connect(m_visionServer, &VisionServer::poseReceived, this,
+            [this](const QString& robot, const Pose6D& p, quint32 seq, const QVariantMap& ex){
+                Q_UNUSED(robot); Q_UNUSED(seq);
+                const int speed = ex.value("speed_pct", 50).toInt();
+
+                Pose6D pose{p.x, p.y, p.z, p.rx, p.ry, p.rz};
+                qDebug()<<"[VS] Pose received for robot"<<robot
+                       <<"("<<pose.x<<pose.y<<pose.z<<pose.rx<<pose.ry<<pose.rz<<")"
+                      <<"speed_pct="<<speed;
+                // 로봇 매니저에 발행
+                m_mgr->enqueuePose(robot, pose);
+            });
+
+    // 8) 다건 좌표 수신 (예: Vision이 여러 픽 포인트를 한번에 전달)
 }
 
 void MainWindow::onHeartbeat(bool ok)

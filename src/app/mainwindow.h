@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QPointer>
 #include "LogLevel.h"
+#include "vision/VisionServer.h"
 
 class RobotManager;
 class QLabel;
@@ -25,6 +26,8 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+    void initVisionServer();
 
 private slots:
     void onHeartbeat(bool ok);
@@ -52,5 +55,7 @@ private:
     bool m_showDebugLogs{false};
 
     void setFsmLedColor(const QString& name);
+
+    VisionServer* m_visionServer{nullptr};
 };
 #endif // MAINWINDOW_H

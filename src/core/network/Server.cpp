@@ -9,6 +9,7 @@ Server::Server(QObject* parent) : QTcpServer(parent)
 
 bool Server::start(const QHostAddress& bindAddr, quint16 port)
 {
+    qDebug()<<"[Server] Starting server on"<<bindAddr.toString()<<":"<<port;
     if (isListening()) stop();
     if (!listen(bindAddr, port)) {
         emit log(QString("[ERR] listen failed: %1").arg(errorString()));
@@ -49,6 +50,8 @@ void Server::onNewConnection()
         emit log(QString("[NET] +conn %1:%2 (count=%3)")
                      .arg(s->peerAddress().toString()).arg(s->peerPort()).arg(m_clients.size()));
 
+        qDebug()<<"[Server] New client connected:"<<s->peerAddress().toString()<<":"<<s->peerPort();
+
         emit clientConnected(s);  // ★ 추가: 여기서 즉시 알림
     }
 }
@@ -88,7 +91,12 @@ void Server::onReadyRead()
         QByteArray line = buf.left(idx);
         buf.remove(0, idx + 1);
 
-        if (line.size() > 0) emit lineReceived(s, line);
+        if (line.size() > 0)
+        {
+            emit lineReceived(s, line);
+//            qDebug()<<"[Server] Data received from"<<s->peerAddress().toString()<<":"<<s->peerPort()<<line;
+        }
+
     }
 
     // DoS 가드
@@ -98,6 +106,7 @@ void Server::onReadyRead()
         s->disconnect(this);
         s->close();
     }
+
 }
 
 int Server::broadcast(const QByteArray& bytes)

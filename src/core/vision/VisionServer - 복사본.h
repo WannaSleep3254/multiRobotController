@@ -143,18 +143,5 @@ private slots:
 private:
     EarlyFilterOptions m_ef;                          // ★ 옵션 보관
 
-public:
-    // 모든 클라이언트에 pick/inspect 좌표 요청
-    void requestPickPose(quint32 seq = 0, int speed_pct = -1);
-    void requestInspectPose(quint32 seq = 0, int speed_pct = -1);
-
-    // 특정 클라이언트(targetId="ip:port")로만 요청
-    void requestPickPoseTo(const QString& targetId, quint32 seq = 0, int speed_pct = -1);
-    void requestInspectPoseTo(const QString& targetId, quint32 seq = 0, int speed_pct = -1);
-
-private:
-    void requestPoseKind(const char* kind, quint32 seq, int speed_pct);
-    void requestPoseKindTo(const QString& targetId, const char* kind, quint32 seq, int speed_pct);
-
 };
 #endif // VISIONSERVER_H

@@ -95,8 +95,6 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
     auto& st = m_stats[from];
     ++st.linesTotal; ++m_global.linesTotal;
 
-    qDebug()<<"[VS] Line received from"<<peerIp(from)<<":"<<QString::fromUtf8(line);
-#if false
     // ── 화이트리스트 검사
     if (!allowedByWhitelist(from)) {
         ++st.whitelistBlock; ++m_global.whitelistBlock;
@@ -111,7 +109,6 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
         return;
     }
 
-    qDebug()<<"[VS] Whitelist passed for"<<peerIp(from);
     // ── 레이트리밋
     if (!passRateLimit(from)) {
         ++st.rateLimitBlock; ++m_global.rateLimitBlock;
@@ -132,7 +129,7 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
             return;
         }
     }
-#endif
+
     // ── JSON 파싱
     QJsonParseError pe{};
     const auto doc = QJsonDocument::fromJson(line, &pe);
@@ -147,11 +144,9 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
 
     const auto obj   = doc.object();
     const auto type  = obj.value("type").toString();
-    const auto robot = obj.value("robot").toString("B"); // "A","B","C"... (없으면 빈 문자열)
+    const auto robot = obj.value("robot").toString(); // "A","B","C"... (없으면 빈 문자열)
     const quint32 seq = obj.value("seq").toInt(0);
 
-    qDebug()<<"[VS] Parsed JSON type="<<type<<"robot="<<robot<<"seq="<<seq;
-#if false
     // ── 인증 토큰
     if (!m_token.isEmpty()) {
         const auto tok = obj.value("token").toString();
@@ -163,26 +158,24 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
             return;
         }
     }
-#endif
+
     const auto extras = collectExtras(obj);
 
     if (type == "pose") {
         Pose6D p{};
         if (!parsePoseObj(obj, p)) {
-            qDebug()<<"[VS] Pose parsing failed";
             ++st.jsonErr; ++m_global.jsonErr;
             sendAck(from, seq, "error", "missing_fields");
             ++st.ackErr; ++m_global.ackErr;
             return;
         }
-        qDebug()<<"[VS] Pose parsed:"<<p.x<<p.y<<p.z<<p.rx<<p.ry<<p.rz;
         emit poseReceived(robot, p, seq, extras);
         sendAck(from, seq, "ok");
         ++st.jsonOk; ++m_global.jsonOk;
         ++st.ackOk;  ++m_global.ackOk;
         return;
     }
-#if false
+
     if (type == "poses") {
         QList<Pose6D> list;
         const auto arr = obj.value("items").toArray();
@@ -205,14 +198,12 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
         ++st.ackOk;  ++m_global.ackOk;
         return;
     }
-#endif
+
     // 알 수 없는 타입
-    ++st.jsonErr;
-    ++m_global.jsonErr;
+    ++st.jsonErr; ++m_global.jsonErr;
     emit log(QString("[ERR] Vision unknown type: %1").arg(type));
     sendAck(from, seq, "error", "unknown_type");
-    ++st.ackErr;
-    ++m_global.ackErr;
+    ++st.ackErr; ++m_global.ackErr;
 }
 
 bool VisionServer::parsePoseObj(const QJsonObject& o, Pose6D &out) const
@@ -315,42 +306,3 @@ void VisionServer::onClientConnected(QTcpSocket* s)
         // 보안/공격자에게 힌트가 될 수 있어 보통은 바로 끊는 걸 권장합니다.
     }
 }
-
-// 공통: JSON 한 줄 생성 + 브로드캐스트
-void VisionServer::requestPoseKind(const char* kind, quint32 seq, int speed_pct)
-{
-    QJsonObject o{
-        {"type", "request_pose"},
-        {"kind", QString::fromUtf8(kind)},
-        {"seq",  int(seq)},
-        {"ts",   QDateTime::currentDateTimeUtc().toString(Qt::ISODate)}
-    };
-    if (speed_pct >= 0) o["speed_pct"] = speed_pct;
-
-    const QByteArray line = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
-    if (m_srv) m_srv->broadcast(line);
-    emit log(QString("[NET] request_pose(kind=%1, seq=%2, speed=%3) broadcast")
-                 .arg(kind).arg(seq).arg(speed_pct));
-}
-
-// 특정 타깃으로 전송
-void VisionServer::requestPoseKindTo(const QString& targetId, const char* kind, quint32 seq, int speed_pct)
-{
-    QJsonObject o{
-        {"type", "request_pose"},
-        {"kind", QString::fromUtf8(kind)},
-        {"seq",  int(seq)},
-        {"ts",   QDateTime::currentDateTimeUtc().toString(Qt::ISODate)}
-    };
-    if (speed_pct >= 0) o["speed_pct"] = speed_pct;
-
-    const QByteArray line = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
-    if (m_srv) m_srv->writeToId(targetId, line);
-    emit log(QString("[NET] request_pose(kind=%1, seq=%2, speed=%3) -> %4")
-                 .arg(kind).arg(seq).arg(speed_pct).arg(targetId));
-}
-
-void VisionServer::requestPickPose(quint32 seq, int speed_pct)       { requestPoseKind("pick",    seq, speed_pct); }
-void VisionServer::requestInspectPose(quint32 seq, int speed_pct)    { requestPoseKind("inspect", seq, speed_pct); }
-void VisionServer::requestPickPoseTo(const QString& id, quint32 s, int v)    { requestPoseKindTo(id, "pick",    s, v); }
-void VisionServer::requestInspectPoseTo(const QString& id, quint32 s, int v) { requestPoseKindTo(id, "inspect", s, v); }
