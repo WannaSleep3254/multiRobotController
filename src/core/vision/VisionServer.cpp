@@ -149,6 +149,7 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
     const auto type  = obj.value("type").toString();
     const auto robot = obj.value("robot").toString("B"); // "A","B","C"... (없으면 빈 문자열)
     const quint32 seq = obj.value("seq").toInt(0);
+    const auto dir = obj.value("dir").toInt(0);
 
     qDebug()<<"[VS] Parsed JSON type="<<type<<"robot="<<robot<<"seq="<<seq;
 #if false
@@ -175,7 +176,8 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
             ++st.ackErr; ++m_global.ackErr;
             return;
         }
-        qDebug()<<"[VS] Pose parsed:"<<p.x<<p.y<<p.z<<p.rx<<p.ry<<p.rz;
+        qDebug()<<"[VS] Pose parsed:"<<p.x<<p.y<<p.z<<p.rx<<p.ry<<p.rz<<dir;
+
         emit poseReceived(robot, p, seq, extras);
         sendAck(from, seq, "ok");
         ++st.jsonOk; ++m_global.jsonOk;
