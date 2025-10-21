@@ -328,6 +328,7 @@ void VisionServer::requestPoseKind(const char* kind, quint32 seq, int speed_pct)
     if (speed_pct >= 0) o["speed_pct"] = speed_pct;
 
     const QByteArray line = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
+    qDebug()<<"[VS] Broadcasting request_pose:"<<QString::fromUtf8(line);
     if (m_srv) m_srv->broadcast(line);
     emit log(QString("[NET] request_pose(kind=%1, seq=%2, speed=%3) broadcast")
                  .arg(kind).arg(seq).arg(speed_pct));
@@ -350,7 +351,9 @@ void VisionServer::requestPoseKindTo(const QString& targetId, const char* kind, 
                  .arg(kind).arg(seq).arg(speed_pct).arg(targetId));
 }
 
+void VisionServer::requestTestPose(quint32 seq, int speed_pct)       { requestPoseKind("test",    seq, speed_pct); }
 void VisionServer::requestPickPose(quint32 seq, int speed_pct)       { requestPoseKind("pick",    seq, speed_pct); }
 void VisionServer::requestInspectPose(quint32 seq, int speed_pct)    { requestPoseKind("inspect", seq, speed_pct); }
+
 void VisionServer::requestPickPoseTo(const QString& id, quint32 s, int v)    { requestPoseKindTo(id, "pick",    s, v); }
 void VisionServer::requestInspectPoseTo(const QString& id, quint32 s, int v) { requestPoseKindTo(id, "inspect", s, v); }

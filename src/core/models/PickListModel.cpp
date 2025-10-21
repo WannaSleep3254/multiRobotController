@@ -5,6 +5,7 @@
 
 PickListModel::PickListModel(QObject *parent)
     : QAbstractTableModel(parent)
+#if false
     , m_data({
           {205, 1020, 35, -180, 0, -100},
           {60, 600, 35, -180, 0, -100},
@@ -14,8 +15,27 @@ PickListModel::PickListModel(QObject *parent)
           {140, -300, 35, -180, 0, -100},
           {320, -300, 35, -180, 0, -100}
     })
+#else
+    , m_data()
+#endif
 {
 
+}
+
+bool PickListModel::removeRow(int r)
+{
+    if (r < 0 || r >= m_data.size())
+        return false;
+
+    beginRemoveRows(QModelIndex(), r, r);
+    m_data.removeAt(r);
+
+    if (m_activeRow == r)
+        m_activeRow = -1;
+
+    endRemoveRows();
+
+    return true;
 }
 
 int PickListModel::rowCount(const QModelIndex& parent) const {

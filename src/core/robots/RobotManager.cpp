@@ -314,9 +314,50 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
     connect(orch, &Orchestrator::currentRowChanged, this,
             [this, id](int row){
                 emit currentRowChanged(id, row);
+//
     });
     connect(orch, &Orchestrator::log, this, [this, id](const QString& line, Common::LogLevel lv) {
         emit logByRobot(id, line, lv);   // ★ 패널용
         emit log(QString("%1 (%2)").arg(line,id), lv);              // ★ 전체용
     });
+}
+
+// 2025-10-21
+void RobotManager::setVisionMode(const QString& id, bool on) {
+    m_visionMode[id] = on;
+    emit log(QString("[RM] VisionMode(%1)=%2").arg(id).arg(on), Common::LogLevel::Info);
+}
+
+bool RobotManager::visionMode(const QString& id) const {
+    return m_visionMode.value(id, false);
+}
+
+void RobotManager::processVisionPose(const QString& id, const Pose6D& p, const QVariantMap& extras)
+{
+    if (!m_ctx.contains(id)) return;
+    auto& c = m_ctx[id];
+    const int speed = extras.value("speed_pct", 50).toInt();
+    applyExtras(id, extras); // SPEED_PCT 등 등록
+
+    if (visionMode(id)) {
+        // ✅ 테스트(비전) 모드: enqueue → 즉시 전송 → 곧바로 삭제
+        if (c.model) {
+            c.model->add(p);
+            const int last = c.model->rowCount() - 1;
+            if (c.orch) {
+                QVector<double> pose{ p.x, p.y, p.z, p.rx, p.ry, p.rz };
+                c.orch->publishPoseToRobot1(pose, speed);
+            }
+//            if (last >= 0) c.model->removeRow(last);
+        }
+        qDebug()<<"[RM] Vision mode: sent pose for"<<id
+               <<"("<<p.x<<p.y<<p.z<<p.rx<<p.ry<<p.rz<<")"
+              <<"speed_pct="<<speed;
+    } else {
+        // ✅ CSV 모드(기존): 큐에 쌓아서 FSM이 순서대로 처리
+        qDebug()<<"[RM] Enqueue vision pose for"<<id
+               <<"("<<p.x<<p.y<<p.z<<p.rx<<p.ry<<p.rz<<")"
+              <<"speed_pct="<<speed;
+        if (c.model) c.model->add(p);
+    }
 }

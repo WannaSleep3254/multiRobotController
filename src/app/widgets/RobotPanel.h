@@ -54,4 +54,6 @@ private:
     QCheckBox*   m_chkRepeat = nullptr;
     QLabel*      m_led = nullptr;   // 연결 상태 LED
     QPlainTextEdit* m_logView = nullptr;   // ★ 패널용 로그창
+
+    QCheckBox*   m_chkVisionMode = nullptr;
 };

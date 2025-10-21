@@ -34,6 +34,10 @@ private slots:
     void onLog(const QString& line);
     void onLog(const QString& line, Common::LogLevel level);
 
+    void on_btnStart_clicked();
+
+    void on_btnStop_clicked();
+
 private:
     Ui::MainWindow *ui;
 

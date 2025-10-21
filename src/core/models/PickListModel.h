@@ -9,6 +9,7 @@ class PickListModel : public QAbstractTableModel
     Q_OBJECT
 public:
     explicit PickListModel(QObject* parent = nullptr);
+    bool removeRow(int r);  // ✅ 전송 후 행 삭제에 사용
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent = QModelIndex()) const override;

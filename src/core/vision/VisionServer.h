@@ -145,6 +145,7 @@ private:
 
 public:
     // 모든 클라이언트에 pick/inspect 좌표 요청
+    void requestTestPose(quint32 seq = 0, int speed_pct = -1);
     void requestPickPose(quint32 seq = 0, int speed_pct = -1);
     void requestInspectPose(quint32 seq = 0, int speed_pct = -1);
 

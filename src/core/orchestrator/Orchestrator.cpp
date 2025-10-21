@@ -65,6 +65,7 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
             if (dFall) {
                 //setState(State::PublishTarget);
                 setState(State::WaitRobotReady);
+                emit finishedCurrentCycle();
             }
             break;
         default: break;
@@ -267,4 +268,43 @@ void Orchestrator::setState(Orchestrator::State s)
 
     emit log(QString("[FSM] %1 → %2").arg(prev, next), Common::LogLevel::Info);
     emit stateChanged(static_cast<int>(s), next);
+}
+void Orchestrator::publishPoseToRobot1(const QVector<double>& pose, int speedPct)
+{
+    if (pose.size() < 6) {
+        emit log("[FSM] pose size < 6");
+        return;
+    }
+    // 6축 float → 12워드(HI,LO)로 인코딩
+    QVector<quint16> regs; regs.reserve(12);
+    for (int i=0;i<6;++i) {
+        float f = float(pose[i]);
+        quint16 hi=0, lo=0;
+        floatToRegs(f, hi, lo);     // Orchestrator.cpp 상단에 이미 있는 함수
+        regs.push_back(hi);
+        regs.push_back(lo);
+    }
+
+    // HOLDING에 좌표 블록 쓰기 (TARGET_POSE_BASE = 132..143)
+    m_bus->writeHoldingBlock(A_TARGET_BASE, regs);
+/*
+    // 속도 등 파라미터
+    if (A_SPEED_PCT > 0)
+        m_bus->writeHolding(A_SPEED_PCT, quint16(std::clamp(speedPct,0,100)));
+
+    // 간단한 페이로드 체크섬/SEQ (옵션: 사용 중일 때만)
+    if (A_SEQ_ID > 0) {
+        m_seq++;
+        m_bus->writeHolding(A_SEQ_ID, m_seq);
+    }
+    if (A_PAYLOAD_CKSUM > 0) {
+        // 아주 단순 합계 체크섬(데모)
+        quint32 sum=0; for (auto v: regs) sum += v;
+        m_bus->writeHolding(A_PAYLOAD_CKSUM, quint16(sum & 0xFFFF));
+    }
+*/
+    // FSM: Publish 시작 (PUBLISH_REQ = 1)
+    m_bus->writeCoil(A_PUBLISH_REQ, true);
+    emit log("[FSM] PUBLISH_REQ=1 (Robot1)");
+    // 이후 FSM은 기존 cycle() 로직: BUSY↑ → DONE↑ → PUBLISH_REQ=0 → DONE↓ 반환
 }

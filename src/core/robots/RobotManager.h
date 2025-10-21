@@ -63,6 +63,13 @@ public:
     void clearPoseList(const QString& id);
     bool loadCsvToModel(const QString& id, const QString& filePath, QString* errMsg=nullptr, QObject* owner=nullptr);
 
+    // ✅ 비전 모드 (true면 enqueue→즉시 전송→삭제)
+    void setVisionMode(const QString& id, bool on);
+    bool visionMode(const QString& id) const;
+
+    // ✅ VisionServer → MainWindow 경유로 호출할 처리 API
+    void processVisionPose(const QString& id, const Pose6D& p, const QVariantMap& extras);
+
 signals:
     void heartbeat(const QString& id, bool ok);
     void connectionChanged(const QString& id, bool connected);
@@ -86,6 +93,8 @@ private:
     QHash<QObject*, QString> m_busToId; // ModbusClient* → id("A","B" 등)
 
     void hookSignals(const QString& id, ModbusClient* bus, Orchestrator* orch);
+
+    QHash<QString, bool> m_visionMode;  // ✅ 로봇별 비전 모드
 };
 
 #endif // ROBOTMANAGER_H

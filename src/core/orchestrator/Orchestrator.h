@@ -23,12 +23,14 @@ public slots:
     void stop();
 
     void applyAddressMap(const QVariantMap& m);
+    void publishPoseToRobot1(const QVector<double>& pose, int speedPct = 50);
 
 signals:
 //    void log(const QString& line, Orchestrator::LogLevel level = Orchestrator::LogLevel::Info);
     void log(const QString& line, Common::LogLevel level = Common::LogLevel::Info);
     void stateChanged(int state, QString name);
     void currentRowChanged(int row);
+    void finishedCurrentCycle();
 
 private slots:
     void cycle();

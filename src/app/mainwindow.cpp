@@ -94,6 +94,7 @@ void MainWindow::initVisionServer()
 
 
     // 7) 좌표 수신 시 로봇으로 발행
+#if false
     connect(m_visionServer, &VisionServer::poseReceived, this,
             [this](const QString& robot, const Pose6D& p, quint32 seq, const QVariantMap& ex){
                 Q_UNUSED(robot); Q_UNUSED(seq);
@@ -106,7 +107,13 @@ void MainWindow::initVisionServer()
                 // 로봇 매니저에 발행
                 m_mgr->enqueuePose(robot, pose);
             });
-
+#else
+    connect(m_visionServer, &VisionServer::poseReceived, this,
+        [this](const QString& robot, const Pose6D& p, quint32 seq, const QVariantMap& ex){
+            Q_UNUSED(seq);
+            m_mgr->processVisionPose(robot, p, ex);
+        });
+#endif
     // 8) 다건 좌표 수신 (예: Vision이 여러 픽 포인트를 한번에 전달)
 }
 
@@ -200,13 +207,30 @@ void MainWindow::loadRobotsFromConfig()
         }
         if (id == "A") { m_panelA->setEndpoint(host, port, addr); m_panelA->setRobotId("A"); }
         if (id == "B") { m_panelB->setEndpoint(host, port, addr); m_panelB->setRobotId("B"); }
+#if false
         const QString poseCsv = o.value("pose_csv").toString();
         if (!poseCsv.isEmpty()) {
             QString err;
             m_mgr->loadCsvToModel(id, poseCsv, &err, this);  // ★ 컨텍스트/모델 자동 준비 + 로드
             if (!err.isEmpty()) qDebug() << "[WARN] CSV load:" << err;
         }
+#endif
         onLog(QString("[OK] Robot %1 added (%2:%3)").arg(id, host).arg(port));
     }
+}
+
+
+void MainWindow::on_btnStart_clicked()
+{
+    static quint32 seq = 1;
+    m_visionServer->requestPickPose(seq++, 50);
+//    m_visionServer->requestTestPose(seq++, 50);
+}
+
+
+void MainWindow::on_btnStop_clicked()
+{
+    static quint32 seq = 1;
+    m_visionServer->requestInspectPose(seq++, 50);
 }
 

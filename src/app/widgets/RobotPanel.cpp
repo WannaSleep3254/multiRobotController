@@ -34,6 +34,7 @@ RobotPanel::RobotPanel(QWidget* parent) : QWidget(parent)
     m_btnClear      = new QPushButton("Clear", this);
     m_chkRepeat     = new QCheckBox("Repeat targets", this);
     m_led           = makeLed(this);
+    m_chkVisionMode = new QCheckBox("Vision", this);
 
     m_logView = new QPlainTextEdit(this);   // ★
     m_logView->setReadOnly(true);
@@ -54,6 +55,8 @@ RobotPanel::RobotPanel(QWidget* parent) : QWidget(parent)
     row2->addWidget(m_btnClear);     // ★
     row2->addStretch();
     row2->addWidget(m_chkRepeat);
+    row2->addSpacing(12);
+    row2->addWidget(m_chkVisionMode); // ✅
 
     auto* lay = new QVBoxLayout(this);
     lay->addLayout(row1);
@@ -70,6 +73,11 @@ RobotPanel::RobotPanel(QWidget* parent) : QWidget(parent)
 
     connect(m_btnLoadCsv,    &QPushButton::clicked, this, &RobotPanel::onLoadCsv); // ★
     connect(m_btnClear,      &QPushButton::clicked, this, &RobotPanel::onClear);   // ★
+
+    // ✅ 비전 모드 토글 → 매니저로 반영
+    connect(m_chkVisionMode, &QCheckBox::toggled, this, [this](bool on){
+        if (m_mgr && !m_id.isEmpty()) m_mgr->setVisionMode(m_id, on);
+    });
 }
 
 void RobotPanel::setManager(RobotManager* mgr)
@@ -176,6 +184,7 @@ void RobotPanel::onDisconnect()
 
 void RobotPanel::onStart()
 {
+    qDebug()<<"RobotPanel::onStart() for robot"<<m_id;
     if (m_mgr && !m_id.isEmpty())
         m_mgr->start(m_id);
 }
