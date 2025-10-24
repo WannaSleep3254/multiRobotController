@@ -116,6 +116,7 @@ void ModbusClient::readHolding(int start, int count)
             for(uint i=0;i<u.valueCount();++i)
                 data.push_back(u.value(i));
         }
+//        qDebug()<<"[MC] holdingInputs result start="<<start<<"data="<<data;
         emit holdingRead(start, data);
         reply->deleteLater();
     });
@@ -137,6 +138,7 @@ void ModbusClient::readInputs(int start, int count)
             for (uint i=0; i<u.valueCount(); ++i)
                 data.push_back(u.value(i));
         }
+//        qDebug()<<"[MC] readInputs result start="<<start<<"data="<<data;
         emit inputRead(start, data);
         reply->deleteLater();
     });

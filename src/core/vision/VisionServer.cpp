@@ -184,6 +184,14 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
         ++st.ackOk;  ++m_global.ackOk;
         return;
     }
+    else if(type == "status")
+    {
+        //getStatus
+        PickPose pose{1,2,3,4,5,6};
+        JointPose joint{11,12,13,14,15,16};
+        const int id=2;
+        sendStatus(pose, joint, id);
+    }
 #if false
     if (type == "poses") {
         QList<Pose6D> list;
@@ -359,3 +367,25 @@ void VisionServer::requestInspectPose(quint32 seq, int speed_pct)    { requestPo
 
 void VisionServer::requestPickPoseTo(const QString& id, quint32 s, int v)    { requestPoseKindTo(id, "pick",    s, v); }
 void VisionServer::requestInspectPoseTo(const QString& id, quint32 s, int v) { requestPoseKindTo(id, "inspect", s, v); }
+
+void VisionServer::sendStatus(const PickPose& p, const JointPose& j, const int id)
+{
+    QJsonObject o{
+                  {"type", "status"},
+                  {"ready", 1}, //1:Ready , 0: Busy
+                  {"robot", id},  // 1: 로봇1, 2: 로봇2
+                  {"x", p.x}, {"y", p.y}, {"z", p.z}, {"rx", p.rx}, {"ry", p.ry}, {"rz", p.rz},
+                  {"j1", j.j1}, {"j2", j.j2}, {"j3", j.j3}, {"j4", j.j4}, {"j5", j.j5}, {"j6", j.j6},
+
+                  };
+    sendJson(o);
+}
+
+void VisionServer::sendJson(const QJsonObject& obj)
+{
+
+    const QByteArray json = QJsonDocument(obj).toJson(QJsonDocument::Compact) + '\n';
+    //const QByteArray line = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
+    qDebug()<<"[VS] Broadcasting JSON:"<<QString::fromUtf8(json);
+    m_srv->broadcast(json);
+}

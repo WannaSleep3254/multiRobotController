@@ -6,6 +6,102 @@
 #include <QDebug>
 #include <cstring>   // for memcpy
 
+#include "tf/EulerAngleConverter.h"
+
+#define DEG2RAD(deg) ((deg) * M_PI / 180.0)  // 도 → 라디안 변환
+#define RAD2DEG(rad) ((rad) * 180.0 / M_PI)  // 라디안 → 도 변환
+
+struct EulerZYX {
+    double roll;
+    double pitch;
+    double yaw; // 최종 YAW 값
+};
+
+/////////////////////////////
+// ✅ 각도를 -180° ~ 180° 범위로 정규화
+double normalizeAngle(double angle) {
+    while (angle > 180.0) angle -= 360.0;
+    while (angle <= -180.0) angle += 360.0;
+    return angle;
+}
+// ✅ EulerZYX 값을 정규화 (Pitch 범위 조정 포함)
+EulerZYX normalizeEulerZYX(const EulerZYX& euler) {
+    double roll = normalizeAngle(euler.roll);
+    double pitch = euler.pitch;
+    double yaw = normalizeAngle(euler.yaw);
+
+    // ✅ Pitch 범위 조정 (-90° ~ 90° 유지)
+    if (pitch > 90.0) {
+        pitch = 180.0 - pitch;
+        roll += 180.0;
+        yaw += 180.0;
+    } else if (pitch < -90.0) {
+        pitch = -180.0 - pitch;
+        roll += 180.0;
+        yaw += 180.0;
+    }
+
+    // Roll과 Yaw도 다시 정규화
+    roll = normalizeAngle(roll);
+    yaw = normalizeAngle(yaw);
+
+    return { roll, pitch, yaw };
+}
+/////////////////////////////
+
+EulerZYX toolRotate(float rx, float ry, float rz, float target_yaw)
+{
+    // 입력 오일러 각 (단위: degree)
+    double roll_degrees = static_cast<double>(rx);
+    double pitch_degrees = static_cast<double>(ry);
+    double yaw_degrees = static_cast<double>(rz);
+    qDebug()<<"Input Euler Angles (ZYX) in degrees:"
+             <<roll_degrees
+             <<pitch_degrees
+             <<yaw_degrees;
+    // Degree to Radian 변환
+    double roll_radians = EulerAngleConverter::ConvertDegreesToRadians(roll_degrees);
+    double pitch_radians = EulerAngleConverter::ConvertDegreesToRadians(pitch_degrees);
+    double yaw_radians = EulerAngleConverter::ConvertDegreesToRadians(yaw_degrees);
+
+    Matrix3d tool_rotation_matrix = EulerAngleConverter::ConvertEulerZYXToRotationMatrix(
+        roll_radians, pitch_radians, yaw_radians);
+
+    // 추가할 YAW 회전
+    double additional_yaw_degrees = 270;//rz - target_yaw;
+    double additional_yaw_radians = EulerAngleConverter::ConvertDegreesToRadians(additional_yaw_degrees);
+
+    // 새로운 회전 행렬 계산
+    Matrix3d updated_tool_rotation_matrix = EulerAngleConverter::ApplyYawRotationToToolFrame(
+        tool_rotation_matrix, additional_yaw_radians);
+
+    // 새로운 오일러 각(ZYX) 변환
+    Vector3d updated_euler_radians = EulerAngleConverter::ConvertRotationMatrixToEulerZYX(updated_tool_rotation_matrix);
+
+    // 정규화 적용
+    double normalized_yaw = EulerAngleConverter::NormalizeAngleRadians(updated_euler_radians[0]);
+    double normalized_pitch = EulerAngleConverter::NormalizeAngleRadians(updated_euler_radians[1]);
+    double normalized_roll = EulerAngleConverter::NormalizeAngleRadians(updated_euler_radians[2]);
+
+    // Radian to Degree 변환
+    double normalized_yaw_degrees = EulerAngleConverter::ConvertRadiansToDegrees(normalized_yaw);
+    double normalized_pitch_degrees = EulerAngleConverter::ConvertRadiansToDegrees(normalized_pitch);
+    double normalized_roll_degrees = EulerAngleConverter::ConvertRadiansToDegrees(normalized_roll);
+
+    qDebug() << "Updated Euler Angles (ZYX) in degrees:"
+             << normalized_yaw_degrees
+             << normalized_pitch_degrees
+             << normalized_roll_degrees;
+
+    EulerZYX normalized = normalizeEulerZYX({normalized_roll_degrees, normalized_pitch_degrees, normalized_yaw_degrees});
+    qDebug() << "Normalized Euler Angles (ZYX) in degrees:"
+             << normalized.roll
+             << normalized.pitch
+             << normalized.yaw;
+
+    return normalized;
+}
+//////////////////////////////
 // ---- 유틸: float -> 2word 변환
 static void floatToRegs(float value, quint16 &hi, quint16 &lo) {
     quint32 raw;
@@ -133,8 +229,12 @@ void Orchestrator::applyAddressMap(const QVariantMap& m)
 void Orchestrator::cycle()
 {
 //    qDebug()<<"[FSM] cycle, state="<<int(m_state);
+    m_bus->readInputs(340, 12);
+    m_bus->readInputs(388, 12);
+
     switch(m_state) {
-    case State::Idle: return;
+    case State::Idle:
+        return;
 
     case State::WaitRobotReady: {
         m_bus->readDiscreteInputs(qMin(A_ROBOT_READY, A_ROBOT_BUSY),
@@ -196,12 +296,22 @@ void Orchestrator::cycle()
 
         QVector<quint16> regs;
         regs.reserve(12);
+/*
         const float vals[6] = {
             static_cast<float>(pt.x), static_cast<float>(pt.y), static_cast<float>(pt.z),
             static_cast<float>(pt.rx), static_cast<float>(pt.ry), static_cast<float>(pt.rz)
         };
+*/
+//KJW -2025-10-22
+        EulerZYX rpy = toolRotate(pt.rx, pt.ry, pt.rz, -90.0);
+        const float target[6] = {
+            static_cast<float>(pt.x), static_cast<float>(pt.y), static_cast<float>(pt.z),
+            static_cast<float>(rpy.roll), static_cast<float>(rpy.pitch), static_cast<float>(rpy.yaw)
+        };
+//
+
         for (int i=0;i<6;++i) {
-            quint16 hi, lo; floatToRegs(vals[i], hi, lo);
+            quint16 hi, lo; floatToRegs(target[i], hi, lo);
             regs.push_back(hi);
             regs.push_back(lo);
         }

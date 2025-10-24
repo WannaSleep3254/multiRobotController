@@ -5,6 +5,8 @@
 #include <QPalette>
 #include <QStyle>
 
+#pragma comment(linker, "/entry::WinMainCRTStartup /subsystem:console")
+
 static void applyDarkPalette() {
     qApp->setStyle(QStyleFactory::create("Fusion"));
 

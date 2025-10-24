@@ -34,6 +34,9 @@ add_library(multiRobotController_core STATIC
 
     src/core/vision/VisionServer.h
     src/core/vision/VisionServer.cpp
+
+    src/core/tf/EulerAngleConverter.cpp
+    src/core/tf/EulerAngleConverter.h
 )
 target_link_libraries(multiRobotController_core
     PRIVATE
@@ -52,6 +55,8 @@ target_include_directories(multiRobotController_core
       src/core/models
       src/core/network
       src/core/robots
+
+    3rdparty/eigen-3.4.0
 )
 
 # ---- app executable

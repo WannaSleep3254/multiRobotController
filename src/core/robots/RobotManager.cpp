@@ -306,6 +306,43 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
         emit logByRobot(id, line, lv);   // ★ 패널용
         emit log(QString("%1 (%2)").arg(line,id), lv);              // ★ 전체용
     });
+/*
+    connect(bus, &ModbusClient::holdingRead, this, [this, id](int start, QVector<quint16> data){
+        qDebug()<<"[RM] holdingRead from"<<id<<"start="<<start<<"data="<<data;
+        // --- ⬇ float 변환 구간 추가 ---
+        QVector<float> floats;
+        for (int i = 0; i + 1 < data.size(); i += 2) {
+            quint32 combined = (static_cast<quint32>(data[i]) << 16) | data[i+1];
+            float value;
+            std::memcpy(&value, &combined, sizeof(float));
+            floats.push_back(value);
+        }
+
+        qDebug() << "[MC] readInputs result start=" << start
+                 //<< "words=" << data
+                 << "floats=" << floats;
+    });
+*/
+    connect(bus, &ModbusClient::inputRead, this, [this, id](int start, QVector<quint16> data){
+        // --- float 변환 구간 추가 ---
+        QVector<float> floats;
+        for (int i = 0; i + 1 < data.size(); i += 2) {
+            quint32 combined = (static_cast<quint32>(data[i]) << 16) | data[i+1];
+            float value;
+            std::memcpy(&value, &combined, sizeof(float));
+            floats.push_back(value);
+        }
+        if(start==340) // Joint
+        {
+        }
+        else if(start==388) // Tcp
+        {
+        }
+        qDebug() << "[MC] readInputs result start=" << start
+                 //<< "words=" << data
+                 << "floats=" << floats;
+    });
+
     // Orchestrator 시그널
     connect(orch, &Orchestrator::stateChanged, this,
             [this, id](int state, const QString& name){

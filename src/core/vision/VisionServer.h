@@ -25,6 +25,14 @@ vs->setEarlyFilterOptions(ef);
 // 서버 시작
 vs->start(QHostAddress::Any, 50000);
  */
+struct PickPose {
+    double x, y, z, rx, ry, rz;
+};
+struct JointPose {
+    double j1, j2, j3, j4, j5, j6;
+};
+
+
 class VisionServer : public QObject
 {
     Q_OBJECT
@@ -63,6 +71,9 @@ public:
     // 메트릭 스냅샷(표시/로그/테스트용)
     QVariantMap metrics() const;              // 전체
     QVariantMap metricsFor(const QTcpSocket* s) const; // 개별 클라이언트
+
+    void sendJson(const QJsonObject& obj);
+    void sendStatus(const PickPose& p, const JointPose& j, const int id);
 
 signals:
     // 단건/다건 좌표 수신
