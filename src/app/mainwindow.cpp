@@ -27,8 +27,11 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     setWindowTitle("BinPicking Modbus Controller");
+    initVisionServer();
 
     m_mgr = new RobotManager(this);
+    m_mgr->setVisionServer(m_visionServer);
+
     connect(m_mgr, &RobotManager::log, this,
             [this](const QString& line, Common::LogLevel level){
                 QString prefix;
@@ -61,7 +64,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->horizontalLayout->addWidget(m_split);
 
     QTimer::singleShot(0, this, [this]{ loadRobotsFromConfig(); });
-    initVisionServer();
+
 }
 
 MainWindow::~MainWindow()
@@ -109,9 +112,9 @@ void MainWindow::initVisionServer()
             });
 #else
     connect(m_visionServer, &VisionServer::poseReceived, this,
-        [this](const QString& robot, const Pose6D& p, quint32 seq, const QVariantMap& ex){
+        [this](const QString& robot, const QString& kind, const Pose6D& p, quint32 seq, const QVariantMap& ex){
             Q_UNUSED(seq);
-            m_mgr->processVisionPose(robot, p, ex);
+            m_mgr->processVisionPose(robot, kind, p, ex);
         });
 #endif
     // 8) 다건 좌표 수신 (예: Vision이 여러 픽 포인트를 한번에 전달)
@@ -222,15 +225,27 @@ void MainWindow::loadRobotsFromConfig()
 
 void MainWindow::on_btnStart_clicked()
 {
-    static quint32 seq = 1;
-    m_visionServer->requestPickPose(seq++, 50);
-//    m_visionServer->requestTestPose(seq++, 50);
+    //static quint32 seq = 1;
+    //m_visionServer->requestPickPose(seq++, 50);
+    //m_visionServer->requestCapture(seq++, "A");
+    m_mgr->triggerProcessA("B", 200);
 }
 
 
 void MainWindow::on_btnStop_clicked()
 {
-    static quint32 seq = 1;
-    m_visionServer->requestInspectPose(seq++, 50);
+    //static quint32 seq = 1;
+    //m_visionServer->requestInspectPose(seq++, 50);
+    //m_visionServer->requestCapture(seq++, "B");
+    m_mgr->triggerProcessB("B", 200);
+}
+
+
+void MainWindow::on_btnPause_clicked()
+{
+    //static quint32 seq = 1;
+    //m_visionServer->requestInspectPose(seq++, 50);
+    //m_visionServer->requestCapture(seq++, "C");
+    m_mgr->triggerProcessC("B", 200);
 }
 

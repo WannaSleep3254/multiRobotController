@@ -38,6 +38,8 @@ private slots:
 
     void on_btnStop_clicked();
 
+    void on_btnPause_clicked();
+
 private:
     Ui::MainWindow *ui;
 

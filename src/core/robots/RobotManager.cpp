@@ -3,15 +3,18 @@
 #include "ModbusClient.h"
 #include "Orchestrator.h"
 
+#include "vision/VisionServer.h"
+
 #include <QTimer>
 #include <QFile>
 #include <QTextStream>
+#include <QVector>
 
 RobotManager::RobotManager(QObject* parent) : QObject(parent)
 {
 
 }
-
+#if false // legacy - 미사용
 void RobotManager::addRobot(const QString& id, const QString& host, int port,
                             const QVariantMap& addr, QObject* owner)
 {
@@ -45,6 +48,7 @@ void RobotManager::addRobot(const QString& id, const QString& host, int port,
     ctx.orch  = new Orchestrator(ctx.bus, ctx.model, owner);
     ctx.addr  = addr;
     ctx.orch->applyAddressMap(addr);
+    ctx.orch->setRobotId(id);
 
     m_ctx.insert(id, ctx);
     hookSignals(id, ctx.bus, ctx.orch);
@@ -54,10 +58,25 @@ void RobotManager::addRobot(const QString& id, const QString& host, int port,
         m_ctx[id].bus->connectTo(host, port);
     });
 }
-
+#endif
 void RobotManager::enqueuePose(const QString& id, const Pose6D &p) {
     if (m_ctx.contains(id))
         m_ctx[id].model->add(p);
+}
+
+void RobotManager::publishPoseNow(const QString& id, const Pose6D& p, int speedPct)
+{
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->orch) {
+        emit log(QString("[RM] publishPoseNow failed: no orch for %1").arg(id),
+                 Common::LogLevel::Warn);
+        return;
+    }
+    const QVector<double> pose{ p.x, p.y, p.z, p.rx, p.ry, p.rz };
+    it->orch->publishPoseToRobot1(pose, speedPct); // 기존 함수 재사용
+    emit log(QString("[RM] publishPoseNow(%1) sent (speed=%2)")
+                 .arg(id).arg(speedPct),
+             Common::LogLevel::Info);
 }
 
 void RobotManager::applyExtras(const QString& id, const QVariantMap& extras) {
@@ -168,10 +187,13 @@ void RobotManager::addOrConnect(const QString& id, const QString& host, int port
     if (!c.bus)  c.bus  = new ModbusClient(owner ? owner : this);
     if (!c.orch) c.orch = new Orchestrator(c.bus, c.model, owner ? owner : this);
     c.orch->applyAddressMap(addr);
+
     if (!c.orch->isAddressMapValid()) {
         qWarning() << "[RM] invalid addr_map" << id;
         return;
     }
+
+    c.orch->setRobotId(id);
     // 시그널은 한 번만
     static QSet<Orchestrator*> hooked;
     if (!hooked.contains(c.orch)) {
@@ -323,6 +345,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                  << "floats=" << floats;
     });
 */
+/*
     connect(bus, &ModbusClient::inputRead, this, [this, id](int start, QVector<quint16> data){
         // --- float 변환 구간 추가 ---
         QVector<float> floats;
@@ -338,12 +361,14 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
         else if(start==388) // Tcp
         {
         }
-        qDebug() << "[MC] readInputs result start=" << start
-                 //<< "words=" << data
-                 << "floats=" << floats;
+    });
+*/
+    // Orchestrator 시그널
+    connect(orch, &Orchestrator::kinematicsUpdated, m_vsrv,
+            [this](const QString& rid, const Orchestrator::RobotState& state){
+                m_vsrv->updateRobotState(rid, state.tcp, state.joints, state.tsMs);
     });
 
-    // Orchestrator 시그널
     connect(orch, &Orchestrator::stateChanged, this,
             [this, id](int state, const QString& name){
                 emit stateChanged(id, state, name);
@@ -352,10 +377,21 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
             [this, id](int row){
                 emit currentRowChanged(id, row);
 //
-    });
+    });    
     connect(orch, &Orchestrator::log, this, [this, id](const QString& line, Common::LogLevel lv) {
         emit logByRobot(id, line, lv);   // ★ 패널용
         emit log(QString("%1 (%2)").arg(line,id), lv);              // ★ 전체용
+    });
+
+    connect(orch, &Orchestrator::processPulse, this, [this, id](const QString& rid, int idx){
+        if (!m_vsrv) return;
+
+        qDebug()<<"[RM] processPulse from"<<rid<<"idx="<<idx;
+
+        static quint32 seq = 1;
+        if      (idx==0)    m_vsrv->requestCapture(seq++, "A");
+        else if (idx==1)    m_vsrv->requestCapture(seq++, "B");
+        else if (idx==2)    m_vsrv->requestCapture(seq++, "C");
     });
 }
 
@@ -369,9 +405,25 @@ bool RobotManager::visionMode(const QString& id) const {
     return m_visionMode.value(id, false);
 }
 
-void RobotManager::processVisionPose(const QString& id, const Pose6D& p, const QVariantMap& extras)
+void RobotManager::processVisionPose(const QString& id, const QString &kind, const Pose6D& p, const QVariantMap& extras)
 {
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->orch) {
+        emit log(QString("[RM] no orchestrator for %1").arg(id)); return;
+    }
+    const int speed = extras.value("speed_pct", 50).toInt();
+    const QVector<double> v{ p.x,p.y,p.z,p.rx,p.ry,p.rz };
+
+    // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
+    if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
+        it->orch->publishPoseWithKind(v, speed, kind);
+    } else {
+        if (it->model) it->model->add(p); // 필요 시 큐에 쌓고 나중에 실행
+    }
+
+    /*
     if (!m_ctx.contains(id)) return;
+
     auto& c = m_ctx[id];
     const int speed = extras.value("speed_pct", 50).toInt();
     applyExtras(id, extras); // SPEED_PCT 등 등록
@@ -380,7 +432,6 @@ void RobotManager::processVisionPose(const QString& id, const Pose6D& p, const Q
         // ✅ 테스트(비전) 모드: enqueue → 즉시 전송 → 곧바로 삭제
         if (c.model) {
             c.model->add(p);
-            const int last = c.model->rowCount() - 1;
             if (c.orch) {
                 QVector<double> pose{ p.x, p.y, p.z, p.rx, p.ry, p.rz };
                 c.orch->publishPoseToRobot1(pose, speed);
@@ -397,4 +448,46 @@ void RobotManager::processVisionPose(const QString& id, const Pose6D& p, const Q
               <<"speed_pct="<<speed;
         if (c.model) c.model->add(p);
     }
+    */
+}
+
+
+    void RobotManager::triggerByKey(const QString& id, const QString& coilKey, int pulseMs)
+    {
+        auto it = m_ctx.find(id);
+        if (it == m_ctx.end() || !it->bus) {
+            emit log(QString("[RM] trigger: no bus for %1").arg(id));
+            return;
+        }
+
+        const auto coils   = it.value().addr.value("coils").toMap();
+       int addr = coils.value(coilKey).toInt();
+
+        if (addr <= 0) {
+            emit log(QString("[RM] trigger: invalid key %1 for %2").arg(coilKey, id));
+            return;
+        }
+
+        // true → (pulseMs 후) false 로 펄스
+        it->bus->writeCoil(addr, true);
+        QTimer::singleShot(pulseMs, this, [bus=it->bus, addr]{
+            bus->writeCoil(addr, false);
+        });
+
+        emit log(QString("[RM] trigger %1(%2) pulsed %3ms").arg(coilKey).arg(addr).arg(pulseMs));
+    }
+
+void RobotManager::triggerProcessA(const QString& id, int pulseMs)
+{   // A_DI2
+    triggerByKey(id, "DI2", pulseMs);
+}
+
+void RobotManager::triggerProcessB(const QString& id, int pulseMs)
+{   // A_DI3
+    triggerByKey(id, "DI3", pulseMs);
+}
+
+void RobotManager::triggerProcessC(const QString& id, int pulseMs)
+{   // A_DI4
+    triggerByKey(id, "DI4", pulseMs);
 }

@@ -148,6 +148,7 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
     const auto obj   = doc.object();
     const auto type  = obj.value("type").toString();
     const auto robot = obj.value("robot").toString("B"); // "A","B","C"... (없으면 빈 문자열)
+    const auto kind = obj.value("kind").toString(""); // "pick", "place" 등 (없으면 빈 문자열)
     const quint32 seq = obj.value("seq").toInt(0);
     const auto dir = obj.value("dir").toInt(0);
 
@@ -176,9 +177,18 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
             ++st.ackErr; ++m_global.ackErr;
             return;
         }
-        qDebug()<<"[VS] Pose parsed:"<<p.x<<p.y<<p.z<<p.rx<<p.ry<<p.rz<<dir;
+//        qDebug()<<"[VS] Pose parsed:"<<p.x<<p.y<<p.z<<p.rx<<p.ry<<p.rz<<dir;
+        if(kind.isEmpty())
+        {
+            //TODO: kind 이 없으면 에러 처리
+            qDebug()<<"[VS] Pose kind missing";
+            ++st.jsonErr; ++m_global.jsonErr;
+            sendAck(from, seq, "error", "missing_kind");
+            ++st.ackErr; ++m_global.ackErr;
+            return;
+        }
 
-        emit poseReceived(robot, p, seq, extras);
+        emit poseReceived(robot, kind, p, seq, extras);
         sendAck(from, seq, "ok");
         ++st.jsonOk; ++m_global.jsonOk;
         ++st.ackOk;  ++m_global.ackOk;
@@ -186,11 +196,45 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
     }
     else if(type == "status")
     {
-        //getStatus
-        PickPose pose{1,2,3,4,5,6};
-        JointPose joint{11,12,13,14,15,16};
-        const int id=2;
+        // 1) 요청에서 로봇 식별자/ID 가져오기 (없으면 기본 "A")
+        const QString rid = obj.value("robot").toString().isEmpty()
+                                ? QStringLiteral("A")
+                                : obj.value("robot").toString();
+        const int reqId = obj.value("id").toInt(0); // 요청에 id가 있으면 우선
+
+        // 2) 최신 캐시 찾기
+        const auto it = m_latest.constFind(rid);
+        if (it == m_latest.cend() || !it->valid) {
+            // 데이터가 아직 없으면 0으로 채워서 동일 형식으로 보냄
+            PickPose  pose{0,0,0,0,0,0};
+            JointPose joint{0,0,0,0,0,0};
+            const int id = reqId ? reqId : 1; // robot "A"=1, "B"=2 등 규칙 쓰고 싶으면 아래 헬퍼 사용
+            sendStatus(pose, joint, id);
+            return ;
+        }
+
+        // 3) 캐시 → PickPose / JointPose 로 변환 (brace-init)
+        const auto& s = *it;
+        PickPose  pose{
+            float(s.tcp.x), float(s.tcp.y), float(s.tcp.z),
+            float(s.tcp.rx), float(s.tcp.ry), float(s.tcp.rz)
+        };
+        JointPose joint{
+            float(s.joints.x), float(s.joints.y), float(s.joints.z),
+            float(s.joints.rx), float(s.joints.ry), float(s.joints.rz)
+        };
+
+        // 4) id 결정: 요청에 없으면 로봇명으로부터 매핑
+        auto robotStrToId = [](const QString& r){
+            if (r.size()==1 && r[0]>='A' && r[0]<='Z') return (r[0].unicode()-'A')+1; // A->1, B->2 ...
+            bool ok=false; int n=r.toInt(&ok); return ok? n : 1;
+        };
+        const int id = reqId ? reqId : robotStrToId(rid);
+
+        // 5) 원하는 형식 그대로 전송
         sendStatus(pose, joint, id);
+        return;
+        /////////////////////////////
     }
 #if false
     if (type == "poses") {
@@ -327,6 +371,38 @@ void VisionServer::onClientConnected(QTcpSocket* s)
 }
 
 // 공통: JSON 한 줄 생성 + 브로드캐스트
+void VisionServer::requestCaptureKind(const char* kind, quint32 seq, int speed_pct)
+{
+    const auto it = m_latest.constFind("B"); // 기본 로봇 "B"");
+    PickPose  pose{};
+    if (it != m_latest.cend() && it->valid) {
+        const auto& s = *it;
+        pose  = PickPose { float(s.tcp.x),    float(s.tcp.y),    float(s.tcp.z),
+                           float(s.tcp.rx),   float(s.tcp.ry),   float(s.tcp.rz) };
+    } else {
+        // 최신 데이터가 없으면 0으로 채우거나, 여기서 return으로 보내지 않도록 선택하세요.
+        // return;  // ← 이렇게 막아도 됨
+    }
+
+    QJsonObject o{
+        {"type", "request_pose"},
+        {"kind", QString::fromUtf8(kind)},
+        {"robot", 2},  // 1: 로봇1, 2: 로봇2
+        {"x", pose.x}, {"y", pose.y}, {"z", pose.z}, {"rx", pose.rx}, {"ry", pose.ry}, {"rz", pose.rz},
+        {"seq",  int(seq)},
+        {"ts",   QDateTime::currentDateTimeUtc().toString(Qt::ISODate)}
+    };
+    if (speed_pct >= 0) o["speed_pct"] = speed_pct;
+
+    const QByteArray line = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
+    qDebug()<<"[VS] Broadcasting request_pose:"<<QString::fromUtf8(line);
+
+    if (m_srv) m_srv->broadcast(line);
+
+    emit log(QString("[NET] request_pose(kind=%1, seq=%2, speed=%3) broadcast")
+                 .arg(kind).arg(seq).arg(speed_pct));
+}
+
 void VisionServer::requestPoseKind(const char* kind, quint32 seq, int speed_pct)
 {
     QJsonObject o{
@@ -361,6 +437,11 @@ void VisionServer::requestPoseKindTo(const QString& targetId, const char* kind, 
                  .arg(kind).arg(seq).arg(speed_pct).arg(targetId));
 }
 
+void VisionServer::requestCapture(quint32 seq, QString type)
+{
+    requestCaptureKind(type.toUtf8().constData(), seq, -1);
+}
+
 void VisionServer::requestTestPose(quint32 seq, int speed_pct)       { requestPoseKind("test",    seq, speed_pct); }
 void VisionServer::requestPickPose(quint32 seq, int speed_pct)       { requestPoseKind("pick",    seq, speed_pct); }
 void VisionServer::requestInspectPose(quint32 seq, int speed_pct)    { requestPoseKind("inspect", seq, speed_pct); }
@@ -388,4 +469,23 @@ void VisionServer::sendJson(const QJsonObject& obj)
     //const QByteArray line = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
     qDebug()<<"[VS] Broadcasting JSON:"<<QString::fromUtf8(json);
     m_srv->broadcast(json);
+}
+
+void VisionServer::updateRobotState(const QString& id, const Pose6D& tcp, const Pose6D& joints, qint64 tsMs)
+{
+    auto &s = m_latest[id];
+    s.tcp = tcp;
+    s.joints = joints;
+    s.tsMs = tsMs;
+    s.valid = true;
+#if false
+    emit log(QString("[VS] state cached (%1) tcp=[%2,%3,%4,%5,%6,%7]")
+                 .arg(id)
+                 .arg(tcp.x, 0, 'f', 1)
+                 .arg(tcp.y, 0, 'f', 1)
+                 .arg(tcp.z, 0, 'f', 1)
+                 .arg(tcp.rx, 0, 'f', 1)
+                 .arg(tcp.ry, 0, 'f', 1)
+                 .arg(tcp.rz, 0, 'f', 1));
+#endif
 }

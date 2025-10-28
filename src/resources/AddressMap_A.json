@@ -29,6 +29,8 @@
   },
   "holding": {
     "TARGET_POSE_BASE": 132,   "_comment" : "132..143 (float×6)",
+	"TARGET_POSE_PICK": 132,   "_comment" : "132..143 (float×6)",
+	"TARGET_POSE_PICK": 144,   "_comment" : "144..155 (float×6)",
     "SEQ_ID": 144,
     "PAYLOAD_CKSUM": 145,
     "SPEED_PCT": 146,

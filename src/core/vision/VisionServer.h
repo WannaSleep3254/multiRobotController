@@ -32,6 +32,12 @@ struct JointPose {
     double j1, j2, j3, j4, j5, j6;
 };
 
+struct VisionRobotState {
+    Pose6D tcp;
+    Pose6D joints;
+    qint64 tsMs{0};
+    bool   valid{false};
+};
 
 class VisionServer : public QObject
 {
@@ -74,11 +80,15 @@ public:
 
     void sendJson(const QJsonObject& obj);
     void sendStatus(const PickPose& p, const JointPose& j, const int id);
+// KJW: 2025-10-28
+    void updateRobotState(const QString& id, const Pose6D& tcp, const Pose6D& joints, qint64 tsMs);
 
 signals:
     // 단건/다건 좌표 수신
-    void poseReceived(const QString& robotId, const Pose6D& pose,
+    void poseReceived(const QString& robotId, const QString& kind, const Pose6D& pose,
                       quint32 seq, const QVariantMap& extras);
+
+
     void posesReceived(const QString& robotId, const QList<Pose6D>& poses,
                        quint32 seq, const QVariantMap& extras);
 
@@ -156,6 +166,8 @@ private:
 
 public:
     // 모든 클라이언트에 pick/inspect 좌표 요청
+    void requestCapture(quint32 seq = 0, QString type = "3-A");
+
     void requestTestPose(quint32 seq = 0, int speed_pct = -1);
     void requestPickPose(quint32 seq = 0, int speed_pct = -1);
     void requestInspectPose(quint32 seq = 0, int speed_pct = -1);
@@ -165,8 +177,10 @@ public:
     void requestInspectPoseTo(const QString& targetId, quint32 seq = 0, int speed_pct = -1);
 
 private:
+    void requestCaptureKind(const char* kind, quint32 seq, int speed_pct);
     void requestPoseKind(const char* kind, quint32 seq, int speed_pct);
     void requestPoseKindTo(const QString& targetId, const char* kind, quint32 seq, int speed_pct);
+    QHash<QString, VisionRobotState> m_latest;  // robotId → 최신 상태 캐시
 
 };
 #endif // VISIONSERVER_H

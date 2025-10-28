@@ -13,6 +13,7 @@ class QAbstractItemModel;
 class PickListModel;
 class ModbusClient;
 class Orchestrator;
+class VisionServer; // for friend declaration
 
 struct RobotContext {
     QString id;
@@ -26,13 +27,16 @@ class RobotManager : public QObject {
     Q_OBJECT
 public:
     explicit RobotManager(QObject* parent=nullptr);
-
+#if false // legacy - 미사용
     // 로봇 컨텍스트 생성/등록
     void addRobot(const QString& id, const QString& host, int port,
                   const QVariantMap& addr, QObject* owner);
-
+#endif
+    void setVisionServer(VisionServer* srv)  { m_vsrv = srv; }
     // 비전에서 온 포즈를 해당 로봇 큐로 적재
     void enqueuePose(const QString& id, const Pose6D& p);
+    // MainWindow에서 바로 호출: TCP(6자유도) 즉시 발행
+    void publishPoseNow(const QString& id, const Pose6D& p, int speedPct = 50);
 
     // 옵션 파라미터 실시간 반영 (예: 속도)
     void applyExtras(const QString& id, const QVariantMap& extras);
@@ -68,7 +72,13 @@ public:
     bool visionMode(const QString& id) const;
 
     // ✅ VisionServer → MainWindow 경유로 호출할 처리 API
-    void processVisionPose(const QString& id, const Pose6D& p, const QVariantMap& extras);
+    void processVisionPose(const QString& id, const QString& kind, const Pose6D& p, const QVariantMap& extras);
+
+    void triggerByKey(const QString& id, const QString& coilKey, int pulseMs = 100);
+    // 공정별 쇼트컷
+    void triggerProcessA(const QString& id, int pulseMs = 100); // A_DI2
+    void triggerProcessB(const QString& id, int pulseMs = 100); // A_DI3
+    void triggerProcessC(const QString& id, int pulseMs = 100); // A_DI4
 
 signals:
     void heartbeat(const QString& id, bool ok);
@@ -95,6 +105,7 @@ private:
     void hookSignals(const QString& id, ModbusClient* bus, Orchestrator* orch);
 
     QHash<QString, bool> m_visionMode;  // ✅ 로봇별 비전 모드
+    VisionServer* m_vsrv{nullptr};  // ✅ 보관용
 };
 
 #endif // ROBOTMANAGER_H
