@@ -33,21 +33,8 @@
     "TARGET_QUEUE_STRIDE": 12
   },
   "input_registers": {
-    "CURR_POSE_BASE": 132,             "_comment" : "132..143 (float×6)",
-    "ROBOT_STATUS_CODE": 144,
-    "ERROR_CODE": 145,
-    "ERROR_FLAGS": 146,
-    "ROBOT_MODE": 147,
-    "SEQ_ID_ECHO": 148,
-    "MAP_SCHEMA_VER": 149,
-    "FEATURE_FLAGS": 150,
-    "MAGIC_0x1234": 151,
-    "HB_ROBOT": 152,
-    "CYCLE_COUNT": 153,
-    "LAST_DONE_TICK_BASE": 154,        "_comment" : "154..155 (u32)",
-    "LAST_ERROR_TICK_BASE": 156,       "_comment" : "156..157 (u32)",
-    "ACTIVE_POSE_ECHO_BASE": 158,      "_comment" : "158..169 (float×6)",
-    "LATCH_POSE_BASE": 170,             "_comment" : "170..181 (float×6)"
+	"CUR_JOINT_BASE" : 340,					"_comment" : "340..351 (float×6)",
+	"CUR_TCP_BASE" : 388,					"_comment" : "380..399 (float×6)"
   },
 
   "reserved": {

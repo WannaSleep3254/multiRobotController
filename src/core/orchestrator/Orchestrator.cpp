@@ -208,7 +208,7 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         if (data.isEmpty()) return;
 
         // 예: 주소 340부터 12개 레지스터 읽기
-        if (start == 340 && data.size() >= 12) {
+        if (start == IR_JOINT_BASE && data.size() >= IR_WORD_PER_POSE) {
             Pose6D joint;
             joint.x  = regsToFloat(data[0],  data[1]);
             joint.y  = regsToFloat(data[2],  data[3]);
@@ -220,14 +220,14 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
             m_kinState.hasJoints = true;
         }
         // 예: 주소 388부터 12개 레지스터 읽기
-        else if (start == 388 && data.size() >= 12) {
+        else if (start == IR_TCP_BASE && data.size() >= IR_WORD_PER_POSE) {
             Pose6D tcp;
-            tcp.x  = regsToFloat(data[0],  data[1]);  // J1
-            tcp.y  = regsToFloat(data[2],  data[3]);  // J2
-            tcp.z  = regsToFloat(data[4],  data[5]);  // J3
-            tcp.rx = regsToFloat(data[6],  data[7]);  // J4
-            tcp.ry = regsToFloat(data[8],  data[9]);  // J5
-            tcp.rz = regsToFloat(data[10], data[11]); // J6
+            tcp.x  = regsToFloat(data[0],  data[1]);
+            tcp.y  = regsToFloat(data[2],  data[3]);
+            tcp.z  = regsToFloat(data[4],  data[5]);
+            tcp.rx = regsToFloat(data[6],  data[7]);
+            tcp.ry = regsToFloat(data[8],  data[9]);
+            tcp.rz = regsToFloat(data[10], data[11]);
             m_kinState.tcp = tcp;
             m_kinState.hasTcp = true;
         }
@@ -271,38 +271,38 @@ void Orchestrator::stop()
 
 void Orchestrator::applyAddressMap(const QVariantMap& m)
 {
+    // 주소 맵 적용
     const auto coils   = m.value("coils").toMap();
     const auto di      = m.value("discrete_inputs").toMap();
     const auto holding = m.value("holding").toMap();
+    const auto ir      = m.value("input_registers").toMap();
 
-    if (di.contains("ROBOT_READY")) A_ROBOT_READY = di.value("ROBOT_READY").toInt();
-    if (di.contains("ROBOT_BUSY"))  A_ROBOT_BUSY  = di.value("ROBOT_BUSY").toInt();
-    if (di.contains("PICK_DONE"))   A_PICK_DONE   = di.value("PICK_DONE").toInt();
-    if (di.contains("DO3_PULSE"))   A_DO3_PULSE = di.value("DO3_PULSE").toInt();
-    if (di.contains("DO4_PULSE"))   A_DO4_PULSE = di.value("DO4_PULSE").toInt();
-    if (di.contains("DO5_PULSE"))   A_DO5_PULSE = di.value("DO5_PULSE").toInt();
+    auto getAddr = [](const QVariantMap& map, const QString& key, int& out){
+        if (map.contains(key)) {
+            out = map.value(key).toInt();
+        }
+    };
 
-    if (coils.contains("PUBLISH_PICK")) A_PUBLISH_PICK = coils.value("PUBLISH_PICK").toInt();
-    if (coils.contains("PUBLISH_PLACE")) A_PUBLISH_PLACE = coils.value("PUBLISH_PLACE").toInt();
-    if (coils.contains("DI2")) A_DI2 = coils.value("DI2").toInt();
-    if (coils.contains("DI3")) A_DI3 = coils.value("DI3").toInt();
-    if (coils.contains("DI4")) A_DI4 = coils.value("DI4").toInt();
+    getAddr(di, "ROBOT_READY", A_ROBOT_READY);
+    getAddr(di, "ROBOT_BUSY", A_ROBOT_BUSY);
+    getAddr(di, "PICK_DONE", A_PICK_DONE);
+    getAddr(di, "DO3_PULSE", A_DO3_PULSE);
+    getAddr(di, "DO4_PULSE", A_DO4_PULSE);
+    getAddr(di, "DO5_PULSE", A_DO5_PULSE);
 
-    if (holding.contains("TARGET_POSE_BASE"))
-        A_TARGET_BASE = holding.value("TARGET_POSE_BASE").toInt();
+    getAddr(coils, "PUBLISH_PICK", A_PUBLISH_PICK);
+    getAddr(coils, "PUBLISH_PLACE", A_PUBLISH_PLACE);
+    getAddr(coils, "DI2", A_DI2);
+    getAddr(coils, "DI3", A_DI3);
+    getAddr(coils, "DI4", A_DI4);
 
-    if (holding.contains("TARGET_POSE_PICK"))
-        A_TARGET_BASE_PICK = holding.value("TARGET_POSE_PICK").toInt();
+    getAddr(holding, "TARGET_POSE_BASE", A_TARGET_BASE);
+    getAddr(holding, "TARGET_POSE_PICK", A_TARGET_BASE_PICK);
+    getAddr(holding, "TARGET_POSE_PLACE", A_TARGET_BASE_PLACE);
 
-    if (holding.contains("TARGET_POSE_PLACE"))
-        A_TARGET_BASE_PLACE = holding.value("TARGET_POSE_PLACE").toInt();
-/*
-    if (holding.contains("SEQ_ID"))        A_SEQ_ID        = holding.value("SEQ_ID").toInt();
-    if (holding.contains("PAYLOAD_CKSUM")) A_PAYLOAD_CKSUM = holding.value("PAYLOAD_CKSUM").toInt();
-    if (holding.contains("SPEED_PCT"))     A_SPEED_PCT     = holding.value("SPEED_PCT").toInt();
-    if (holding.contains("CMD_TIMEOUT_MS"))   A_CMD_TIMEOUT_MS   = holding.value("CMD_TIMEOUT_MS").toInt();
-    if (holding.contains("READY_TIMEOUT_MS")) A_READY_TIMEOUT_MS = holding.value("READY_TIMEOUT_MS").toInt();
-*/
+    getAddr(ir, "CUR_JOINT_BASE", IR_JOINT_BASE);
+    getAddr(ir, "CUR_TCP_BASE", IR_TCP_BASE);
+
     emit log(QString("[ADDR] READY=%1 BUSY=%2 DONE=%3 COIL_PUBLISH=%4 TARGET_BASE=%5")
                  .arg(A_ROBOT_READY).arg(A_ROBOT_BUSY).arg(A_PICK_DONE).arg(A_PUBLISH_PICK).arg(A_TARGET_BASE)
              , Common::LogLevel::Info);
@@ -310,10 +310,12 @@ void Orchestrator::applyAddressMap(const QVariantMap& m)
 
 void Orchestrator::cycle()
 {
-    m_bus->readInputs(340, 12);
-    m_bus->readInputs(388, 12);
+    if(IR_JOINT_BASE > 0)
+        m_bus->readInputs(IR_JOINT_BASE, IR_WORD_PER_POSE);
+    if(IR_TCP_BASE > 0)
+        m_bus->readInputs(IR_TCP_BASE, IR_WORD_PER_POSE);
 
-    m_bus->readDiscreteInputs(100, 6);
+    m_bus->readDiscreteInputs(A_ROBOT_READY, 6);
 #if false
     switch(m_state) {
     case State::Idle:

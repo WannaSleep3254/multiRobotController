@@ -83,22 +83,28 @@ private:
     QElapsedTimer m_stateTick;
 
     // AddressMap.json 기반 주소
-    int A_PUBLISH_PICK  = 100;      // coils
-    int A_PUBLISH_PLACE = 101;      // coils
-    int A_DI2           = 102;      // coils
-    int A_DI3           = 103;      // coils
-    int A_DI4           = 104;      // coils
+    int A_PUBLISH_PICK  {100};      // coils
+    int A_PUBLISH_PLACE {101};      // coils
+    int A_DI2           {102};      // coils
+    int A_DI3           {103};      // coils
+    int A_DI4           {104};      // coils
 
-    int A_ROBOT_READY   = 100;      // discrete_inputs
-    int A_PICK_DONE     = 101;      // discrete_inputs
-    int A_ROBOT_BUSY    = 102;      // discrete_inputs
-    int A_DO3_PULSE     = 103;
-    int A_DO4_PULSE     = 104;
-    int A_DO5_PULSE     = 105;
+    int A_ROBOT_READY   {100};      // discrete_inputs
+    int A_PICK_DONE     {101};      // discrete_inputs
+    int A_ROBOT_BUSY    {102};      // discrete_inputs
+    int A_DO3_PULSE     {103};
+    int A_DO4_PULSE     {104};
+    int A_DO5_PULSE     {105};
 
-    int A_TARGET_BASE   = 132;      // holding: TARGET_POSE_STAGING_BASE (132..143)
-    int A_TARGET_BASE_PICK   = 132; // holding: TARGET_POSE_STAGING_BASE (132..143)
-    int A_TARGET_BASE_PLACE  = 144; // holding: TARGET_POSE_STAGING_BASE (144..155)
+    int A_TARGET_BASE   {132};      // holding: TARGET_POSE_STAGING_BASE (132..143)
+    int A_TARGET_BASE_PICK   {132}; // holding: TARGET_POSE_STAGING_BASE (132..143)
+    int A_TARGET_BASE_PLACE  {144}; // holding: TARGET_POSE_STAGING_BASE (144..155)
+
+    int IR_JOINT_BASE   {340};        // input_registers: JOINT_BASE (340..351)
+    int IR_TCP_BASE     {388};        // input_registers: TCP_BASE (388..399)
+    int IR_WORD_PER_POSE   {12};         // 6개 실수값 × 2워드
+
+    QString IR_WORD_ORDER {"HI_LO"}; // "HI_LO" 또는 "LO_HI"
 /*
     // 선택 파라미터
     int A_SEQ_ID        = -1;
