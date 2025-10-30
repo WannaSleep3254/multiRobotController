@@ -68,7 +68,7 @@ EulerZYX toolRotate(float rx, float ry, float rz, float target_yaw)
         roll_radians, pitch_radians, yaw_radians);
 
     // 추가할 YAW 회전
-    double additional_yaw_degrees = 270;//rz - target_yaw;
+    double additional_yaw_degrees = target_yaw;//rz - target_yaw;
     double additional_yaw_radians = EulerAngleConverter::ConvertDegreesToRadians(additional_yaw_degrees);
 
     // 새로운 회전 행렬 계산
@@ -209,27 +209,27 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
 
         // 예: 주소 340부터 12개 레지스터 읽기
         if (start == 340 && data.size() >= 12) {
-            Pose6D tcp;
-            tcp.x  = regsToFloat(data[0],  data[1]);
-            tcp.y  = regsToFloat(data[2],  data[3]);
-            tcp.z  = regsToFloat(data[4],  data[5]);
-            tcp.rx = regsToFloat(data[6],  data[7]);
-            tcp.ry = regsToFloat(data[8],  data[9]);
-            tcp.rz = regsToFloat(data[10], data[11]);
-            m_kinState.tcp = tcp;
-            m_kinState.hasTcp = true;
+            Pose6D joint;
+            joint.x  = regsToFloat(data[0],  data[1]);
+            joint.y  = regsToFloat(data[2],  data[3]);
+            joint.z  = regsToFloat(data[4],  data[5]);
+            joint.rx = regsToFloat(data[6],  data[7]);
+            joint.ry = regsToFloat(data[8],  data[9]);
+            joint.rz = regsToFloat(data[10], data[11]);
+            m_kinState.joints = joint;
+            m_kinState.hasJoints = true;
         }
         // 예: 주소 388부터 12개 레지스터 읽기
         else if (start == 388 && data.size() >= 12) {
-            Pose6D j;
-            j.x  = regsToFloat(data[0],  data[1]);  // J1
-            j.y  = regsToFloat(data[2],  data[3]);  // J2
-            j.z  = regsToFloat(data[4],  data[5]);  // J3
-            j.rx = regsToFloat(data[6],  data[7]);  // J4
-            j.ry = regsToFloat(data[8],  data[9]);  // J5
-            j.rz = regsToFloat(data[10], data[11]); // J6
-            m_kinState.joints = j;
-            m_kinState.hasJoints = true;
+            Pose6D tcp;
+            tcp.x  = regsToFloat(data[0],  data[1]);  // J1
+            tcp.y  = regsToFloat(data[2],  data[3]);  // J2
+            tcp.z  = regsToFloat(data[4],  data[5]);  // J3
+            tcp.rx = regsToFloat(data[6],  data[7]);  // J4
+            tcp.ry = regsToFloat(data[8],  data[9]);  // J5
+            tcp.rz = regsToFloat(data[10], data[11]); // J6
+            m_kinState.tcp = tcp;
+            m_kinState.hasTcp = true;
         }
         if (m_kinState.hasTcp && m_kinState.hasJoints) {
             m_kinState.tsMs = QDateTime::currentMSecsSinceEpoch();
@@ -448,15 +448,33 @@ void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct
 //    if (A_SPEED_PCT >= 0) m_bus->writeHolding(A_SPEED_PCT, quint16(speedPct));
 //    if (A_SEQ_ID   >= 0) m_bus->writeHolding(A_SEQ_ID,   ++m_seq);
 
+    qDebug() <<"[ORCH] publishPoseWithKind:"
+             <<"pose="<<pose
+             <<"speedPct="<<speedPct
+             <<"kind="<<kind;
+
     // 2) 주소 선택: kind=place면 A_TARGET_BASE_PLACE, pick이면 A_TARGET_BASE_PICK, 없으면 기본 A_TARGET_BASE
     int base = A_TARGET_BASE;
+    float yaw = 0;
     if (!kind.compare("place", Qt::CaseInsensitive) && A_TARGET_BASE_PLACE >= 0)
+    {
         base = A_TARGET_BASE_PLACE;
+        qDebug()<<"[ORCH] Using TARGET_BASE_PLACE ="<<base;
+        yaw = 0;
+    }
     else if (!kind.compare("pick", Qt::CaseInsensitive) && A_TARGET_BASE_PICK >= 0)
+    {
         base = A_TARGET_BASE_PICK;
+        qDebug()<<"[ORCH] Using TARGET_BASE_PICK ="<<base;
+        yaw = -180;
+    }
+    else
+    {
+        qDebug()<<"[ORCH] Using default TARGET_BASE ="<<base;
+    }
 
     // 3) 포즈를 12워드(6float)로 인코딩해서 쓰기
-    EulerZYX rpy = toolRotate(pose[3], pose[4], pose[5], -90.0);
+    EulerZYX rpy = toolRotate(pose[3], pose[4], pose[5], yaw);
     QVector<double> rotate_pose{pose};
     rotate_pose[3] = rpy.roll;
     rotate_pose[4] = rpy.pitch;
@@ -464,7 +482,8 @@ void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct
 
     QVector<quint16> regs; regs.reserve(12);
     for (int i=0;i<6;i++) {
-        quint16 hi, lo; floatToRegs(float(rotate_pose[i]), hi, lo);
+        quint16 hi, lo;
+        floatToRegs(float(rotate_pose[i]), hi, lo);
         regs << hi << lo;
     }
     m_bus->writeHoldingBlock(base, regs);
@@ -473,13 +492,27 @@ void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct
     // FSM 시작: PUBLISH_REQ=1 → BUSY↑ → … → DONE↑ → ACK 후 DONE
    // kind에 따라 coil 분기
     if (!kind.compare("place", Qt::CaseInsensitive) && A_PUBLISH_PLACE > 0)
-        m_bus->writeCoil(A_PUBLISH_PLACE, true);
-    else
-        m_bus->writeCoil(A_PUBLISH_PICK, true);
+    {
+        QTimer::singleShot(50, this, [this]{
+            m_bus->writeCoil(A_PUBLISH_PLACE, true);
+        });
+        QTimer::singleShot(200, this, [this]{
+            m_bus->writeCoil(A_PUBLISH_PLACE, false);
+        });
+    }
+    else if (!kind.compare("pick", Qt::CaseInsensitive) && A_PUBLISH_PICK >= 0)
+    {
+        QTimer::singleShot(50, this, [this]{
+            m_bus->writeCoil(A_PUBLISH_PICK, true);
+        });
+        QTimer::singleShot(200, this, [this]{
+            m_bus->writeCoil(A_PUBLISH_PICK, false);
+        });
+    }
 
     // FSM은 동일하게 WaitPickStart로 진입
-    setState(State::WaitPickStart);
-    m_stateTick.restart();
+//    setState(State::WaitPickStart);
+//    m_stateTick.restart();
 }
 
 void Orchestrator::publishPoseToRobot1(const QVector<double>& pose, int speedPct)

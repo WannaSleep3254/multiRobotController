@@ -417,6 +417,7 @@ void RobotManager::processVisionPose(const QString& id, const QString &kind, con
     // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
     if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
         it->orch->publishPoseWithKind(v, speed, kind);
+        if (it->model) it->model->add(p); // 필요 시 큐에 쌓고 나중에 실행
     } else {
         if (it->model) it->model->add(p); // 필요 시 큐에 쌓고 나중에 실행
     }
