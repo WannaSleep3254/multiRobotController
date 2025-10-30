@@ -453,23 +453,23 @@ void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct
              <<"speedPct="<<speedPct
              <<"kind="<<kind;
 
-    // 2) 주소 선택: kind=place면 A_TARGET_BASE_PLACE, pick이면 A_TARGET_BASE_PICK, 없으면 기본 A_TARGET_BASE
-    int base = A_TARGET_BASE;
-    float yaw = 0;
+    // 2) 주소 선택:
+    int base = A_TARGET_BASE;   // 기본 TARGET_BASE
+    float yaw = 0;              // 기본 YAW 오프셋
     if (!kind.compare("place", Qt::CaseInsensitive) && A_TARGET_BASE_PLACE >= 0)
-    {
+    {   // kind가 "place"이고 A_TARGET_BASE_PLACE >= 0이면 해당 주소 사용
         base = A_TARGET_BASE_PLACE;
         qDebug()<<"[ORCH] Using TARGET_BASE_PLACE ="<<base;
         yaw = 0;
     }
     else if (!kind.compare("pick", Qt::CaseInsensitive) && A_TARGET_BASE_PICK >= 0)
-    {
+    {   // kind가 "pick"이고 A_TARGET_BASE_PICK >= 0이면 해당 주소 사용
         base = A_TARGET_BASE_PICK;
         qDebug()<<"[ORCH] Using TARGET_BASE_PICK ="<<base;
         yaw = -180;
     }
     else
-    {
+    {   // 그 외에는 기본 A_TARGET_BASE 사용
         qDebug()<<"[ORCH] Using default TARGET_BASE ="<<base;
     }
 
@@ -490,9 +490,9 @@ void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct
 
     // 4) FSM 규칙대로 PUBLISH_REQ 올리고 시작
     // FSM 시작: PUBLISH_REQ=1 → BUSY↑ → … → DONE↑ → ACK 후 DONE
-   // kind에 따라 coil 분기
+    // kind에 따라 coil 분기
     if (!kind.compare("place", Qt::CaseInsensitive) && A_PUBLISH_PLACE > 0)
-    {
+    {   // kind가 "place"이고 A_PUBLISH_PLACE >= 0이면 해당 주소 사용
         QTimer::singleShot(50, this, [this]{
             m_bus->writeCoil(A_PUBLISH_PLACE, true);
         });
@@ -501,7 +501,7 @@ void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct
         });
     }
     else if (!kind.compare("pick", Qt::CaseInsensitive) && A_PUBLISH_PICK >= 0)
-    {
+    {   // kind가 "pick"이고 A_PUBLISH_PICK >= 0이면 해당 주소 사용
         QTimer::singleShot(50, this, [this]{
             m_bus->writeCoil(A_PUBLISH_PICK, true);
         });
