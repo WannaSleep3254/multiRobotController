@@ -46,7 +46,9 @@ public slots:
 
     void applyAddressMap(const QVariantMap& m);
 
-    void publishPoseWithKind(const QVector<double>& pose, int speedPct, const QString& kind);
+    void publishPickPlacePoses(const QVector<double>& pick, const QVector<double>& place, int speedPct);
+
+    void publishPoseWithKind(const QVector<double>& pose, int speedPct, const QString& kind);   
     void publishPoseToRobot1(const QVector<double>& pose, int speedPct = 50);
 
 signals:

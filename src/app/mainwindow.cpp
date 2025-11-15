@@ -44,6 +44,12 @@ MainWindow::MainWindow(QWidget *parent)
                 onLog(prefix + line, level);
             });
 
+    connect(m_mgr, &RobotManager::bulkProcessFinished, this,
+            [this](const QString& robotId){
+                if (robotId == "A")
+                    bulkReady();
+            });
+
     m_split  = new QSplitter(Qt::Horizontal, this);
     m_panelA = new RobotPanel(this);
     m_panelB = new RobotPanel(this);
@@ -116,6 +122,21 @@ void MainWindow::initVisionServer()
             Q_UNUSED(seq);
             m_mgr->processVisionPose(robot, kind, p, ex);
         });
+
+    connect(m_visionServer, &VisionServer::poseBulkReceived, this,
+        [this](const QString& robot, const Pose6D& pick, const Pose6D& place, quint32 seq, const QVariantMap& ex){
+            Q_UNUSED(seq);
+            qDebug()<<"[VS] Bulk Pose received for robot"<<robot;
+            // 로봇 매니저에 발행
+            m_mgr->processVisionPoseBulk(robot, pick, place, ex);
+        });
+
+    connect(m_visionServer, &VisionServer::commandReceived, this,
+        [this](const QString& robotId, const QString& type, quint32 seq){
+            Q_UNUSED(seq);
+            bulkStop();
+        });
+
 #endif
     // 8) 다건 좌표 수신 (예: Vision이 여러 픽 포인트를 한번에 전달)
 }
@@ -249,3 +270,30 @@ void MainWindow::on_btnPause_clicked()
     m_mgr->triggerProcessC("B", 200);
 }
 
+
+void MainWindow::on_pushButton_bulk_clicked()
+{
+    flag_bulkRunning = true;
+    bulkRequest();
+}
+
+void MainWindow::bulkStop()
+{
+    flag_bulkRunning = false;
+}
+
+void MainWindow::bulkRequest()
+{
+    static quint32 seq = 1;
+    m_visionServer->requestPoseBulk("bulk", seq++);
+}
+
+void MainWindow::bulkReady()
+{
+    if(flag_bulkRunning)
+    {
+        QTimer::singleShot(500, this, [this]{
+            bulkRequest();
+        });
+    }
+}

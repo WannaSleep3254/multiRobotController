@@ -75,23 +75,30 @@
        </spacer>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButton_bulk">
+        <property name="text">
+         <string>1-Bulk</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="btnStart">
         <property name="text">
-         <string>Req1</string>
+         <string>3-A</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="btnStop">
         <property name="text">
-         <string>Req2</string>
+         <string>3-B</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="btnPause">
         <property name="text">
-         <string>Req3</string>
+         <string>3-C</string>
         </property>
        </widget>
       </item>

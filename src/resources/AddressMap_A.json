@@ -1,36 +1,23 @@
 {
   "coils": {
-    "PUBLISH_REQ": 100,
-    "FAULT_RESET_REQ": 101,
-    "PAUSE_REQ": 102,
-    "RESUME_REQ": 103,
-    "PARAM_COMMIT": 104,
-    "ABORT_REQ": 105,
-    "HOME_REQ": 106,
-    "GRIP_OPEN_REQ": 107,
-    "GRIP_CLOSE_REQ": 108,
-    "VACUUM_ON_REQ": 109,
-    "VACUUM_OFF_REQ": 110
+    "PUBLISH_PICK": 100,
+    "PUBLISH_PLACE": 101,
+    "DI2": 102,
+    "DI3": 103,
+    "DI4": 104
   },
   "discrete_inputs": {
     "ROBOT_READY": 100,
     "PICK_DONE": 101,
     "ROBOT_BUSY": 102,
-    "SAFE_DOOR": 103,
-    "LIGHT_CURTAIN": 104,
-    "E_STOP": 105,
-    "ALARM_ACTIVE": 106,
-    "SERVO_ON": 107,
-    "COLLISION_DET": 108,
-    "TEACH_MODE": 109,
-    "AUTO_MODE": 110,
-    "STATUS_SUMMARY": 120,
-    "SAFE_SUMMARY": 121
+	"DO3_PULSE": 103,
+	"DO4_PULSE": 104,
+	"DO5_PULSE": 105
   },
   "holding": {
     "TARGET_POSE_BASE": 132,   "_comment" : "132..143 (float×6)",
 	"TARGET_POSE_PICK": 132,   "_comment" : "132..143 (float×6)",
-	"TARGET_POSE_PICK": 144,   "_comment" : "144..155 (float×6)",
+	"TARGET_POSE_PLACE": 144,   "_comment" : "144..155 (float×6)",
     "SEQ_ID": 144,
     "PAYLOAD_CKSUM": 145,
     "SPEED_PCT": 146,

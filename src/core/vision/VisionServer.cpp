@@ -169,30 +169,81 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
     const auto extras = collectExtras(obj);
 
     if (type == "pose") {
-        Pose6D p{};
-        if (!parsePoseObj(obj, p)) {
-            qDebug()<<"[VS] Pose parsing failed";
-            ++st.jsonErr; ++m_global.jsonErr;
-            sendAck(from, seq, "error", "missing_fields");
-            ++st.ackErr; ++m_global.ackErr;
-            return;
-        }
-//        qDebug()<<"[VS] Pose parsed:"<<p.x<<p.y<<p.z<<p.rx<<p.ry<<p.rz<<dir;
-        if(kind.isEmpty())
+        if(robot=="A" && kind=="bulk" && dir==1)
         {
-            //TODO: kind 이 없으면 에러 처리
-            qDebug()<<"[VS] Pose kind missing";
-            ++st.jsonErr; ++m_global.jsonErr;
-            sendAck(from, seq, "error", "missing_kind");
-            ++st.ackErr; ++m_global.ackErr;
+            // bulk pick/place 좌표
+            Pose6D pick{}, place{};
+            // pick
+            if(obj.contains("pick")&&obj["pick"].isObject())
+            {
+                parsePoseObj(obj["pick"].toObject(), pick);
+                //qDebug()<<"[VS] Pick Pose parsed:"<<pick.x<<pick.y<<pick.z<<pick.rx<<pick.ry<<pick.rz;
+            }
+            else
+            {
+                qDebug()<<"[VS] Pick Pose parsing failed";
+                ++st.jsonErr; ++m_global.jsonErr;
+                sendAck(from, seq, "error", "missing_fields [pick]");
+                ++st.ackErr; ++m_global.ackErr;
+                return;
+            }
+            // place
+            if(obj.contains("place")&&obj["place"].isObject())
+            {
+                parsePoseObj(obj["place"].toObject(), place);
+                //qDebug()<<"[VS] place Pose parsed:"<<place.x<<place.y<<place.z<<place.rx<<place.ry<<place.rz;
+            }
+            else
+            {
+                qDebug()<<"[VS] PlacePose parsing failed";
+                ++st.jsonErr; ++m_global.jsonErr;
+                sendAck(from, seq, "error", "missing_fields [place]");
+                ++st.ackErr; ++m_global.ackErr;
+                return;
+            }
+//            qDebug()<<"[VS] Bulk Pose parsed:";
+            emit poseBulkReceived(robot, pick, place, seq, extras);
+            sendAck(from, seq, "ok");
+            ++st.jsonOk; ++m_global.jsonOk;
+            ++st.ackOk;  ++m_global.ackOk;
             return;
         }
+        else if(robot=="B")
+        {
+            Pose6D p{};
+            if (!parsePoseObj(obj, p)) {
+                qDebug()<<"[VS] Pose parsing failed";
+                ++st.jsonErr; ++m_global.jsonErr;
+                sendAck(from, seq, "error", "missing_fields [pose]");
+                ++st.ackErr; ++m_global.ackErr;
+                return;
+            }
+    //        qDebug()<<"[VS] Pose parsed:"<<p.x<<p.y<<p.z<<p.rx<<p.ry<<p.rz<<dir;
 
-        emit poseReceived(robot, kind, p, seq, extras);
-        sendAck(from, seq, "ok");
-        ++st.jsonOk; ++m_global.jsonOk;
-        ++st.ackOk;  ++m_global.ackOk;
-        return;
+            if(kind.isEmpty())
+            {
+                //TODO: kind 이 없으면 에러 처리
+                qDebug()<<"[VS] Pose kind missing";
+                ++st.jsonErr; ++m_global.jsonErr;
+                sendAck(from, seq, "error", "missing_kind");
+                ++st.ackErr; ++m_global.ackErr;
+                return;
+            }
+
+            emit poseReceived(robot, kind, p, seq, extras);
+            sendAck(from, seq, "ok");
+            ++st.jsonOk; ++m_global.jsonOk;
+            ++st.ackOk;  ++m_global.ackOk;
+            return;
+        }
+    }
+    else if(type == "stop")
+    {
+        if(robot=="A" && kind=="bulk" && dir==1)
+        {
+            qDebug() << "[VS] Bulk Stop command received for robot"<<robot;
+            emit commandReceived(robot, kind, seq);
+        }
     }
     else if(type == "status")
     {
@@ -270,6 +321,36 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
 }
 
 bool VisionServer::parsePoseObj(const QJsonObject& o, Pose6D &out) const
+{
+    if (!o.contains("x") || !o.contains("y") || !o.contains("z") ||
+        !o.contains("rx") || !o.contains("ry") || !o.contains("rz"))
+        return false;
+
+    out.x  = o.value("x").toDouble();
+    out.y  = o.value("y").toDouble();
+    out.z  = o.value("z").toDouble();
+    out.rx = o.value("rx").toDouble();
+    out.ry = o.value("ry").toDouble();
+    out.rz = o.value("rz").toDouble();
+    return true;
+}
+
+bool VisionServer::parsePickPoseObj(const QJsonObject& o, Pose6D &out) const
+{
+    if (!o.contains("x") || !o.contains("y") || !o.contains("z") ||
+        !o.contains("rx") || !o.contains("ry") || !o.contains("rz"))
+        return false;
+
+    out.x  = o.value("x").toDouble();
+    out.y  = o.value("y").toDouble();
+    out.z  = o.value("z").toDouble();
+    out.rx = o.value("rx").toDouble();
+    out.ry = o.value("ry").toDouble();
+    out.rz = o.value("rz").toDouble();
+    return true;
+}
+
+bool VisionServer::parsePlacePoseObj(const QJsonObject& o, Pose6D &out) const
 {
     if (!o.contains("x") || !o.contains("y") || !o.contains("z") ||
         !o.contains("rx") || !o.contains("ry") || !o.contains("rz"))
@@ -401,6 +482,24 @@ void VisionServer::requestCaptureKind(const char* kind, quint32 seq, int speed_p
 
     emit log(QString("[NET] request_pose(kind=%1, seq=%2, speed=%3) broadcast")
                  .arg(kind).arg(seq).arg(speed_pct));
+}
+
+void VisionServer::requestPoseBulk(const char* kind, quint32 seq)
+{
+    QJsonObject o{
+        {"type", "ready"},
+        {"kind", QString::fromUtf8(kind)},
+        {"robot", "A"},  // 1: 로봇1, 2: 로봇2},
+        {"dir", 2},  //0: none, 1: 비전->로봇(명령), 2: 로봇->비전(상태)},
+        {"seq",  int(seq)},
+        {"ts",   QDateTime::currentDateTimeUtc().toString(Qt::ISODate)}
+    };
+
+    const QByteArray line = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
+    qDebug()<<"[VS] Broadcasting request_pose:"<<QString::fromUtf8(line);
+    if (m_srv) m_srv->broadcast(line);
+    emit log(QString("[NET] request_pose(kind=%1, seq=%2 broadcast")
+                 .arg(kind).arg(seq));
 }
 
 void VisionServer::requestPoseKind(const char* kind, quint32 seq, int speed_pct)

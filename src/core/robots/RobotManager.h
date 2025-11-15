@@ -73,7 +73,9 @@ public:
 
     // ✅ VisionServer → MainWindow 경유로 호출할 처리 API
     void processVisionPose(const QString& id, const QString& kind, const Pose6D& p, const QVariantMap& extras);
-
+    // 벌크 픽&플레이스 좌표 처리
+    void processVisionPoseBulk(const QString& id, const Pose6D& pick, const Pose6D& place, const QVariantMap& extras);
+    // 코일 트리거
     void triggerByKey(const QString& id, const QString& coilKey, int pulseMs = 100);
     // 공정별 쇼트컷
     void triggerProcessA(const QString& id, int pulseMs = 100); // A_DI2
@@ -85,6 +87,9 @@ signals:
     void connectionChanged(const QString& id, bool connected);
     void stateChanged(const QString& id, int state, const QString& name);
     void currentRowChanged(const QString& id, int row);
+
+    void bulkProcessStarted(const QString& id);
+    void bulkProcessFinished(const QString& id);
 
     void log(const QString& line,
              Common::LogLevel level = Common::LogLevel::Info);

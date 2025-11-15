@@ -92,6 +92,11 @@ signals:
     void posesReceived(const QString& robotId, const QList<Pose6D>& poses,
                        quint32 seq, const QVariantMap& extras);
 
+    void poseBulkReceived(const QString& robotId, const Pose6D& pick, const Pose6D& place,
+                       quint32 seq, const QVariantMap& extras);
+
+    void commandReceived(const QString& robotId, const QString& type, quint32 seq);
+
     // 상태/로그
     void log(const QString& line);
     void started(const QHostAddress& addr, quint16 port);
@@ -104,6 +109,9 @@ private slots:
 private:
     // 내부 헬퍼
     bool parsePoseObj(const QJsonObject& o, Pose6D& out) const;
+    bool parsePickPoseObj(const QJsonObject& o, Pose6D& out) const;
+    bool parsePlacePoseObj(const QJsonObject& o, Pose6D& out) const;
+
     QVariantMap collectExtras(const QJsonObject& o) const;
     void sendAck(QTcpSocket* to, quint32 seq, const QString& status,
                  const QString& message = QString());
@@ -176,10 +184,14 @@ public:
     void requestPickPoseTo(const QString& targetId, quint32 seq = 0, int speed_pct = -1);
     void requestInspectPoseTo(const QString& targetId, quint32 seq = 0, int speed_pct = -1);
 
+    void requestPoseBulk(const char* kind, quint32 seq);
+
 private:
     void requestCaptureKind(const char* kind, quint32 seq, int speed_pct);
     void requestPoseKind(const char* kind, quint32 seq, int speed_pct);
     void requestPoseKindTo(const QString& targetId, const char* kind, quint32 seq, int speed_pct);
+
+
     QHash<QString, VisionRobotState> m_latest;  // robotId → 최신 상태 캐시
 
 };

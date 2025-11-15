@@ -387,11 +387,20 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
         if (!m_vsrv) return;
 
         qDebug()<<"[RM] processPulse from"<<rid<<"idx="<<idx;
-
-        static quint32 seq = 1;
-        if      (idx==0)    m_vsrv->requestCapture(seq++, "A");
-        else if (idx==1)    m_vsrv->requestCapture(seq++, "B");
-        else if (idx==2)    m_vsrv->requestCapture(seq++, "C");
+        if(rid=="A")
+        {
+            if(idx==0)
+            {
+                emit bulkProcessFinished(rid);
+            }
+        }
+        else if(rid=="B")
+        {
+            static quint32 seq = 1;
+            if      (idx==0)    m_vsrv->requestCapture(seq++, "A");
+            else if (idx==1)    m_vsrv->requestCapture(seq++, "B");
+            else if (idx==2)    m_vsrv->requestCapture(seq++, "C");
+        }
     });
 }
 
@@ -452,31 +461,55 @@ void RobotManager::processVisionPose(const QString& id, const QString &kind, con
     */
 }
 
-
-    void RobotManager::triggerByKey(const QString& id, const QString& coilKey, int pulseMs)
-    {
-        auto it = m_ctx.find(id);
-        if (it == m_ctx.end() || !it->bus) {
-            emit log(QString("[RM] trigger: no bus for %1").arg(id));
-            return;
-        }
-
-        const auto coils   = it.value().addr.value("coils").toMap();
-       int addr = coils.value(coilKey).toInt();
-
-        if (addr <= 0) {
-            emit log(QString("[RM] trigger: invalid key %1 for %2").arg(coilKey, id));
-            return;
-        }
-
-        // true → (pulseMs 후) false 로 펄스
-        it->bus->writeCoil(addr, true);
-        QTimer::singleShot(pulseMs, this, [bus=it->bus, addr]{
-            bus->writeCoil(addr, false);
-        });
-
-        emit log(QString("[RM] trigger %1(%2) pulsed %3ms").arg(coilKey).arg(addr).arg(pulseMs));
+void RobotManager::processVisionPoseBulk(const QString& id, const Pose6D& pick, const Pose6D& place, const QVariantMap& extras)
+{
+//    qDebug()<<"[RM] processVisionPoseBulk for"<<id;
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->orch) {
+        emit log(QString("[RM] no orchestrator for %1").arg(id)); return;
     }
+    const int speed = extras.value("speed_pct", 50).toInt();
+    const QVector<double> vPick { pick.x,  pick.y,  pick.z,  pick.rx,  pick.ry,  pick.rz };
+    const QVector<double> vPlace{ place.x, place.y, place.z, place.rx, place.ry, place.rz };
+    // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
+    if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
+        it->orch->publishPickPlacePoses(vPick, vPlace, speed);
+        if (it->model) {
+            it->model->add(pick);
+            it->model->add(place);
+        }
+    } else {
+        if (it->model) {
+            it->model->add(pick);
+            it->model->add(place);
+        }
+    }
+}
+
+void RobotManager::triggerByKey(const QString& id, const QString& coilKey, int pulseMs)
+{
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+
+    const auto coils   = it.value().addr.value("coils").toMap();
+   int addr = coils.value(coilKey).toInt();
+
+    if (addr <= 0) {
+        emit log(QString("[RM] trigger: invalid key %1 for %2").arg(coilKey, id));
+        return;
+    }
+
+    // true → (pulseMs 후) false 로 펄스
+    it->bus->writeCoil(addr, true);
+    QTimer::singleShot(pulseMs, this, [bus=it->bus, addr]{
+        bus->writeCoil(addr, false);
+    });
+
+    emit log(QString("[RM] trigger %1(%2) pulsed %3ms").arg(coilKey).arg(addr).arg(pulseMs));
+}
 
 void RobotManager::triggerProcessA(const QString& id, int pulseMs)
 {   // A_DI2

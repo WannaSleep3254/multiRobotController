@@ -29,16 +29,26 @@ public:
 
     void initVisionServer();
 
+    // 벌크
+    void bulkStop();
+    void bulkRequest();
+
+private slots:
+    void bulkReady();
+
+private:
+    bool flag_bulkRunning{false};
+
 private slots:
     void onHeartbeat(bool ok);
     void onLog(const QString& line);
     void onLog(const QString& line, Common::LogLevel level);
 
     void on_btnStart_clicked();
-
     void on_btnStop_clicked();
-
     void on_btnPause_clicked();
+
+    void on_pushButton_bulk_clicked();
 
 private:
     Ui::MainWindow *ui;

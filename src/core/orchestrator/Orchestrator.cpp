@@ -145,15 +145,7 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         get(A_DO3_PULSE , do3);
         get(A_DO4_PULSE , do4);
         get(A_DO5_PULSE , do5);
-/*
-        qDebug()<<"[ORCH] DI read:"
-                 <<"READY="<<ready
-                 <<"BUSY="<<busy
-                 <<"DONE="<<done
-                 <<"DO3="<<do3
-                 <<"DO4="<<do4
-                 <<"DO5="<<do5;
-*/
+
         // 에지 감지
         bool rRise = ( ready && !m_lastReady);
         bool bRise = ( busy && !m_lastBusy );
@@ -442,6 +434,48 @@ void Orchestrator::setState(Orchestrator::State s)
 
     emit log(QString("[FSM] %1 → %2").arg(prev, next), Common::LogLevel::Info);
     emit stateChanged(static_cast<int>(s), next);
+}
+
+void Orchestrator::publishPickPlacePoses(const QVector<double>& pick, const QVector<double>& place, int speedPct)
+{
+    qDebug() << "[ORCH] publishPickPlacePoses:"
+             << "pick=" <<pick
+             << "place=" <<place
+             << "speedPct=" <<speedPct;
+
+    int pick_base = A_TARGET_BASE_PICK;
+    int place_base = A_TARGET_BASE_PLACE;
+
+    // 포즈를 12워드(6float)로 인코딩해서 쓰기
+    QVector<quint16> pick_regs;
+    pick_regs.reserve(12);
+    for (int i=0;i<6;i++) {
+        quint16 hi, lo;
+        floatToRegs(float(pick[i]), hi, lo);
+        pick_regs << hi << lo;
+    }
+    m_bus->writeHoldingBlock(pick_base, pick_regs);
+    QTimer::singleShot(50, this, [this]{
+        m_bus->writeCoil(A_PUBLISH_PICK, true);
+    });
+    QTimer::singleShot(200, this, [this]{
+        m_bus->writeCoil(A_PUBLISH_PICK, false);
+    });
+
+    QVector<quint16> place_regs;
+    place_regs.reserve(12);
+    for (int i=0;i<6;i++) {
+        quint16 hi, lo;
+        floatToRegs(float(place[i]), hi, lo);
+        place_regs << hi << lo;
+    }
+    m_bus->writeHoldingBlock(place_base, place_regs);
+    QTimer::singleShot(50, this, [this]{
+        m_bus->writeCoil(A_PUBLISH_PLACE, true);
+    });
+    QTimer::singleShot(200, this, [this]{
+        m_bus->writeCoil(A_PUBLISH_PLACE, false);
+    });
 }
 
 void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct, const QString& kind)
