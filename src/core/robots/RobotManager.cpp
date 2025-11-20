@@ -471,6 +471,10 @@ void RobotManager::processVisionPoseBulk(const QString& id, const Pose6D& pick, 
     const int speed = extras.value("speed_pct", 50).toInt();
     const QVector<double> vPick { pick.x,  pick.y,  pick.z,  pick.rx,  pick.ry,  pick.rz };
     const QVector<double> vPlace{ place.x, place.y, place.z, place.rx, place.ry, place.rz };
+    if (pick.z<-8.5)
+    {
+//        vPick[2] = -8.5;
+    }
     // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
     if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
         it->orch->publishPickPlacePoses(vPick, vPlace, speed);
@@ -524,4 +528,14 @@ void RobotManager::triggerProcessB(const QString& id, int pulseMs)
 void RobotManager::triggerProcessC(const QString& id, int pulseMs)
 {   // A_DI4
     triggerByKey(id, "DI4", pulseMs);
+}
+
+void RobotManager::triggerClamp(const QString& id, const int& clamp, bool toggle)
+{
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    it->bus->writeCoil(clamp, toggle);
 }

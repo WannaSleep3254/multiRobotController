@@ -102,6 +102,34 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QPushButton" name="btn_Clamp1_on">
+        <property name="text">
+         <string>1_On</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_Clamp1_off">
+        <property name="text">
+         <string>1_Off</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_Clamp2_on">
+        <property name="text">
+         <string>2_On</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_Clamp2_off">
+        <property name="text">
+         <string>2_Off</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>

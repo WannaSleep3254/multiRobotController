@@ -50,6 +50,14 @@ private slots:
 
     void on_pushButton_bulk_clicked();
 
+    void on_btn_Clamp1_on_clicked();
+
+    void on_btn_Clamp1_off_clicked();
+
+    void on_btn_Clamp2_on_clicked();
+
+    void on_btn_Clamp2_off_clicked();
+
 private:
     Ui::MainWindow *ui;
 

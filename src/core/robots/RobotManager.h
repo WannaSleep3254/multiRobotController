@@ -82,6 +82,8 @@ public:
     void triggerProcessB(const QString& id, int pulseMs = 100); // A_DI3
     void triggerProcessC(const QString& id, int pulseMs = 100); // A_DI4
 
+    void triggerClamp(const QString& id, const int& clamp, bool toggle);
+
 signals:
     void heartbeat(const QString& id, bool ok);
     void connectionChanged(const QString& id, bool connected);

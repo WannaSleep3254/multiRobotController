@@ -284,7 +284,7 @@ void MainWindow::bulkStop()
 
 void MainWindow::bulkRequest()
 {
-    static quint32 seq = 1;
+    static quint32 seq = 0;
     m_visionServer->requestPoseBulk("bulk", seq++);
 }
 
@@ -297,3 +297,27 @@ void MainWindow::bulkReady()
         });
     }
 }
+
+void MainWindow::on_btn_Clamp1_on_clicked()
+{
+    m_mgr->triggerClamp("B",110, true);
+}
+
+
+void MainWindow::on_btn_Clamp1_off_clicked()
+{
+    m_mgr->triggerClamp("B",110, false);
+}
+
+
+void MainWindow::on_btn_Clamp2_on_clicked()
+{
+    m_mgr->triggerClamp("B",111, true);
+}
+
+
+void MainWindow::on_btn_Clamp2_off_clicked()
+{
+    m_mgr->triggerClamp("B",111, false);
+}
+

@@ -208,6 +208,17 @@ void VisionServer::onLine(QTcpSocket* from, const QByteArray& line)
             ++st.ackOk;  ++m_global.ackOk;
             return;
         }
+        if(robot=="A" && kind=="Sorting" && dir==1)
+        {
+            Pose6D pick{}, place{};
+            // pick
+            if(obj.contains("pick")&&obj["pick"].isObject())
+            {
+                parsePoseObj(obj["pick"].toObject(), pick);
+                //qDebug()<<"[VS] Pick Pose parsed:"<<pick.x<<pick.y<<pick.z<<pick.rx<<pick.ry<<pick.rz;
+                qDebug()<<pick.x<<pick.y<<pick.z<<pick.rx<<pick.ry<<pick.rz;
+            }
+        }
         else if(robot=="B")
         {
             Pose6D p{};
