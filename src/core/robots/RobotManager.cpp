@@ -418,9 +418,11 @@ void RobotManager::triggerByKey(const QString& id, const QString& coilKey, int p
         return;
     }
     // true → (pulseMs 후) false 로 펄스
-    it->bus->writeCoil(addr, true);
-    QTimer::singleShot(pulseMs, this, [bus=it->bus, addr]{
-        bus->writeCoil(addr, false);
+    QPointer<ModbusClient> busPtr = it->bus;
+    busPtr->writeCoil(addr, true);
+    QTimer::singleShot(pulseMs, this, [busPtr, addr]{
+        if (!busPtr) return;
+        busPtr->writeCoil(addr, false);
     });
 
     emit log(QString("[RM] trigger %1(%2) pulsed %3ms for %4").arg(coilKey).arg(addr).arg(pulseMs).arg(id));

@@ -62,7 +62,7 @@ private:
     QHash<int, PendingGroup> m_gantryMap;   // seq → group (1-2-3)
     QHash<int, PendingGroup> m_conveyorMap; // seq → group (4)
 
-    bool m_gantryOk, m_convOk;
+    bool m_gantryOk{true}, m_convOk{true};
     QSet<int> m_gantryPendingAxes;
     QSet<int> m_conveyorPendingAxes;
 };

@@ -91,7 +91,8 @@ void GentryManager::setup_motorStateMonitoring()
     QStringList stateMotorError;
     stateMotorError<<"NoError"<<"ReadError"<<"WriteError"<<"ConnectionError"<<"ConfigurationError"
                     <<"TimeoutError"<<"ProtocolError"<<"ReplyAbortedError"<<"UnknownError";
-    QObject::connect(motorController, &Leadshine::ELD2::comState, this, [=](int state){
+    //QObject::connect(motorController, &Leadshine::ELD2::comState, this, [=](int state){
+    QObject::connect(motorController, &Leadshine::ELD2::errorState, this, [=](int state){
         // 에러 상태
         /**
         QModbusDevice::NoError              0	No errors have occurred.
@@ -152,8 +153,8 @@ void GentryManager::doGentryReady()
     logMessage2("gentry move to X home position");
     motorController->reqWritePos(2, 0); //gentry z move 0mm
     logMessage2("gentry move to Z home position");
-    motorController->reqWritePos(3, -25020); //picker rotate 0 degree
-    logMessage2("picker rotate 0 degree");
+    motorController->reqWritePos(3, -25020); //picker rotate -90 degree
+    logMessage2("picker rotate -90 degree");
 }
 
 void GentryManager::startGantryMove()   // 1-2-3축 동시
@@ -166,6 +167,7 @@ void GentryManager::startGantryMove()   // 1-2-3축 동시
     g.ok = true;
     m_gantryMap.insert(seq, g);
     */
+    m_gantryOk = true;
     m_gantryPendingAxes = QSet<int>({1,2,3});
 }
 
@@ -179,6 +181,7 @@ void GentryManager::startConveyorMove() // 4축
     g.ok = true;
     m_conveyorMap.insert(seq, g);
 */
+    m_convOk = true;
     m_conveyorPendingAxes = QSet<int>({4});
 }
 
