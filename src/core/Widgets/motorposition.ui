@@ -1,0 +1,519 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>motorPosition</class>
+ <widget class="QDialog" name="motorPosition">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>740</height>
+   </rect>
+  </property>
+  <property name="font">
+   <font>
+    <pointsize>15</pointsize>
+    <bold>true</bold>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>서보 On/Off</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QPushButton" name="pushButton_ServoOn">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>On</string>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QPushButton" name="pushButton_ServoOff">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Off</string>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="title">
+      <string>X축</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="2" column="1">
+       <widget class="QPushButton" name="pushButton_X_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Move</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Left</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QPushButton" name="pushButton_X_3">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Move</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QPushButton" name="pushButton_X_1">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Move</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="label_2">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Center</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLineEdit" name="lineEdit_X_1">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>-100</string>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="lineEdit_X_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>0</string>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLineEdit" name="lineEdit_X_3">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>+100</string>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="label_3">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+          <kerning>true</kerning>
+         </font>
+        </property>
+        <property name="text">
+         <string>Right</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="title">
+      <string>Z축</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="1">
+       <widget class="QLabel" name="label_5">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Bottom</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QPushButton" name="pushButton_Z_1">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Move</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QPushButton" name="pushButton_Z_2">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Move</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Top</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLineEdit" name="lineEdit_Z_1">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>0</string>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="lineEdit_Z_2">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>-65</string>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_4">
+     <property name="title">
+      <string>픽커</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_4">
+      <item row="2" column="0">
+       <widget class="QPushButton" name="pushButton_P_1">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Move</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="label_8">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Place_2</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QPushButton" name="pushButton_P_2">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Move</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QPushButton" name="pushButton_P_3">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Move</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="label_7">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Place_1</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_6">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Pick</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLineEdit" name="lineEdit_P_1">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>0</string>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="lineEdit_P_2">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>-45</string>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLineEdit" name="lineEdit_P_3">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>-90</string>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_5">
+     <property name="title">
+      <string>컨베어</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_5">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>이동</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="lineEdit_C_1">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>-220</string>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QPushButton" name="pushButton_C_1">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Move</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -13,7 +13,8 @@ class QAbstractItemModel;
 class PickListModel;
 class ModbusClient;
 class Orchestrator;
-class VisionServer; // for friend declaration
+//class VisionServer; // for friend declaration
+class VisionClient;
 
 struct RobotContext {
     QString id;
@@ -32,7 +33,9 @@ public:
     void addRobot(const QString& id, const QString& host, int port,
                   const QVariantMap& addr, QObject* owner);
 #endif
-    void setVisionServer(VisionServer* srv)  { m_vsrv = srv; }
+//    void setVisionServer(VisionServer* srv)  { m_vsrv = srv; }
+    void setVisionClient(VisionClient* srv)  { m_vsrv = srv; }
+
     // 비전에서 온 포즈를 해당 로봇 큐로 적재
     void enqueuePose(const QString& id, const Pose6D& p);
     // MainWindow에서 바로 호출: TCP(6자유도) 즉시 발행
@@ -77,13 +80,39 @@ public:
     void processVisionPoseBulk(const QString& id, const Pose6D& pick, const Pose6D& place, const QVariantMap& extras);
     // 코일 트리거
     void triggerByKey(const QString& id, const QString& coilKey, int pulseMs = 100);
-    // 공정별 쇼트컷
-    void triggerProcessA(const QString& id, int pulseMs = 100); // A_DI2
-    void triggerProcessB(const QString& id, int pulseMs = 100); // A_DI3
-    void triggerProcessC(const QString& id, int pulseMs = 100); // A_DI4
 
-    void triggerClamp(const QString& id, const int& clamp, bool toggle);
+    ////////////////////////////////////////////////////////////////////////////////////////
+    /// 2025-11-21: VisionClient의 제어 API
+    /// /////////////////////////////////////////////////////////////////////////////////////
+    /* Sorting */
+    // 1. 소팅 툴 장착
+    void cmdSort_AttachTool();
+    // 2. 피킹 촬상위치로 이동
+    void cmdSort_MoveToPickupReady();
+    // 3. 피킹 동작 수행
+    void cmdSort_DoPickup(const Pose6D &pose);
+    // 4. 컨베이어 이동
+    void cmdSort_MoveToConveyor();
+    // 5. 플레이스 수행
+    void cmdSort_DoPlace(bool flip, int offset);
+    // gentry 툴 토글
+    void cmdSort_GentryTool(bool toggle);
 
+    /* Aligin */
+    // 6. 얼라인 초기화
+    void cmdAlign_Initialize();
+    // 7. ASSY 촬상위치로 이동
+    void cmdAlign_MoveToAssyReady();
+    // 8. 피킹 촬상위치로 이동
+    void cmdAlign_MoveToPickupReady();
+    // 9. 피킹 동작 수행
+    void cmdAlign_DoPickup(const Pose6D& pose);
+    // 10. 플레이스 동작 수행
+    void cmdAlign_DoPlace(const Pose6D& pose);
+    // 11. 클램프 동작 수행
+    void cmdAlign_Clamp(bool open);
+
+    ////////////////////////////////////////////////////////////////////////////////////////
 signals:
     void heartbeat(const QString& id, bool ok);
     void connectionChanged(const QString& id, bool connected);
@@ -100,6 +129,10 @@ signals:
                     const QString& line,
                     Common::LogLevel level = Common::LogLevel::Info);
 
+    void sortProcessFinished(const QString& id);
+    void reqGentryPalce();
+    void reqGentryReady();
+
 private slots:
     void onBusHeartbeat(bool ok);
     void onBusConnected();
@@ -112,7 +145,10 @@ private:
     void hookSignals(const QString& id, ModbusClient* bus, Orchestrator* orch);
 
     QHash<QString, bool> m_visionMode;  // ✅ 로봇별 비전 모드
-    VisionServer* m_vsrv{nullptr};  // ✅ 보관용
+//    VisionServer* m_vsrv{nullptr};  // ✅ 보관용
+    VisionClient* m_vsrv{nullptr};  // ✅ 보관용
+    float m_yawOffset{0.0f}; // vision pose yaw offset
+
 };
 
 #endif // ROBOTMANAGER_H

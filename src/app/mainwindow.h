@@ -4,13 +4,15 @@
 #include <QMainWindow>
 #include <QPointer>
 #include "LogLevel.h"
-#include "vision/VisionServer.h"
+#include "vision/VisionClient.h"
 
 class RobotManager;
+class GentryManager;
 class QLabel;
 class QFrame;
 class QCheckBox;
 class RobotPanel;
+class MotorPanel;
 class QSplitter;
 
 QT_BEGIN_NAMESPACE
@@ -27,47 +29,34 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    void initVisionServer();
-
-    // 벌크
-    void bulkStop();
-    void bulkRequest();
-
-private slots:
-    void bulkReady();
+    void initVisionClient();
 
 private:
-    bool flag_bulkRunning{false};
+    void handleRobotA(const RobotCommand& cmd);
+    void handleRobotB(const RobotCommand& cmd);
+
 
 private slots:
-    void onHeartbeat(bool ok);
     void onLog(const QString& line);
     void onLog(const QString& line, Common::LogLevel level);
 
-    void on_btnStart_clicked();
-    void on_btnStop_clicked();
-    void on_btnPause_clicked();
+    void onRobotCommand(const RobotCommand& cmd);
 
-    void on_pushButton_bulk_clicked();
-
-    void on_btn_Clamp1_on_clicked();
-
-    void on_btn_Clamp1_off_clicked();
-
-    void on_btn_Clamp2_on_clicked();
-
-    void on_btn_Clamp2_off_clicked();
+    void on_btnConnect_clicked();
+    void on_btnDisconnect_clicked();
 
 private:
     Ui::MainWindow *ui;
 
     QPointer<RobotManager> m_mgr;
+    QPointer<GentryManager> m_gentryMgr;
     QVariantMap m_addr; // parsed AddressMap.json
 
     QSplitter*   m_split = nullptr;
     RobotPanel*  m_panelA = nullptr;
     RobotPanel*  m_panelB = nullptr;
-    RobotPanel*  m_panelC = nullptr;
+    MotorPanel*  m_motorPanel = nullptr;
+//    RobotPanel*  m_panelC = nullptr;
 
     void loadRobotsFromConfig();
 
@@ -80,6 +69,11 @@ private:
 
     void setFsmLedColor(const QString& name);
 
-    VisionServer* m_visionServer{nullptr};
+    VisionClient* m_visionClient{nullptr};
+
+    bool m_sortingPlacePorcessActive{false};
+    bool m_sortingFlip{false};
+    bool m_sortingDock{false};
+    int  m_sortingOffset{0};
 };
 #endif // MAINWINDOW_H

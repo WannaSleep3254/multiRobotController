@@ -146,7 +146,7 @@ void ModbusClient::readInputs(int start, int count)
 
 void ModbusClient:: readDiscreteInputs(int start, int count)
 {
-    //qDebug()<<start<<count;
+//    qDebug()<<start<<count;
     auto *reply = m_client->sendReadRequest(
         QModbusDataUnit(QModbusDataUnit::DiscreteInputs, start, count), 1);
     if(!reply)

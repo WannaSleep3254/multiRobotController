@@ -588,14 +588,4 @@ void VisionServer::updateRobotState(const QString& id, const Pose6D& tcp, const 
     s.joints = joints;
     s.tsMs = tsMs;
     s.valid = true;
-#if false
-    emit log(QString("[VS] state cached (%1) tcp=[%2,%3,%4,%5,%6,%7]")
-                 .arg(id)
-                 .arg(tcp.x, 0, 'f', 1)
-                 .arg(tcp.y, 0, 'f', 1)
-                 .arg(tcp.z, 0, 'f', 1)
-                 .arg(tcp.rx, 0, 'f', 1)
-                 .arg(tcp.ry, 0, 'f', 1)
-                 .arg(tcp.rz, 0, 'f', 1));
-#endif
 }

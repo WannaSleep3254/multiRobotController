@@ -130,7 +130,6 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         //qDebug()<<"[ORCH] discreteInputsRead start="<<start<<"data="<<data<<data.size();
         auto get = [&](int addr, bool& out){
             int idx = addr - start;
-//            qDebug()<<"  get addr="<<addr<<"idx="<<idx;
             if (idx >= 0 && idx < data.size())
                 out = data[idx];
         };
@@ -142,10 +141,17 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
 
         // DO3/DO4/DO5 펄스 감지
         bool do3=m_lastDO3, do4=m_lastDO4, do5=m_lastDO5;
+        bool do6=m_lastDO6, do7=m_lastDO7, do8=m_lastDO8;
+        bool do9=m_lastDO9;
+
         get(A_DO3_PULSE , do3);
         get(A_DO4_PULSE , do4);
         get(A_DO5_PULSE , do5);
-
+        get(A_DO6_PULSE , do6);
+        get(A_DO7_PULSE , do7);
+        get(A_DO8_PULSE , do8);
+        get(A_DO9_PULSE , do9);
+/*
         // 에지 감지
         bool rRise = ( ready && !m_lastReady);
         bool bRise = ( busy && !m_lastBusy );
@@ -187,12 +193,39 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         m_lastReady = ready;
         m_lastBusy  = busy;
         m_lastDone  = done;
-
+*/
         // === 상승에지 → 공정 인덱스 배출 ===
-        if (!m_lastDO3 && do3) emit processPulse(m_robotId, 0); // 공정 1
-        if (!m_lastDO4 && do4) emit processPulse(m_robotId, 1); // 공정 2
-        if (!m_lastDO5 && do5) emit processPulse(m_robotId, 2); // 공정 3
+        if (!m_lastDO3 && do3)
+        {
+            emit processPulse(m_robotId, 0); // 공정 0: INIT
+        }
+        if (!m_lastDO4 && do4)
+        {
+            emit processPulse(m_robotId, 1); // 공정 1: READY
+        }
+        if (!m_lastDO5 && do5)
+        {
+            emit processPulse(m_robotId, 2); // 공정 2: ASSY
+        }
+        if (!m_lastDO6 && do6)
+        {
+            emit processPulse(m_robotId, 3); // 공정 3: PICK
+        }
+        if (!m_lastDO7 && do7)
+        {
+            emit processPulse(m_robotId, 4); // 공정 4: PLACE
+        }
+        if (!m_lastDO8 && do8)
+        {
+            emit processPulse(m_robotId, 5); // 공정 5: CLAMP
+        }
+        if (!m_lastDO9 && do9)
+        {
+            emit processPulse(m_robotId, 6); // 공정 5: CLAMP
+        }
         m_lastDO3 = do3; m_lastDO4 = do4; m_lastDO5 = do5;
+        m_lastDO6 = do6; m_lastDO7 = do7; m_lastDO8 = do8;
+        m_lastDO8 = do8; m_lastDO9 = do9;
     });
 
     connect(m_bus, &ModbusClient::inputRead, this, [this](int start, const QVector<quint16>& data){
@@ -281,12 +314,20 @@ void Orchestrator::applyAddressMap(const QVariantMap& m)
     getAddr(di, "DO3_PULSE", A_DO3_PULSE);
     getAddr(di, "DO4_PULSE", A_DO4_PULSE);
     getAddr(di, "DO5_PULSE", A_DO5_PULSE);
+    getAddr(di, "DO6_PULSE", A_DO6_PULSE);
+    getAddr(di, "DO7_PULSE", A_DO7_PULSE);
+    getAddr(di, "DO8_PULSE", A_DO8_PULSE);
+    getAddr(di, "DO9_PULSE", A_DO9_PULSE);
 
     getAddr(coils, "PUBLISH_PICK", A_PUBLISH_PICK);
     getAddr(coils, "PUBLISH_PLACE", A_PUBLISH_PLACE);
     getAddr(coils, "DI2", A_DI2);
     getAddr(coils, "DI3", A_DI3);
     getAddr(coils, "DI4", A_DI4);
+    getAddr(coils, "DI5", A_DI5);
+    getAddr(coils, "DI6", A_DI6);
+    getAddr(coils, "DI7", A_DI7);
+    getAddr(coils, "DI8", A_DI8);
 
     getAddr(holding, "TARGET_POSE_BASE", A_TARGET_BASE);
     getAddr(holding, "TARGET_POSE_PICK", A_TARGET_BASE_PICK);
@@ -307,108 +348,7 @@ void Orchestrator::cycle()
     if(IR_TCP_BASE > 0)
         m_bus->readInputs(IR_TCP_BASE, IR_WORD_PER_POSE);
 
-    m_bus->readDiscreteInputs(A_ROBOT_READY, 6);
-#if false
-    switch(m_state) {
-    case State::Idle:
-        return;
-
-    case State::WaitRobotReady: {
-
-        const int diStart = std::min({A_ROBOT_READY, A_PICK_DONE, A_ROBOT_BUSY, A_DO3_PULSE, A_DO4_PULSE, A_DO5_PULSE});
-        const int diEnd   = std::max({A_ROBOT_READY, A_PICK_DONE, A_ROBOT_BUSY, A_DO3_PULSE, A_DO4_PULSE, A_DO5_PULSE});
-        //m_bus->readDiscreteInputs(diStart, diEnd - diStart + 1);
-        m_bus->readDiscreteInputs(100, 6);
-
-/*
-        if (m_stateTick.elapsed() > A_READY_TIMEOUT_MS) {
-            emit log("[WARN] WaitRobotReady timeout", Common::LogLevel::Debug);
-            m_stateTick.restart();
-        }
-*/
-        break;
-    }
-    case State::PublishTarget: {
-        const int total = m_model ? m_model->rowCount() : 0;
-        if (total <= 0) {
-            emit log("[FSM] No targets. Waiting...", Common::LogLevel::Debug);
-            return;
-        }
-        if (m_currentRow+1 >= total) {
-            if (m_repeat) {
-                m_currentRow = 0;
-            } else {
-                emit log("[FSM] Reached end of list. Waiting...", Common::LogLevel::Info);
-                return;
-            }
-        } else {
-            ++m_currentRow;
-        }
-        if (m_currentRow < 0 || m_currentRow >= total) {
-            emit log("[FSM] Invalid row index, skip publish", Common::LogLevel::Warn);
-            return;
-        }
-        if (m_model)
-            m_model->setActiveRow(m_currentRow);
-
-        const auto pt = m_model->getRow(m_currentRow);
-
-        emit currentRowChanged(m_currentRow);
-
-        QVector<quint16> regs;
-        regs.reserve(12);
-
-//KJW -2025-10-22
-        EulerZYX rpy = toolRotate(pt.rx, pt.ry, pt.rz, -90.0);
-        const float target[6] = {
-            static_cast<float>(pt.x), static_cast<float>(pt.y), static_cast<float>(pt.z),
-            static_cast<float>(rpy.roll), static_cast<float>(rpy.pitch), static_cast<float>(rpy.yaw)
-        };
-//
-
-        for (int i=0;i<6;++i) {
-            quint16 hi, lo; floatToRegs(target[i], hi, lo);
-            regs.push_back(hi);
-            regs.push_back(lo);
-        }
-
-        m_bus->writeHoldingBlock(A_TARGET_BASE, regs);
-        m_bus->writeCoil(A_PUBLISH_REQ, true);
-        emit log(QString("[FSM] Published #%1 @%2..%3 (X=%4 Y=%5 Z=%6 | Rx=%7 Ry=%8 Rz=%9)")
-                     .arg(m_currentRow)
-                     .arg(A_TARGET_BASE).arg(A_TARGET_BASE + regs.size() - 1)
-                     .arg(pt.x,0,'f',3).arg(pt.y,0,'f',3).arg(pt.z,0,'f',3)
-                     .arg(pt.rx,0,'f',3).arg(pt.ry,0,'f',3).arg(pt.rz,0,'f',3)
-                 , Common::LogLevel::Info);
-
-        setState(State::WaitPickStart);     // BUSY 상승 대기
-        m_stateTick.restart();
-        break; }
-
-    case State::WaitPickStart:
-    case State::WaitPickDone:
-    case State::WaitDoneClear:
-#if false
-        m_bus->readDiscreteInputs(qMin(A_ROBOT_READY, A_ROBOT_BUSY),
-                                  qAbs(A_ROBOT_BUSY - A_ROBOT_READY) + 1);
-#else
-    {
-        const int diStart = std::min({A_ROBOT_READY, A_PICK_DONE, A_ROBOT_BUSY});
-        const int diEnd   = std::max({A_ROBOT_READY, A_PICK_DONE, A_ROBOT_BUSY});
-        m_bus->readDiscreteInputs(diStart, diEnd - diStart + 1);
-    }
-#endif
-    /*
-        if (m_stateTick.elapsed() > A_CMD_TIMEOUT_MS) {
-            emit log("[ERR] Command timeout");
-            m_bus->writeCoil(A_PUBLISH_REQ, false);
-            m_state = State::WaitRobotReady;
-            m_stateTick.restart();
-        }
-    */
-        break;
-    }
-#endif
+    m_bus->readDiscreteInputs(A_ROBOT_READY, 10);
 }
 
 QString Orchestrator::stateName(Orchestrator::State s)
@@ -477,19 +417,14 @@ void Orchestrator::publishPickPlacePoses(const QVector<double>& pick, const QVec
         m_bus->writeCoil(A_PUBLISH_PLACE, false);
     });
 }
-
+// KJW 2025-11-24: 포즈 발행 함수 개선:
 void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct, const QString& kind)
 {
-    // 1) 속도/시퀀스 등 부가 파라미터
-//    if (A_SPEED_PCT >= 0) m_bus->writeHolding(A_SPEED_PCT, quint16(speedPct));
-//    if (A_SEQ_ID   >= 0) m_bus->writeHolding(A_SEQ_ID,   ++m_seq);
-
     qDebug() <<"[ORCH] publishPoseWithKind:"
              <<"pose="<<pose
              <<"speedPct="<<speedPct
              <<"kind="<<kind;
 
-    // 2) 주소 선택:
     int base = A_TARGET_BASE;   // 기본 TARGET_BASE
     float yaw = 0;              // 기본 YAW 오프셋
     if (!kind.compare("place", Qt::CaseInsensitive) && A_TARGET_BASE_PLACE >= 0)
@@ -502,7 +437,24 @@ void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct
     {   // kind가 "pick"이고 A_TARGET_BASE_PICK >= 0이면 해당 주소 사용
         base = A_TARGET_BASE_PICK;
         qDebug()<<"[ORCH] Using TARGET_BASE_PICK ="<<base;
-        yaw = -180;
+        yaw = 0;
+        // KJW 2025-12-02: 로봇 ID "A"의 픽 포즈의 YAW 제한값 적용
+        // 툴의 기본자세는 (180,0,-90), rz가 90도 근처일때 +30/-30 오프셋 적용.
+#if true
+        if(m_robotId == "A")
+        {
+            if( 60 < pose[5] && pose[5]<= 90 )
+            {
+                yaw = +30;
+                m_yawOffset=+30;
+            }
+            else if(90 <= pose[5] && pose[5] <120)
+            {
+                yaw = -30;
+                m_yawOffset=-30;
+            }
+        }
+#endif
     }
     else
     {   // 그 외에는 기본 A_TARGET_BASE 사용
@@ -545,10 +497,25 @@ void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct
             m_bus->writeCoil(A_PUBLISH_PICK, false);
         });
     }
+}
 
-    // FSM은 동일하게 WaitPickStart로 진입
-//    setState(State::WaitPickStart);
-//    m_stateTick.restart();
+void Orchestrator::publishFlip_Offset(bool flip, int offset, float yaw)
+{
+    int base = A_TARGET_BASE_PLACE;   // 기본 TARGET_BASE_PLACE
+
+    float val[3];
+    val[0] = flip ? 1.0f : 0.0f;
+    val[1] = static_cast<double>(offset);
+    val[2] = yaw;
+
+    QVector<quint16> regs; regs.reserve(6);
+    for (int i=0;i<3;i++) {
+        quint16 hi, lo;
+        floatToRegs(val[i], hi, lo);
+        regs << hi << lo;
+    }
+
+    m_bus->writeHoldingBlock(base, regs);
 }
 
 void Orchestrator::publishPoseToRobot1(const QVector<double>& pose, int speedPct)
@@ -569,22 +536,6 @@ void Orchestrator::publishPoseToRobot1(const QVector<double>& pose, int speedPct
 
     // HOLDING에 좌표 블록 쓰기 (TARGET_POSE_BASE = 132..143)
     m_bus->writeHoldingBlock(A_TARGET_BASE, regs);
-/*
-    // 속도 등 파라미터
-    if (A_SPEED_PCT > 0)
-        m_bus->writeHolding(A_SPEED_PCT, quint16(std::clamp(speedPct,0,100)));
-
-    // 간단한 페이로드 체크섬/SEQ (옵션: 사용 중일 때만)
-    if (A_SEQ_ID > 0) {
-        m_seq++;
-        m_bus->writeHolding(A_SEQ_ID, m_seq);
-    }
-    if (A_PAYLOAD_CKSUM > 0) {
-        // 아주 단순 합계 체크섬(데모)
-        quint32 sum=0; for (auto v: regs) sum += v;
-        m_bus->writeHolding(A_PAYLOAD_CKSUM, quint16(sum & 0xFFFF));
-    }
-*/
     // FSM: Publish 시작 (PUBLISH_REQ = 1)
     m_bus->writeCoil(A_PUBLISH_PICK, true);
     emit log("[FSM] PUBLISH_REQ=1 (Robot1)");

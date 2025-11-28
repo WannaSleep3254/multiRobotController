@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>motorTest</class>
+ <widget class="QDialog" name="motorTest">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>577</height>
+   </rect>
+  </property>
+  <property name="font">
+   <font>
+    <pointsize>15</pointsize>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0" colspan="2">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="font">
+      <font>
+       <pointsize>15</pointsize>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="title">
+      <string>제어 축</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QCheckBox" name="checkBox_SelectX">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>X 축</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBox_SelectZ">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Z 축</string>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBox_SelectP">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>픽커</string>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBox_SelectC">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>컨베어</string>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="2">
+    <widget class="QGroupBox" name="groupBox_6">
+     <property name="font">
+      <font>
+       <pointsize>15</pointsize>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="title">
+      <string>알람/에러</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <item>
+       <widget class="QPushButton" name="pushButton_ErrorCheck">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>로그</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_ErrorClear">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>초기화</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="2">
+    <widget class="QGroupBox" name="groupBox_5">
+     <property name="font">
+      <font>
+       <pointsize>15</pointsize>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="title">
+      <string>끝단 이동</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <widget class="QPushButton" name="pushButton_LimitA">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>A</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_LimitB">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>B</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="font">
+      <font>
+       <pointsize>15</pointsize>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="title">
+      <string>조그 이동</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QPushButton" name="pushButton_JogLeft">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>역회전</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_JogRight">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>정회전</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="2">
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="font">
+      <font>
+       <pointsize>15</pointsize>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="title">
+      <string>서보 On/Off</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QPushButton" name="pushButton_ServoOn">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>On</string>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_ServoOff">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Off</string>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2">
+    <widget class="QGroupBox" name="groupBox_4">
+     <property name="font">
+      <font>
+       <pointsize>15</pointsize>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="title">
+      <string>리미트 이동</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="lineEdit_posMove">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>절대 위치 [pulse]</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QPushButton" name="pushButton_Move">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Move</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>상대 위치 [pulse]</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="lineEdit_posShift">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QPushButton" name="pushButton_Shift">
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Shift</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -25,12 +25,7 @@ vs->setEarlyFilterOptions(ef);
 // 서버 시작
 vs->start(QHostAddress::Any, 50000);
  */
-struct PickPose {
-    double x, y, z, rx, ry, rz;
-};
-struct JointPose {
-    double j1, j2, j3, j4, j5, j6;
-};
+
 
 struct VisionRobotState {
     Pose6D tcp;

@@ -48,7 +48,9 @@ public slots:
 
     void publishPickPlacePoses(const QVector<double>& pick, const QVector<double>& place, int speedPct);
 
-    void publishPoseWithKind(const QVector<double>& pose, int speedPct, const QString& kind);   
+    void publishPoseWithKind(const QVector<double>& pose, int speedPct, const QString& kind);
+    void publishFlip_Offset(bool flip, int offset, float yaw);
+
     void publishPoseToRobot1(const QVector<double>& pose, int speedPct = 50);
 
 signals:
@@ -90,6 +92,10 @@ private:
     int A_DI2           {102};      // coils
     int A_DI3           {103};      // coils
     int A_DI4           {104};      // coils
+    int A_DI5           {105};      // coils
+    int A_DI6           {106};      // coils
+    int A_DI7           {107};      // coils
+    int A_DI8           {108};      // coils
 
     int A_ROBOT_READY   {100};      // discrete_inputs
     int A_PICK_DONE     {101};      // discrete_inputs
@@ -97,6 +103,10 @@ private:
     int A_DO3_PULSE     {103};
     int A_DO4_PULSE     {104};
     int A_DO5_PULSE     {105};
+    int A_DO6_PULSE     {106};
+    int A_DO7_PULSE     {107};
+    int A_DO8_PULSE     {108};
+    int A_DO9_PULSE     {109};
 
     int A_TARGET_BASE   {132};      // holding: TARGET_POSE_STAGING_BASE (132..143)
     int A_TARGET_BASE_PICK   {132}; // holding: TARGET_POSE_STAGING_BASE (132..143)
@@ -122,8 +132,11 @@ private:
 
     bool m_lastDI2{false}, m_lastDI3{false}, m_lastDI4{false};
     bool m_lastDO3{false}, m_lastDO4{false}, m_lastDO5{false};
+    bool m_lastDO6{false}, m_lastDO7{false}, m_lastDO8{false};
+    bool m_lastDO9{false};
 
     quint16 m_seq{0};
+    float m_yawOffset{0.0f};
 private:
     // 상태 전용 헬퍼: 여기서만 상태를 바꾸고, 시그널/로그를 함께 처리
     void setState(State s);

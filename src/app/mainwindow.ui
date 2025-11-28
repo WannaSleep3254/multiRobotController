@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>980</width>
+    <width>1026</width>
     <height>770</height>
    </rect>
   </property>
@@ -18,9 +18,9 @@
     <item>
      <layout class="QHBoxLayout" name="row1">
       <item>
-       <widget class="QLineEdit" name="editHost">
+       <widget class="QLineEdit" name="lineEdit_IP">
         <property name="text">
-         <string>192.168.57.2</string>
+         <string>192.168.57.101</string>
         </property>
         <property name="placeholderText">
          <string>192.168.57.2</string>
@@ -28,12 +28,12 @@
        </widget>
       </item>
       <item>
-       <widget class="QSpinBox" name="spinPort">
+       <widget class="QSpinBox" name="spinBox_Port">
         <property name="maximum">
          <number>65535</number>
         </property>
         <property name="value">
-         <number>502</number>
+         <number>54615</number>
         </property>
        </widget>
       </item>
@@ -73,62 +73,6 @@
          </size>
         </property>
        </spacer>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pushButton_bulk">
-        <property name="text">
-         <string>1-Bulk</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnStart">
-        <property name="text">
-         <string>3-A</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnStop">
-        <property name="text">
-         <string>3-B</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnPause">
-        <property name="text">
-         <string>3-C</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btn_Clamp1_on">
-        <property name="text">
-         <string>1_On</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btn_Clamp1_off">
-        <property name="text">
-         <string>1_Off</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btn_Clamp2_on">
-        <property name="text">
-         <string>2_On</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btn_Clamp2_off">
-        <property name="text">
-         <string>2_Off</string>
-        </property>
-       </widget>
       </item>
      </layout>
     </item>
@@ -179,7 +123,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>980</width>
+     <width>1026</width>
      <height>22</height>
     </rect>
    </property>

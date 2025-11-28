@@ -2,8 +2,9 @@
 #include "PickListModel.h"
 #include "ModbusClient.h"
 #include "Orchestrator.h"
+#include "vision/VisionClient.h"
 
-#include "vision/VisionServer.h"
+//#include "vision/VisionServer.h"
 
 #include <QTimer>
 #include <QFile>
@@ -14,51 +15,7 @@ RobotManager::RobotManager(QObject* parent) : QObject(parent)
 {
 
 }
-#if false // legacy - 미사용
-void RobotManager::addRobot(const QString& id, const QString& host, int port,
-                            const QVariantMap& addr, QObject* owner)
-{
-#if false
-    RobotContext ctx;
-    ctx.id    = id;
-    ctx.model = new PickListModel(owner);
-    ctx.bus   = new ModbusClient(owner);
-    ctx.orch  = new Orchestrator(ctx.bus, ctx.model, owner);
-    ctx.addr  = addr;
-    ctx.orch->applyAddressMap(addr);
 
-    m_ctx.insert(id, ctx);
-
-    hookSignals(id, ctx.bus, ctx.orch);
-#else
-    // 기존 컨텍스트가 있으면 정리
-    if (m_ctx.contains(id))
-    {
-        auto c = m_ctx.value(id);
-        if (c.orch)  { c.orch->stop(); c.orch->deleteLater(); }
-        if (c.bus)   { c.bus->deleteLater(); }
-        if (c.model) { c.model->deleteLater(); }
-        m_ctx.remove(id);
-    }
-
-    RobotContext ctx;
-    ctx.id    = id;
-    ctx.model = new PickListModel(owner);                // ★ 새 모델
-    ctx.bus   = new ModbusClient(owner);
-    ctx.orch  = new Orchestrator(ctx.bus, ctx.model, owner);
-    ctx.addr  = addr;
-    ctx.orch->applyAddressMap(addr);
-    ctx.orch->setRobotId(id);
-
-    m_ctx.insert(id, ctx);
-    hookSignals(id, ctx.bus, ctx.orch);
-#endif
-    QTimer::singleShot(0, this, [this, id, host, port]{
-        if (!m_ctx.contains(id) || !m_ctx[id].bus) return;
-        m_ctx[id].bus->connectTo(host, port);
-    });
-}
-#endif
 void RobotManager::enqueuePose(const QString& id, const Pose6D &p) {
     if (m_ctx.contains(id))
         m_ctx[id].model->add(p);
@@ -152,30 +109,6 @@ bool RobotManager::hasRobot(const QString& id) const
 void RobotManager::addOrConnect(const QString& id, const QString& host, int port,
                                 const QVariantMap& addr, QObject* owner)
 {
-#if false
-    if (!hasRobot(id)) {
-        RobotContext ctx;
-        ctx.id    = id;
-        ctx.model = new PickListModel(owner);
-        ctx.bus   = new ModbusClient(owner);
-        ctx.orch  = new Orchestrator(ctx.bus, ctx.model, owner);
-        ctx.addr  = addr;
-        ctx.orch->applyAddressMap(addr);
-        if (!ctx.orch->isAddressMapValid())
-        {
-            qWarning()<<"[RM] invalid addr_map"<<id; return;
-        }
-        m_ctx.insert(id, ctx);
-        hookSignals(id, ctx.bus, ctx.orch);
-    } else {
-        // 주소맵 변경이 필요하면 여기서 재적용
-        m_ctx[id].addr = addr;
-        if (m_ctx[id].orch)
-        {
-            m_ctx[id].orch->applyAddressMap(addr);
-        }
-    }
-#else
     if (!m_ctx.contains(id)) {
         RobotContext ctx;
         ctx.id    = id;
@@ -200,7 +133,7 @@ void RobotManager::addOrConnect(const QString& id, const QString& host, int port
         hookSignals(id, c.bus, c.orch);
         hooked.insert(c.orch);
     }
-#endif
+
     // 연결은 다음 틱에 (즉시 시그널로 인한 UAF/레이스 방지)
     QTimer::singleShot(0, this, [this, id, host, port]{
         if (!m_ctx.contains(id) || !m_ctx[id].bus) return;
@@ -328,47 +261,13 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
         emit logByRobot(id, line, lv);   // ★ 패널용
         emit log(QString("%1 (%2)").arg(line,id), lv);              // ★ 전체용
     });
-/*
-    connect(bus, &ModbusClient::holdingRead, this, [this, id](int start, QVector<quint16> data){
-        qDebug()<<"[RM] holdingRead from"<<id<<"start="<<start<<"data="<<data;
-        // --- ⬇ float 변환 구간 추가 ---
-        QVector<float> floats;
-        for (int i = 0; i + 1 < data.size(); i += 2) {
-            quint32 combined = (static_cast<quint32>(data[i]) << 16) | data[i+1];
-            float value;
-            std::memcpy(&value, &combined, sizeof(float));
-            floats.push_back(value);
-        }
-
-        qDebug() << "[MC] readInputs result start=" << start
-                 //<< "words=" << data
-                 << "floats=" << floats;
-    });
-*/
-/*
-    connect(bus, &ModbusClient::inputRead, this, [this, id](int start, QVector<quint16> data){
-        // --- float 변환 구간 추가 ---
-        QVector<float> floats;
-        for (int i = 0; i + 1 < data.size(); i += 2) {
-            quint32 combined = (static_cast<quint32>(data[i]) << 16) | data[i+1];
-            float value;
-            std::memcpy(&value, &combined, sizeof(float));
-            floats.push_back(value);
-        }
-        if(start==340) // Joint
-        {
-        }
-        else if(start==388) // Tcp
-        {
-        }
-    });
-*/
     // Orchestrator 시그널
+/*
     connect(orch, &Orchestrator::kinematicsUpdated, m_vsrv,
             [this](const QString& rid, const Orchestrator::RobotState& state){
-                m_vsrv->updateRobotState(rid, state.tcp, state.joints, state.tsMs);
+//                m_vsrv->updateRobotState(rid, state.tcp, state.joints, state.tsMs);
     });
-
+*/
     connect(orch, &Orchestrator::stateChanged, this,
             [this, id](int state, const QString& name){
                 emit stateChanged(id, state, name);
@@ -385,21 +284,63 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
 
     connect(orch, &Orchestrator::processPulse, this, [this, id](const QString& rid, int idx){
         if (!m_vsrv) return;
-
-        qDebug()<<"[RM] processPulse from"<<rid<<"idx="<<idx;
-        if(rid=="A")
-        {
-            if(idx==0)
+        emit logByRobot(id, QString("[RM] processPulse from %1 idx=%2").arg(rid).arg(idx), Common::LogLevel::Info);
+        if (rid == "A") {
+            switch(idx)
             {
-                emit bulkProcessFinished(rid);
+            case 0: // Tool attach complete
+                m_vsrv->sendWorkComplete(id, "sorting", "tool", 0);
+                break;
+            case 1: // Ready
+                m_vsrv->sendWorkComplete(id, "sorting", "ready", 0);
+                break;
+            case 2: // PICK
+                m_vsrv->sendWorkComplete(id, "sorting", "pick", 0);
+                break;
+            case 3: // PLACE : non-flip Complete
+                m_vsrv->sendWorkComplete(id, "sorting", "place", 0);
+                emit sortProcessFinished(id);
+                break;
+            case 4: // PLACE : flip dock
+                emit reqGentryPalce();
+                break;
+            case 5: // PLACE : flip complete
+                m_vsrv->sendWorkComplete(id, "sorting", "place", 0);
+                emit sortProcessFinished(id);
+                emit reqGentryReady();
+                break;
+            case 6:
+//                m_vsrv->sendWorkComplete(id, "sorting", "place", 0);
+//                emit sortProcessFinished(id);
+//                emit reqGentryReady();
+                break;
             }
         }
-        else if(rid=="B")
-        {
-            static quint32 seq = 1;
-            if      (idx==0)    m_vsrv->requestCapture(seq++, "A");
-            else if (idx==1)    m_vsrv->requestCapture(seq++, "B");
-            else if (idx==2)    m_vsrv->requestCapture(seq++, "C");
+        else if (rid == "B") {
+            switch(idx)
+            {
+            case 0: // INIT
+                m_vsrv->sendWorkComplete(id, "align", "init", 0);
+                break;
+            case 1: // READY
+                m_vsrv->sendWorkComplete(id, "align", "ready", 0);
+                break;
+            case 2: //ASSY
+                m_vsrv->sendWorkComplete(id, "align", "assy", 0);
+                break;
+            case 3: // PICK
+                m_vsrv->sendWorkComplete(id, "align", "pick", 0);
+                break;
+            case 4: // PLACE
+                m_vsrv->sendWorkComplete(id, "align", "place", 0);
+                break;
+            case 5: // CLAMP
+                m_vsrv->sendWorkComplete(id, "align", "clamp", 0, true);
+                break;
+            case 6: // CLAMP
+                m_vsrv->sendWorkComplete(id, "align", "clamp", 0, false);
+                break;
+            }
         }
     });
 }
@@ -430,35 +371,6 @@ void RobotManager::processVisionPose(const QString& id, const QString &kind, con
     } else {
         if (it->model) it->model->add(p); // 필요 시 큐에 쌓고 나중에 실행
     }
-
-    /*
-    if (!m_ctx.contains(id)) return;
-
-    auto& c = m_ctx[id];
-    const int speed = extras.value("speed_pct", 50).toInt();
-    applyExtras(id, extras); // SPEED_PCT 등 등록
-
-    if (visionMode(id)) {
-        // ✅ 테스트(비전) 모드: enqueue → 즉시 전송 → 곧바로 삭제
-        if (c.model) {
-            c.model->add(p);
-            if (c.orch) {
-                QVector<double> pose{ p.x, p.y, p.z, p.rx, p.ry, p.rz };
-                c.orch->publishPoseToRobot1(pose, speed);
-            }
-//            if (last >= 0) c.model->removeRow(last);
-        }
-        qDebug()<<"[RM] Vision mode: sent pose for"<<id
-               <<"("<<p.x<<p.y<<p.z<<p.rx<<p.ry<<p.rz<<")"
-              <<"speed_pct="<<speed;
-    } else {
-        // ✅ CSV 모드(기존): 큐에 쌓아서 FSM이 순서대로 처리
-        qDebug()<<"[RM] Enqueue vision pose for"<<id
-               <<"("<<p.x<<p.y<<p.z<<p.rx<<p.ry<<p.rz<<")"
-              <<"speed_pct="<<speed;
-        if (c.model) c.model->add(p);
-    }
-    */
 }
 
 void RobotManager::processVisionPoseBulk(const QString& id, const Pose6D& pick, const Pose6D& place, const QVariantMap& extras)
@@ -499,43 +411,222 @@ void RobotManager::triggerByKey(const QString& id, const QString& coilKey, int p
     }
 
     const auto coils   = it.value().addr.value("coils").toMap();
-   int addr = coils.value(coilKey).toInt();
+    int addr = coils.value(coilKey).toInt();
 
     if (addr <= 0) {
         emit log(QString("[RM] trigger: invalid key %1 for %2").arg(coilKey, id));
         return;
     }
-
     // true → (pulseMs 후) false 로 펄스
     it->bus->writeCoil(addr, true);
     QTimer::singleShot(pulseMs, this, [bus=it->bus, addr]{
         bus->writeCoil(addr, false);
     });
 
-    emit log(QString("[RM] trigger %1(%2) pulsed %3ms").arg(coilKey).arg(addr).arg(pulseMs));
+    emit log(QString("[RM] trigger %1(%2) pulsed %3ms for %4").arg(coilKey).arg(addr).arg(pulseMs).arg(id));
 }
 
-void RobotManager::triggerProcessA(const QString& id, int pulseMs)
-{   // A_DI2
-    triggerByKey(id, "DI2", pulseMs);
-}
-
-void RobotManager::triggerProcessB(const QString& id, int pulseMs)
-{   // A_DI3
-    triggerByKey(id, "DI3", pulseMs);
-}
-
-void RobotManager::triggerProcessC(const QString& id, int pulseMs)
-{   // A_DI4
-    triggerByKey(id, "DI4", pulseMs);
-}
-
-void RobotManager::triggerClamp(const QString& id, const int& clamp, bool toggle)
+////////////////////////////////////////////////////////////////////////////////////////
+/// 2025-11-21: VisionClient의 제어 API
+/// /////////////////////////////////////////////////////////////////////////////////////
+/* Sorting */
+// 1. 소팅 툴 장착
+void RobotManager::cmdSort_AttachTool()
 {
+    QString id("A");
     auto it = m_ctx.find(id);
     if (it == m_ctx.end() || !it->bus) {
         emit log(QString("[RM] trigger: no bus for %1").arg(id));
         return;
     }
-    it->bus->writeCoil(clamp, toggle);
+    triggerByKey(id, "DI3", 500);
+    emit logByRobot(id, QString("[RM] cmdSort_AttachTool triggered for %1").arg(id), Common::LogLevel::Info);
+}
+// 2. 피킹 촬상위치로 이동
+void RobotManager::cmdSort_MoveToPickupReady()
+{
+    QString id("A");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    triggerByKey(id, "DI4", 500);
+    emit logByRobot(id, QString("[RM] cmdSort_MoveToPickupReady triggered for %1").arg(id), Common::LogLevel::Info);
+}
+// 3. 피킹 동작 수행
+void RobotManager::cmdSort_DoPickup(const Pose6D& pose)
+{
+    QString id("A");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    /////////////////////////////////////////////////////////////////////
+    const QVector<double> v{ pose.x,pose.y,pose.z,pose.rx,pose.ry,pose.rz };
+
+    if( 60 < v[5] && v[5]<= 90 )
+    {
+        m_yawOffset=+30;
+    }
+    else if(90 <= v[5] && v[5] <120)
+    {
+        m_yawOffset=-30;
+    }
+    else
+    {
+        m_yawOffset=0;
+    }
+    /////////////////////////////////////////////////////////////////////
+    // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
+    if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
+        it->orch->publishPoseWithKind(v, 50, "pick");
+        triggerByKey(id, "DI5", 500);
+        emit logByRobot(id, QString("[RM] cmdSort_DoPickup triggered for %1").arg(id), Common::LogLevel::Info);
+        if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+    } else {
+        if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+    }
+    /// ///////////////////////////////////////////////////////////////////
+}
+// 4. 컨베이어 이동
+void RobotManager::cmdSort_MoveToConveyor()
+{
+    QString id("A");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    emit logByRobot(id, QString("[RM] cmdSort_MoveToConveyor triggered for %1").arg(id), Common::LogLevel::Info);
+}
+// 5. 플레이스 수행
+void RobotManager::cmdSort_DoPlace(bool flip, int offset)
+{
+    QString id("A");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    if (flip) {
+        // flip 처리
+        it->bus->writeCoil(110, true); // 110번 코일을 여닫기);
+        it->orch->publishFlip_Offset(true, offset, m_yawOffset);
+    } else {
+        // non-flip 처리
+        it->orch->publishFlip_Offset(false, offset, m_yawOffset);
+    }
+    m_yawOffset = 0;
+    triggerByKey(id, "DI6", 500);
+    emit logByRobot(id, QString("[RM] cmdSort_DoPlace triggered for %1").arg(id), Common::LogLevel::Info);
+}
+
+void RobotManager::cmdSort_GentryTool(bool toggle)
+{
+    QString id("A");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    it->bus->writeCoil(110, toggle); // 110번 코일을 여닫기);
+
+    triggerByKey(id, "DI7", 500);
+    emit logByRobot(id, QString("[RM] cmdSort_GentryTool %1 triggered for %2").arg(toggle?"ON":"OFF").arg(id), Common::LogLevel::Info);
+}
+/* Aligin */
+// 6. 얼라인 초기화
+void RobotManager::cmdAlign_Initialize()
+{
+    QString id("B");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    triggerByKey(id, "DI3", 500);
+    emit logByRobot(id, QString("[RM] cmdAlign_Initialize triggered for %1").arg(id), Common::LogLevel::Info);
+}
+// 7. ASSY 촬상위치로 이동
+void RobotManager::cmdAlign_MoveToAssyReady()
+{
+    QString id("B");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    triggerByKey(id, "DI5", 500);
+    emit logByRobot(id, QString("[RM] cmdAlign_MoveToAssyReady triggered for %1").arg(id), Common::LogLevel::Info);
+}
+// 8. 피킹 촬상위치로 이동
+void RobotManager::cmdAlign_MoveToPickupReady()
+{
+    QString id("B");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    triggerByKey(id, "DI4", 500);
+    emit logByRobot(id, QString("[RM] cmdAlign_MoveToPickupReady triggered for %1").arg(id), Common::LogLevel::Info);
+}
+// 9. 피킹 동작 수행
+void RobotManager::cmdAlign_DoPickup(const Pose6D& pose)
+{
+    QString id("B");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    /////////////////////////////////////////////////////////////////////
+    const QVector<double> v{ pose.x,pose.y,pose.z,pose.rx,pose.ry,pose.rz };
+    // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
+    if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
+        it->orch->publishPoseWithKind(v, 50, "pick");
+        if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+        triggerByKey(id, "DI6", 500);
+        emit logByRobot(id, QString("[RM] cmdAlign_DoPickup triggered for %1").arg(id), Common::LogLevel::Info);
+    } else {
+        if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+    }
+    /// ///////////////////////////////////////////////////////////////////
+}
+// 10. 플레이스 동작 수행
+void RobotManager::cmdAlign_DoPlace(const Pose6D& pose)
+{
+    QString id("B");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    /////////////////////////////////////////////////////////////////////
+    const QVector<double> v{ pose.x,pose.y,pose.z,pose.rx,pose.ry,pose.rz };
+    // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
+    if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
+        it->orch->publishPoseWithKind(v, 50, "place");
+        if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+    } else {
+        if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+    }
+    /// ///////////////////////////////////////////////////////////////////
+    triggerByKey(id, "DI7", 500);
+    emit logByRobot(id, QString("[RM] cmdAlign_DoPlace triggered for %1").arg(id), Common::LogLevel::Info);
+}
+// 11. 클램프 동작 수행
+void RobotManager::cmdAlign_Clamp(bool open)
+{
+    QString id("B");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    it->bus->writeCoil(110, open); // 110번 코일을 여닫기);
+    triggerByKey(id, "DI8", 500);
+    emit logByRobot(id, QString("[RM] Clamp %1 command sent").arg(open?"Open":"Close"), Common::LogLevel::Info);
 }

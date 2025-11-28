@@ -2,6 +2,7 @@
 #include "./ui_mainwindow.h"
 
 #include "RobotManager.h"
+#include "GentryManager.h"
 
 #include <QFile>
 #include <QDir>
@@ -16,8 +17,11 @@
 #include <QFrame>
 #include <QCheckBox>
 #include <QDebug>
+#include <QDateTime>
 
 #include "widgets/RobotPanel.h"
+#include "widgets/MotorPanel.h"
+
 #include <QSplitter>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -27,11 +31,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     setWindowTitle("BinPicking Modbus Controller");
-    initVisionServer();
+    initVisionClient();
 
     m_mgr = new RobotManager(this);
-    m_mgr->setVisionServer(m_visionServer);
-
+    m_mgr->setVisionClient(m_visionClient);
     connect(m_mgr, &RobotManager::log, this,
             [this](const QString& line, Common::LogLevel level){
                 QString prefix;
@@ -46,31 +49,98 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(m_mgr, &RobotManager::bulkProcessFinished, this,
             [this](const QString& robotId){
-                if (robotId == "A")
-                    bulkReady();
+//                if (robotId == "A")
+//                    bulkReady();
+            });
+
+    connect(m_mgr, &RobotManager::reqGentryPalce, this, [this]{
+            // TODO Gentry Place 동작 시작
+        qDebug()<<QDateTime::currentDateTime()<<"MainWindow::reqGentryPlace";
+        m_gentryMgr->startGantryMove();
+        m_gentryMgr->doGentryPlace();
+
+    });
+
+    connect(m_mgr, &RobotManager::reqGentryReady, this, [this]{
+        // TODO Gentry Place 동작 시작
+        qDebug()<<QDateTime::currentDateTime()<<"MainWindow::reqGentryReady";
+        m_sortingPlacePorcessActive=false;
+        m_gentryMgr->doGentryReady();
+    });
+
+    connect(m_mgr, &RobotManager::sortProcessFinished, this, [this](const QString& id){
+        onLog(QString("[RM] sortProcessFinished received for %1").arg(id));
+        m_sortingPlacePorcessActive = false;
+    });
+
+    m_gentryMgr = new GentryManager(this);
+    connect(m_gentryMgr, &GentryManager::log, this,
+            [this](const QString& line){
+        onLog("[GENTRY] " + line);
+    });
+
+    connect(m_gentryMgr, &GentryManager::gantryCommandFinished, this,
+            [this](bool ok){
+                Q_UNUSED(ok)
+                qDebug()<<QString("Gentry gantry command finished: %1").arg(ok?"OK":"FAIL");
+                bool flip = m_sortingFlip;
+                int  offset = m_sortingOffset;
+                bool isDock = m_sortingDock;
+
+                onLog(QString("m_flip: %1, offset: %2").arg(m_sortingFlip?"OK":"FAIL", offset));
+                onLog(QString("flip: %1, offset; %2").arg(flip?"OK":"FAIL", m_sortingOffset));
+
+//                if(ok && m_sortingPlacePorcessActive&& !m_sortingDock){
+                if(m_sortingPlacePorcessActive&& !m_sortingDock){
+                    if(!flip)
+                    {   //TODO robot->place
+                        qDebug()<<"Robot place without flip";
+                        m_mgr->cmdSort_DoPlace(flip, offset);
+                    }
+                    else if(flip)
+                    {   //TODO robot->dock -> ready
+                        qDebug()<<"Robot place with flip - dock first";
+                        m_sortingDock = true;
+                        m_mgr->cmdSort_DoPlace(flip, offset);
+                    }
+                }
+//                else if(ok && m_sortingPlacePorcessActive&& m_sortingDock){
+                else if(m_sortingPlacePorcessActive&& m_sortingDock){
+                    // 겐트리 Tool Off
+                    m_sortingDock = false;
+                    m_mgr->cmdSort_GentryTool(false);
+                }
+            });
+
+
+    connect(m_gentryMgr, &GentryManager::conveyorCommandFinished, this,
+            [this](bool ok){
+                Q_UNUSED(ok)
+                qDebug()<<QString("Conveyor command finished: %1").arg(ok?"OK":"FAIL");
+                m_visionClient->sendWorkComplete("a", "conveyor", "forward", 0);
             });
 
     m_split  = new QSplitter(Qt::Horizontal, this);
     m_panelA = new RobotPanel(this);
     m_panelB = new RobotPanel(this);
-    m_panelC = new RobotPanel(this);
+    m_motorPanel = new MotorPanel(this);
 
     m_panelA->setManager(m_mgr);
     m_panelB->setManager(m_mgr);
-    m_panelC->setManager(m_mgr);
+    m_motorPanel->setManager(m_gentryMgr);
 
     m_panelA->setRobotId("A");
     m_panelB->setRobotId("B");
-    m_panelC->setRobotId("C");
 
     m_split->addWidget(m_panelA);
     m_split->addWidget(m_panelB);
-    m_split->addWidget(m_panelC);
+    m_split->addWidget(m_motorPanel);
 
     ui->horizontalLayout->addWidget(m_split);
-
     QTimer::singleShot(0, this, [this]{ loadRobotsFromConfig(); });
 
+    m_motorPanel->onConnect();
+    m_motorPanel->onServoOn();
 }
 
 MainWindow::~MainWindow()
@@ -78,72 +148,29 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::initVisionServer()
+void MainWindow::initVisionClient()
 {
-    // 1) VisionServer 생성
-    m_visionServer = new VisionServer(this);
+    m_visionClient = new VisionClient(this);
 
-    // 2) 서버 옵션 설정
-    VisionServer::Options opt;
-    opt.enforceWhitelist = true;
-    opt.whitelistIPs = {"192.168.57.100", "127.0.0.1"};
-    opt.maxConnections = 8;
-    opt.ratePerSec = 50;   // 초당 50 라인 제한
-    opt.rateBurst = 100;   // 최대 버스트 100라인
-    m_visionServer->setOptions(opt);
+    connect(m_visionClient, &VisionClient::connected, this, [this]{
+        onLog("[VC] VisionClient connected");
+    });
+    connect(m_visionClient, &VisionClient::disconnected, this, [this]{
+        onLog("[VC] VisionClient disconnected");
+    });
+    connect(m_visionClient, &VisionClient::ackReceived, this,
+            [this](quint32 seq, const QString& status, const QString& msg){
+        const QString text = QStringLiteral("[VC] Ack received: seq=%1 status=%2 msg=%3")
+                            .arg(QString::number(seq), status, msg);  // multi-arg 사용
+        onLog(text);
+    });
 
-    // 3) 토큰 (선택사항)
-    m_visionServer->setAuthToken("ccNC2025");
+    // 로그 메시지 처리
+    connect(m_visionClient, &VisionClient::lineReceived, this, [this](const QString& line){
+        onLog(QString("[VC] Line received: %1").arg(line));
+    });
+    connect(m_visionClient, &VisionClient::commandReceived, this, &MainWindow::onRobotCommand);
 
-    // 4) 서버 시작
-    if (m_visionServer->start(54615))
-        onLog("[VS] VisionServer started on port 5555");
-    else
-        onLog("[VS] VisionServer failed to start");
-
-
-    // 7) 좌표 수신 시 로봇으로 발행
-#if false
-    connect(m_visionServer, &VisionServer::poseReceived, this,
-            [this](const QString& robot, const Pose6D& p, quint32 seq, const QVariantMap& ex){
-                Q_UNUSED(robot); Q_UNUSED(seq);
-                const int speed = ex.value("speed_pct", 50).toInt();
-
-                Pose6D pose{p.x, p.y, p.z, p.rx, p.ry, p.rz};
-                qDebug()<<"[VS] Pose received for robot"<<robot
-                       <<"("<<pose.x<<pose.y<<pose.z<<pose.rx<<pose.ry<<pose.rz<<")"
-                      <<"speed_pct="<<speed;
-                // 로봇 매니저에 발행
-                m_mgr->enqueuePose(robot, pose);
-            });
-#else
-    connect(m_visionServer, &VisionServer::poseReceived, this,
-        [this](const QString& robot, const QString& kind, const Pose6D& p, quint32 seq, const QVariantMap& ex){
-            Q_UNUSED(seq);
-            m_mgr->processVisionPose(robot, kind, p, ex);
-        });
-
-    connect(m_visionServer, &VisionServer::poseBulkReceived, this,
-        [this](const QString& robot, const Pose6D& pick, const Pose6D& place, quint32 seq, const QVariantMap& ex){
-            Q_UNUSED(seq);
-            qDebug()<<"[VS] Bulk Pose received for robot"<<robot;
-            // 로봇 매니저에 발행
-            m_mgr->processVisionPoseBulk(robot, pick, place, ex);
-        });
-
-    connect(m_visionServer, &VisionServer::commandReceived, this,
-        [this](const QString& robotId, const QString& type, quint32 seq){
-            Q_UNUSED(seq);
-            bulkStop();
-        });
-
-#endif
-    // 8) 다건 좌표 수신 (예: Vision이 여러 픽 포인트를 한번에 전달)
-}
-
-void MainWindow::onHeartbeat(bool ok)
-{
-    ui->ledConnection->setStyleSheet(ok ? "background:#22c55e;border-radius:6px;" : "background:#ef4444;border-radius:6px;");
 }
 
 void MainWindow::onLog(const QString& line)
@@ -231,93 +258,163 @@ void MainWindow::loadRobotsFromConfig()
         }
         if (id == "A") { m_panelA->setEndpoint(host, port, addr); m_panelA->setRobotId("A"); }
         if (id == "B") { m_panelB->setEndpoint(host, port, addr); m_panelB->setRobotId("B"); }
-#if false
-        const QString poseCsv = o.value("pose_csv").toString();
-        if (!poseCsv.isEmpty()) {
-            QString err;
-            m_mgr->loadCsvToModel(id, poseCsv, &err, this);  // ★ 컨텍스트/모델 자동 준비 + 로드
-            if (!err.isEmpty()) qDebug() << "[WARN] CSV load:" << err;
-        }
-#endif
+
         onLog(QString("[OK] Robot %1 added (%2:%3)").arg(id, host).arg(port));
     }
 }
 
-
-void MainWindow::on_btnStart_clicked()
+void MainWindow::onRobotCommand(const RobotCommand& cmd)
 {
-    //static quint32 seq = 1;
-    //m_visionServer->requestPickPose(seq++, 50);
-    //m_visionServer->requestCapture(seq++, "A");
-    m_mgr->triggerProcessA("B", 200);
-}
+    // dir 필터가 필요하면 여기서
+    if (cmd.dir != 1)
+        return;
 
-
-void MainWindow::on_btnStop_clicked()
-{
-    //static quint32 seq = 1;
-    //m_visionServer->requestInspectPose(seq++, 50);
-    //m_visionServer->requestCapture(seq++, "B");
-    m_mgr->triggerProcessB("B", 200);
-}
-
-
-void MainWindow::on_btnPause_clicked()
-{
-    //static quint32 seq = 1;
-    //m_visionServer->requestInspectPose(seq++, 50);
-    //m_visionServer->requestCapture(seq++, "C");
-    m_mgr->triggerProcessC("B", 200);
-}
-
-
-void MainWindow::on_pushButton_bulk_clicked()
-{
-    flag_bulkRunning = true;
-    bulkRequest();
-}
-
-void MainWindow::bulkStop()
-{
-    flag_bulkRunning = false;
-}
-
-void MainWindow::bulkRequest()
-{
-    static quint32 seq = 0;
-    m_visionServer->requestPoseBulk("bulk", seq++);
-}
-
-void MainWindow::bulkReady()
-{
-    if(flag_bulkRunning)
-    {
-        QTimer::singleShot(500, this, [this]{
-            bulkRequest();
-        });
+    switch (cmd.robot) {
+    case RobotId::A: handleRobotA(cmd); break;
+    case RobotId::B: handleRobotB(cmd); break;
+    default:
+        onLog("Unknown robot command");
+        break;
     }
 }
 
-void MainWindow::on_btn_Clamp1_on_clicked()
+void MainWindow::handleRobotA(const RobotCommand& cmd)
 {
-    m_mgr->triggerClamp("B",110, true);
+    if (cmd.type == CmdType::Sorting) {
+        switch (cmd.kind) {
+        case CmdKind::Tool:
+            onLog("로봇 A 소팅 툴 처리 필요\r\n");
+            m_visionClient->sendAck(0, "ok", "sorting Tool command received");
+            m_mgr->cmdSort_AttachTool();
+            break;
+        case CmdKind::Ready:
+            onLog("로봇 A 소팅 레디 처리 필요\r\n");
+            m_visionClient->sendAck(0, "ok", "sorting Ready command received");
+            m_mgr->cmdSort_MoveToPickupReady();
+            break;
+        case CmdKind::Pick:
+            if (cmd.hasPick) {
+                // cmd.pick 사용
+                onLog(QString("로봇 A 소팅 픽 처리 필요, pose: [%1,%2,%3] [%4,%5,%6]\r\n")
+                               .arg(cmd.pick.x).arg(cmd.pick.y).arg(cmd.pick.z).arg(cmd.pick.rx).arg(cmd.pick.ry).arg(cmd.pick.rz));
+                m_visionClient->sendAck(0, "ok", "sorting Pick command received");
+                m_mgr->cmdSort_DoPickup(cmd.pick);
+            }
+            break;
+        case CmdKind::Place:
+            if (cmd.flip) {
+                // offset: 로봇 후퇴거리/미사용
+                onLog("로봇 A 소팅 플립 처리 필요\r\n");
+                m_visionClient->sendAck(0, "ok", "sorting Place Flip command received");
+//                m_mgr->cmdSort_DoPlace(cmd.flip, cmd.offset);
+////////////////////////////////////////////////////////////////
+                m_sortingPlacePorcessActive = true;
+                m_sortingFlip = true;
+                m_sortingOffset=cmd.offset;
+                m_gentryMgr->startGantryMove();
+                m_gentryMgr->setFalgs(false, false, true, false, false);
+                m_mgr->cmdSort_GentryTool(true);
+                m_gentryMgr->gentry_motion();
+////////////////////////////////////////////////////////////////
+            } else {
+                // offset: 겐트리와 컨베어간의 높이차이 -> Z축 환산필요
+                onLog(QString("로봇 A 소팅 논플립 처리 필요, offset: %1\r\n")
+                               .arg(cmd.offset));
+                m_visionClient->sendAck(0, "ok", "sorting Place Non-Flip command received");
+//                m_mgr->cmdSort_DoPlace(cmd.flip, cmd.offset);
+////////////////////////////////////////////////////////////////
+                m_sortingPlacePorcessActive = true;
+                m_sortingFlip =false;
+                m_sortingOffset=cmd.offset;
+                m_gentryMgr->startGantryMove();
+                m_gentryMgr->setFalgs(false, true, false, false, false);
+                m_gentryMgr->gentry_motion();
+////////////////////////////////////////////////////////////////
+            }
+            break;
+        default:
+            break;
+        }
+    } else if (cmd.type == CmdType::Conveyor) {
+        if (cmd.kind == CmdKind::Forward) {
+            onLog("로봇 A 컨베이어 포워드 처리 필요\r\n");
+            m_visionClient->sendAck(0, "ok", "conveyor Forward command received");
+            //m_mgr->cmdSort_MoveToConveyor();
+            m_gentryMgr->startConveyorMove();
+            m_gentryMgr->setFalgs(true, false, false, false, false);
+            m_gentryMgr->gentry_motion();
+        }
+    }
+}
+
+void MainWindow::handleRobotB(const RobotCommand& cmd)
+{
+    if (cmd.type != CmdType::Align)
+        return;
+
+    switch (cmd.kind) {
+    case CmdKind::Init:  // TODO: 초기화 명령 처리
+        onLog("로봇 B 얼라인 이닛 처리 필요\r\n");
+        m_visionClient->sendAck(0, "ok", "align Init command received");
+        m_mgr->cmdAlign_Initialize();
+
+        break;
+    case CmdKind::Assy:  // TODO: 어셈블리 명령 처리
+        onLog("로봇 B 얼라인 어셈블리 처리 필요\r\n");
+        m_visionClient->sendAck(0, "ok", "align Assy command received");
+        m_mgr->cmdAlign_MoveToAssyReady();
+        break;
+    case CmdKind::Ready: // TODO: 레디 명령 처리
+        onLog("로봇 B 얼라인 레디 처리 필요\r\n");
+        m_visionClient->sendAck(0, "ok", "align Ready command received");
+        m_mgr->cmdAlign_MoveToPickupReady();
+        break;
+    case CmdKind::Pick:  // TODO: 픽 명령 처리
+        if (cmd.hasPick) {
+            // cmd.pick 사용
+            onLog(QString("로봇 B 얼라인 픽 처리 필요, pose: [%1,%2,%3] [%4,%5,%6]\r\n")
+                           .arg(cmd.pick.x).arg(cmd.pick.y).arg(cmd.pick.z).arg(cmd.pick.rx).arg(cmd.pick.ry).arg(cmd.pick.rz));
+            m_visionClient->sendAck(0, "ok", "align Pick command received");
+            m_mgr->cmdAlign_DoPickup(cmd.pick);
+        }
+        break;
+    case CmdKind::Place: // TODO: 플레이스 명령 처리
+        if (cmd.hasPlace) {
+            // cmd.place 사용
+            onLog(QString("로봇 B 얼라인 플레이스 처리 필요, pose: [%1,%2,%3] [%4,%5,%6]\r\n")
+                           .arg(cmd.place.x).arg(cmd.place.y).arg(cmd.place.z).arg(cmd.place.rx).arg(cmd.place.ry).arg(cmd.place.rz));
+            m_visionClient->sendAck(0, "ok", "align Place command received");
+            m_mgr->cmdAlign_DoPlace(cmd.place);
+        }
+        break;
+    case CmdKind::Clamp:
+        if (cmd.clamp == "open") {
+            onLog("로봇 B 클램프 오픈 처리 필요\r\n");
+            qDebug()<<"25-11-24: Robot B Clamp Open command received";
+            m_visionClient->sendAck(0, "ok", "align Clamp Open command received");
+            m_mgr->cmdAlign_Clamp(false);
+        } else if (cmd.clamp == "close") {
+            onLog("로봇 B 클램프 클로즈 처리 필요\r\n");
+            m_visionClient->sendAck(0, "ok", "align Clamp Close command received");
+            m_mgr->cmdAlign_Clamp(true);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+void MainWindow::on_btnConnect_clicked()
+{
+    QString IP = ui->lineEdit_IP->text();
+    quint16 port = static_cast<quint16>(ui->spinBox_Port->value());
+
+    m_visionClient->connectTo(IP, port);
 }
 
 
-void MainWindow::on_btn_Clamp1_off_clicked()
+void MainWindow::on_btnDisconnect_clicked()
 {
-    m_mgr->triggerClamp("B",110, false);
-}
-
-
-void MainWindow::on_btn_Clamp2_on_clicked()
-{
-    m_mgr->triggerClamp("B",111, true);
-}
-
-
-void MainWindow::on_btn_Clamp2_off_clicked()
-{
-    m_mgr->triggerClamp("B",111, false);
+    m_visionClient->disconnectFrom();
 }
 
