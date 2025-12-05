@@ -48,8 +48,11 @@ public slots:
 
     void publishPickPlacePoses(const QVector<double>& pick, const QVector<double>& place, int speedPct);
 
+    void publishToolComnad(const QVector<quint16>& cmds);
+
     void publishPoseWithKind(const QVector<double>& pose, int speedPct, const QString& kind);
-    void publishFlip_Offset(bool flip, int offset, float yaw);
+    void publishBulkPoseWithKind(const QVector<double>& pose, const QString& kind);
+    void publishFlip_Offset(bool flip, int offset, float yaw, int thick);
 
     void publishPoseToRobot1(const QVector<double>& pose, int speedPct = 50);
 
@@ -96,10 +99,12 @@ private:
     int A_DI6           {106};      // coils
     int A_DI7           {107};      // coils
     int A_DI8           {108};      // coils
+    int A_DI9           {109};      // coils
 
     int A_ROBOT_READY   {100};      // discrete_inputs
     int A_PICK_DONE     {101};      // discrete_inputs
     int A_ROBOT_BUSY    {102};      // discrete_inputs
+    int A_DO2_PULSE     {102};
     int A_DO3_PULSE     {103};
     int A_DO4_PULSE     {104};
     int A_DO5_PULSE     {105};
@@ -107,6 +112,7 @@ private:
     int A_DO7_PULSE     {107};
     int A_DO8_PULSE     {108};
     int A_DO9_PULSE     {109};
+    int A_DO10_PULSE    {110};
 
     int A_TARGET_BASE   {132};      // holding: TARGET_POSE_STAGING_BASE (132..143)
     int A_TARGET_BASE_PICK   {132}; // holding: TARGET_POSE_STAGING_BASE (132..143)
@@ -131,9 +137,10 @@ private:
     bool m_lastDone{false};
 
     bool m_lastDI2{false}, m_lastDI3{false}, m_lastDI4{false};
+    bool m_lastDO2{false};
     bool m_lastDO3{false}, m_lastDO4{false}, m_lastDO5{false};
     bool m_lastDO6{false}, m_lastDO7{false}, m_lastDO8{false};
-    bool m_lastDO9{false};
+    bool m_lastDO9{false}, m_lastDO10{false};
 
     quint16 m_seq{0};
     float m_yawOffset{0.0f};

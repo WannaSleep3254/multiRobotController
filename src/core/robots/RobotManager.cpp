@@ -289,57 +289,218 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
             switch(idx)
             {
             case 0: // Tool attach complete
-                m_vsrv->sendWorkComplete(id, "sorting", "tool", 0);
-                break;
+            {
+                QString key = QString("%1_tool").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendToolComplete(id, 0, true);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+
+            }   break;
             case 1: // Ready
-                m_vsrv->sendWorkComplete(id, "sorting", "ready", 0);
-                break;
+            {
+                QString key = QString("%1_ready").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "sorting", "ready", 0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
             case 2: // PICK
-                m_vsrv->sendWorkComplete(id, "sorting", "pick", 0);
-                break;
+            {
+                QString key = QString("%1_pick").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "sorting", "pick", 0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
             case 3: // PLACE : non-flip Complete
-                m_vsrv->sendWorkComplete(id, "sorting", "place", 0);
+            {
+                QString key = QString("%1_place").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "sorting", "place", 0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
                 emit sortProcessFinished(id);
-                break;
+            }   break;
             case 4: // PLACE : flip dock
+            {
                 emit reqGentryPalce();
-                break;
+            }   break;
             case 5: // PLACE : flip complete
+            {
                 m_vsrv->sendWorkComplete(id, "sorting", "place", 0);
                 emit sortProcessFinished(id);
                 emit reqGentryReady();
-                break;
+            }   break;
             case 6:
-//                m_vsrv->sendWorkComplete(id, "sorting", "place", 0);
-//                emit sortProcessFinished(id);
-//                emit reqGentryReady();
-                break;
+            {
+                QString key = QString("%1_bulk_place").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(rid, "bulk", "pick", 0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
+            case 7:
+            {
+                QString key = QString("%1_bulk_place").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "bulk", "place", 0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
             }
         }
         else if (rid == "B") {
             switch(idx)
             {
             case 0: // INIT
-                m_vsrv->sendWorkComplete(id, "align", "init", 0);
-                break;
+            {
+                QString key = QString("%1_init").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "align", "init", 0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
             case 1: // READY
-                m_vsrv->sendWorkComplete(id, "align", "ready", 0);
-                break;
+            {
+                QString key = QString("%1_ready").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "align", "ready", 0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
             case 2: //ASSY
-                m_vsrv->sendWorkComplete(id, "align", "assy", 0);
-                break;
+            {
+                QString key = QString("%1_assy").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "align", "assy", 0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
             case 3: // PICK
-                m_vsrv->sendWorkComplete(id, "align", "pick", 0);
-                break;
+            {
+                QString key = QString("%1_pick").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "align", "pick", 0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
             case 4: // PLACE
-                m_vsrv->sendWorkComplete(id, "align", "place", 0);
-                break;
+            {
+                QString key = QString("%1_pick").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "align", "place", 0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
             case 5: // CLAMP
-                m_vsrv->sendWorkComplete(id, "align", "clamp", 0, true);
-                break;
+            {
+                QString key = QString("%1_clamp_1").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "align", "clamp", 0, true);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
             case 6: // CLAMP
-                m_vsrv->sendWorkComplete(id, "align", "clamp", 0, false);
-                break;
+            {
+                QString key = QString("%1_clamp_2").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "align", "clamp", 0, false);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
+            case 7: // scrap
+            {
+                QString key = QString("%1_scrap").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "align", "scrap", 0, false);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
             }
         }
     });
@@ -431,6 +592,106 @@ void RobotManager::triggerByKey(const QString& id, const QString& coilKey, int p
 ////////////////////////////////////////////////////////////////////////////////////////
 /// 2025-11-21: VisionClient의 제어 API
 /// /////////////////////////////////////////////////////////////////////////////////////
+/* Bulk */
+void RobotManager::cmdBulk_AttachTool()
+{
+    QString id("A");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    QVector<quint16> regs;// AI0:1, AI1:1
+    regs.reserve(2);
+    regs << 1 << 1;
+    it->orch->publishToolComnad(regs);
+
+    triggerByKey(id, "DI2", 500);
+    emit logByRobot(id, QString("[RM] cmdBulk_AttachTool triggered for %1").arg(id), Common::LogLevel::Info);
+}
+
+void RobotManager::cmdBulk_DettachTool()
+{
+    QString id("A");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    QVector<quint16> regs;// AI0:2, AI1:1
+    regs.reserve(2);
+    regs << 2 << 1;
+    it->orch->publishToolComnad(regs);
+
+    triggerByKey(id, "DI2", 500);
+    emit logByRobot(id, QString("[RM] cmdBulk_DettachTool triggered for %1").arg(id), Common::LogLevel::Info);
+}
+
+void RobotManager::cmdBulk_ChangeTool()
+{
+    QString id("A");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    QVector<quint16> regs;  // AI0:3, AI1:1
+    regs.reserve(2);
+    regs << 3 << 1;
+    it->orch->publishToolComnad(regs);
+    // Bulk to Sorting
+    triggerByKey(id, "DI2", 500);
+    emit logByRobot(id, QString("[RM] cmdBulk_ChangeTool triggered for %1").arg(id), Common::LogLevel::Info);
+}
+
+/* Bulk */
+void RobotManager::cmdBulk_DoPickup(const Pose6D& pose)
+{
+    QString id("A");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    qDebug()<<"[RM] cmdBulk_DoPickup pose:"<<pose.x<<pose.y<<pose.z<<pose.rx<<pose.ry<<pose.rz;
+    const QVector<double> v{ pose.x,pose.y,pose.z,pose.rx,pose.ry,pose.rz };
+    /////////////////////////////////////////////////////////////////////
+    // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
+    if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
+        it->orch->publishBulkPoseWithKind(v, "pick");
+        triggerByKey(id, "DI8", 500);
+        emit logByRobot(id, QString("[RM] cmdBulk_DoPickup triggered for %1").arg(id), Common::LogLevel::Info);
+        if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+    } else {
+        if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+    }
+    /// ///////////////////////////////////////////////////////////////////
+}
+
+void RobotManager::cmdBulk_DoPlace(const Pose6D& pose)
+{
+    QString id("A");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    qDebug()<<"[RM] cmdBulk_DoPlace pose:"<<pose.x<<pose.y<<pose.z<<pose.rx<<pose.ry<<pose.rz;
+    const QVector<double> v{ pose.x,pose.y,pose.z,pose.rx,pose.ry,pose.rz };
+    /////////////////////////////////////////////////////////////////////
+    // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
+    if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
+        it->orch->publishBulkPoseWithKind(v, "place");
+        triggerByKey(id, "DI9", 500);
+        emit logByRobot(id, QString("[RM] cmdBulk_DoPlace triggered for %1").arg(id), Common::LogLevel::Info);
+        if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+    } else {
+        if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+    }
+    /// ///////////////////////////////////////////////////////////////////
+
+}
+
 /* Sorting */
 // 1. 소팅 툴 장착
 void RobotManager::cmdSort_AttachTool()
@@ -441,8 +702,46 @@ void RobotManager::cmdSort_AttachTool()
         emit log(QString("[RM] trigger: no bus for %1").arg(id));
         return;
     }
-    triggerByKey(id, "DI3", 500);
+    QVector<quint16> regs;  // AI0:1, AI1:2
+    regs.reserve(2);
+    regs << 1 << 2;
+    it->orch->publishToolComnad(regs);
+
+    triggerByKey(id, "DI2", 500);
     emit logByRobot(id, QString("[RM] cmdSort_AttachTool triggered for %1").arg(id), Common::LogLevel::Info);
+}
+void RobotManager::cmdSort_DettachTool()
+{
+    QString id("A");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    QVector<quint16> regs;  // AI0:2, AI1:2
+    regs.reserve(2);
+    regs << 2 << 2;
+    it->orch->publishToolComnad(regs);
+
+    triggerByKey(id, "DI2", 500);
+    emit logByRobot(id, QString("[RM] cmdSort_DettachTool triggered for %1").arg(id), Common::LogLevel::Info);
+}
+
+void RobotManager::cmdSort_ChangeTool()
+{
+    QString id("A");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    QVector<quint16> regs;  // AI0:3, AI1:2
+    regs.reserve(2);
+    regs << 3 << 2;
+    it->orch->publishToolComnad(regs);
+
+    triggerByKey(id, "DI2", 500);
+    emit logByRobot(id, QString("[RM] cmdSort_ChangeTool triggered for %1").arg(id), Common::LogLevel::Info);
 }
 // 2. 피킹 촬상위치로 이동
 void RobotManager::cmdSort_MoveToPickupReady()
@@ -504,7 +803,7 @@ void RobotManager::cmdSort_MoveToConveyor()
     emit logByRobot(id, QString("[RM] cmdSort_MoveToConveyor triggered for %1").arg(id), Common::LogLevel::Info);
 }
 // 5. 플레이스 수행
-void RobotManager::cmdSort_DoPlace(bool flip, int offset)
+void RobotManager::cmdSort_DoPlace(bool flip, int offset, int thick)
 {
     QString id("A");
     auto it = m_ctx.find(id);
@@ -515,10 +814,10 @@ void RobotManager::cmdSort_DoPlace(bool flip, int offset)
     if (flip) {
         // flip 처리
         it->bus->writeCoil(110, true); // 110번 코일을 여닫기);
-        it->orch->publishFlip_Offset(true, offset, m_yawOffset);
+        it->orch->publishFlip_Offset(true, offset, m_yawOffset, thick);
     } else {
         // non-flip 처리
-        it->orch->publishFlip_Offset(false, offset, m_yawOffset);
+        it->orch->publishFlip_Offset(false, offset, m_yawOffset, thick);
     }
     m_yawOffset = 0;
     triggerByKey(id, "DI6", 500);
@@ -631,4 +930,16 @@ void RobotManager::cmdAlign_Clamp(bool open)
     it->bus->writeCoil(110, open); // 110번 코일을 여닫기);
     triggerByKey(id, "DI8", 500);
     emit logByRobot(id, QString("[RM] Clamp %1 command sent").arg(open?"Open":"Close"), Common::LogLevel::Info);
+}
+
+void RobotManager::cmdAlign_Scrap()
+{
+    QString id("B");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    triggerByKey(id, "DI9", 500);
+    emit logByRobot(id, QString("[RM] Screap command sent"), Common::LogLevel::Info);
 }

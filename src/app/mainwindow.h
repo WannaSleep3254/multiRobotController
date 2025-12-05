@@ -75,5 +75,6 @@ private:
     bool m_sortingFlip{false};
     bool m_sortingDock{false};
     int  m_sortingOffset{0};
+    int  m_sortingThick{0};
 };
 #endif // MAINWINDOW_H

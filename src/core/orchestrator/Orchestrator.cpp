@@ -142,7 +142,7 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         // DO3/DO4/DO5 펄스 감지
         bool do3=m_lastDO3, do4=m_lastDO4, do5=m_lastDO5;
         bool do6=m_lastDO6, do7=m_lastDO7, do8=m_lastDO8;
-        bool do9=m_lastDO9;
+        bool do9=m_lastDO9, do10=m_lastDO10;
 
         get(A_DO3_PULSE , do3);
         get(A_DO4_PULSE , do4);
@@ -151,6 +151,7 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         get(A_DO7_PULSE , do7);
         get(A_DO8_PULSE , do8);
         get(A_DO9_PULSE , do9);
+        get(A_DO10_PULSE , do10);
 /*
         // 에지 감지
         bool rRise = ( ready && !m_lastReady);
@@ -197,35 +198,39 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         // === 상승에지 → 공정 인덱스 배출 ===
         if (!m_lastDO3 && do3)
         {
-            emit processPulse(m_robotId, 0); // 공정 0: INIT
+            emit processPulse(m_robotId, 0);
         }
         if (!m_lastDO4 && do4)
         {
-            emit processPulse(m_robotId, 1); // 공정 1: READY
+            emit processPulse(m_robotId, 1);
         }
         if (!m_lastDO5 && do5)
         {
-            emit processPulse(m_robotId, 2); // 공정 2: ASSY
+            emit processPulse(m_robotId, 2);
         }
         if (!m_lastDO6 && do6)
         {
-            emit processPulse(m_robotId, 3); // 공정 3: PICK
+            emit processPulse(m_robotId, 3);
         }
         if (!m_lastDO7 && do7)
         {
-            emit processPulse(m_robotId, 4); // 공정 4: PLACE
+            emit processPulse(m_robotId, 4);
         }
         if (!m_lastDO8 && do8)
         {
-            emit processPulse(m_robotId, 5); // 공정 5: CLAMP
+            emit processPulse(m_robotId, 5);
         }
         if (!m_lastDO9 && do9)
         {
-            emit processPulse(m_robotId, 6); // 공정 5: CLAMP
+            emit processPulse(m_robotId, 6);
+        }
+        if (!m_lastDO10 && do10)
+        {
+            emit processPulse(m_robotId, 7);
         }
         m_lastDO3 = do3; m_lastDO4 = do4; m_lastDO5 = do5;
         m_lastDO6 = do6; m_lastDO7 = do7; m_lastDO8 = do8;
-        m_lastDO8 = do8; m_lastDO9 = do9;
+        m_lastDO8 = do8; m_lastDO9 = do9; m_lastDO10 = do10;
     });
 
     connect(m_bus, &ModbusClient::inputRead, this, [this](int start, const QVector<quint16>& data){
@@ -318,6 +323,7 @@ void Orchestrator::applyAddressMap(const QVariantMap& m)
     getAddr(di, "DO7_PULSE", A_DO7_PULSE);
     getAddr(di, "DO8_PULSE", A_DO8_PULSE);
     getAddr(di, "DO9_PULSE", A_DO9_PULSE);
+    getAddr(di, "DO10_PULSE", A_DO10_PULSE);
 
     getAddr(coils, "PUBLISH_PICK", A_PUBLISH_PICK);
     getAddr(coils, "PUBLISH_PLACE", A_PUBLISH_PLACE);
@@ -328,6 +334,7 @@ void Orchestrator::applyAddressMap(const QVariantMap& m)
     getAddr(coils, "DI6", A_DI6);
     getAddr(coils, "DI7", A_DI7);
     getAddr(coils, "DI8", A_DI8);
+    getAddr(coils, "DI9", A_DI9);
 
     getAddr(holding, "TARGET_POSE_BASE", A_TARGET_BASE);
     getAddr(holding, "TARGET_POSE_PICK", A_TARGET_BASE_PICK);
@@ -348,7 +355,7 @@ void Orchestrator::cycle()
     if(IR_TCP_BASE > 0)
         m_bus->readInputs(IR_TCP_BASE, IR_WORD_PER_POSE);
 
-    m_bus->readDiscreteInputs(A_ROBOT_READY, 10);
+    m_bus->readDiscreteInputs(A_ROBOT_READY, 11);
 }
 
 QString Orchestrator::stateName(Orchestrator::State s)
@@ -416,6 +423,10 @@ void Orchestrator::publishPickPlacePoses(const QVector<double>& pick, const QVec
     QTimer::singleShot(200, this, [this]{
         m_bus->writeCoil(A_PUBLISH_PLACE, false);
     });
+}
+void Orchestrator::publishToolComnad(const QVector<quint16>& cmds)
+{
+    m_bus->writeHoldingBlock(100, cmds);
 }
 // KJW 2025-11-24: 포즈 발행 함수 개선:
 void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct, const QString& kind)
@@ -499,17 +510,68 @@ void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct
     }
 }
 
-void Orchestrator::publishFlip_Offset(bool flip, int offset, float yaw)
+void Orchestrator::publishBulkPoseWithKind(const QVector<double>& pose, const QString& kind)
+{
+    if (pose.size() < 6) {
+        qWarning() << "[ORCH] pose needs 6 elements, got" << pose.size();
+//        return false;
+    }
+    int base = A_TARGET_BASE;   // 기본 TARGET_BASE
+    if (!kind.compare("place", Qt::CaseInsensitive) && A_TARGET_BASE_PLACE >= 0)
+    {   // kind가 "place"이고 A_TARGET_BASE_PLACE >= 0이면 해당 주소 사용
+        base = A_TARGET_BASE_PLACE;
+    }
+    else if (!kind.compare("pick", Qt::CaseInsensitive) && A_TARGET_BASE_PICK >= 0)
+    {   // kind가 "pick"이고 A_TARGET_BASE_PICK >= 0이면 해당 주소 사용
+        base = A_TARGET_BASE_PICK;
+    }
+    else
+    {   // 그 외에는 기본 A_TARGET_BASE 사용
+        qDebug()<<"[ORCH] Using default TARGET_BASE ="<<base;
+    }
+
+    QVector<quint16> regs;
+    regs.reserve(12);
+
+    for (int i=0;i<6;i++) {
+        quint16 hi{0}, lo{0};
+        floatToRegs(static_cast<float>(pose[i]), hi, lo);
+        regs << hi << lo;
+    }
+    m_bus->writeHoldingBlock(base, regs);
+
+    if (!kind.compare("place", Qt::CaseInsensitive) && A_PUBLISH_PLACE > 0)
+    {   // kind가 "place"이고 A_PUBLISH_PLACE >= 0이면 해당 주소 사용
+        QTimer::singleShot(50, this, [this]{
+            m_bus->writeCoil(A_PUBLISH_PLACE, true);
+        });
+        QTimer::singleShot(200, this, [this]{
+            m_bus->writeCoil(A_PUBLISH_PLACE, false);
+        });
+    }
+    else if (!kind.compare("pick", Qt::CaseInsensitive) && A_PUBLISH_PICK >= 0)
+    {   // kind가 "pick"이고 A_PUBLISH_PICK >= 0이면 해당 주소 사용
+        QTimer::singleShot(50, this, [this]{
+            m_bus->writeCoil(A_PUBLISH_PICK, true);
+        });
+        QTimer::singleShot(200, this, [this]{
+            m_bus->writeCoil(A_PUBLISH_PICK, false);
+        });
+    }
+}
+
+void Orchestrator::publishFlip_Offset(bool flip, int offset, float yaw, int thick)
 {
     int base = A_TARGET_BASE_PLACE;   // 기본 TARGET_BASE_PLACE
 
-    float val[3];
+    float val[4];
     val[0] = flip ? 1.0f : 0.0f;
     val[1] = static_cast<double>(offset);
     val[2] = yaw;
+    val[3] = static_cast<double>(thick);
 
-    QVector<quint16> regs; regs.reserve(6);
-    for (int i=0;i<3;i++) {
+    QVector<quint16> regs; regs.reserve(8);//(6);
+    for (int i=0;i<4;i++) {
         quint16 hi, lo;
         floatToRegs(val[i], hi, lo);
         regs << hi << lo;

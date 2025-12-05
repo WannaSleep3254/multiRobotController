@@ -87,6 +87,7 @@ namespace Leadshine
         void reqReadEncoder(const int&);
         void reqReadError(const int &);
         void reqReadServo(const int &);
+        void reqReadState(const int &);
         void reqReadVelocity(const int &);
         void reqReadVersion(const int&);
         // write
@@ -113,6 +114,7 @@ namespace Leadshine
 
         void readVersion(const int&, const QString&);
         void readServo(const int& , const bool&);
+        void readState(const int&, const uint16_t&);
         void readEncoder(const int& , qint32& , const float&);
         void readVelocity(const int&, const qint16&);
         void readError(const int&, const quint16&);

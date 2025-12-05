@@ -12,6 +12,8 @@ enum class RobotId {
 };
 
 enum class CmdType {
+    Tool,
+    Bulk,
     Sorting,
     Conveyor,
     Align,
@@ -19,7 +21,6 @@ enum class CmdType {
 };
 
 enum class CmdKind {
-    Tool,
     Ready,
     Pick,
     Place,
@@ -27,6 +28,10 @@ enum class CmdKind {
     Init,
     Assy,
     Forward,
+    Tool_Mount,
+    Tool_UnMount,
+    Tool_Change,
+    Scrap,
     Unknown
 };
 
@@ -37,6 +42,17 @@ enum class CmdState {
     Done,
     Error,
     Timeout
+};
+
+struct ToolCommand {
+    QString  toolName;          // mount/unmount 용
+    QString  toolFrom;          // change 용
+    QString  toolTo;            // change 용
+};
+
+struct sortingOffset {
+    int height;
+    int thickness;
 };
 
 struct RobotCommand
@@ -51,12 +67,19 @@ struct RobotCommand
     // 옵션 필드
     bool     flip{false};
     int      offset{0};         // A-sorting place 에서 쓰는 offset
+
+    bool    isOffset{false};   // offset 필드 사용 여부
+    sortingOffset sortOffset{}; // A-sorting place 에서 쓰는 offset 상세
+
     QString  clamp;             // "open"/"close"
 
     bool     hasPick{false};
     bool     hasPlace{false};
     Pose6D   pick{};
     Pose6D   place{};
+
+    bool     isTool{false};
+    ToolCommand toolCmd{};
 
     QJsonObject raw;            // 디버깅용 원본 JSON
 };

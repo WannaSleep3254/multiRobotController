@@ -117,6 +117,23 @@ void GentryManager::setup_motorStateMonitoring()
         emit motorServoStatus(id, servo);
 //        emit log(QString("%1번 모터 서보: %2").arg(id).arg(servo?"On":"Off"));
     });
+    // 축별 상태
+    QObject::connect(motorController, &Leadshine::ELD2::readState,this,[=](int id, uint16_t state){
+        // 상태 코드: bit_0: RDY, bit_1: RUN, bit_2: ERR, bit_3: HOME_OK, bit_4: INPOS, bit_5: AT-SPEED
+        bool rdy = state & (1 << 0);       // Bit 0
+        bool run = state & (1 << 1);      // Bit 1
+        bool err = state & (1 << 2);      // Bit 2
+        bool homeOk = state & (1 << 3);   // Bit 3
+        bool inPosition = state & (1 << 4);   // Bit 4
+        bool AtSpeed = state & (1 << 5);      // Bit 5
+
+        if(id==4)
+        {
+            qDebug()<<QString("%1번 모터 상태: RDY=%2, RUN=%3, ERR=%4, HOME_OK=%5, INPOS=%6, AT-SPEED=%7")
+                          .arg(id).arg(rdy).arg(run).arg(err).arg(homeOk).arg(inPosition).arg(AtSpeed);
+        }
+        //emit motorState(id, state);
+    });
     // 축별 엔코더
     QObject::connect(motorController, &Leadshine::ELD2::readEncoder,this,[=](int id, int32_t pulse, float pos){
         //qDebug()<<QString("%1번 모터 엔코더: %2 pulse, %3 mm").arg(id).arg(pulse).arg(pos);
@@ -137,11 +154,14 @@ void GentryManager::setup_motorStateMonitoring()
     });
 }
 
-void GentryManager::doGentryPlace()
+void GentryManager::doGentryPlace(int offset_z)
 {
-    motorController->reqWritePos(1, 260000); //gentry x move 130mm
+ //   motorController->reqWritePos(1, 260000); //gentry x move 130mm
+//    motorController->reqWritePos(1, 0); //gentry x move 0mm
+    motorController->reqWritePos(1, 74000); //gentry x move 37mm
     logMessage2("gentry move to X place position");
-    motorController->reqWritePos(2, -250000); //gentry z move -125mm
+    //motorController->reqWritePos(2, -250000); //gentry z move -125mm: 1mm per 2000 pulse
+    motorController->reqWritePos(2, -250000+2000*offset_z); //gentry z move -125mm: 1mm per 2000 pulse
     logMessage2("gentry move to Z place position");
     motorController->reqWritePos(3, -25020); //picker rotate -90 degree
     logMessage2("picker rotate -90 degree");
@@ -333,7 +353,8 @@ void GentryManager::gentry_motion()
         break;
 
     case gty_place_pos: //gentry move to braket place
-        motorController->reqWritePos(1, 260000); //gentry x move 130mm
+        //motorController->reqWritePos(1, 260000); //gentry x move 130mm
+        motorController->reqWritePos(1, 0); //gentry x move 0mm
         logMessage2("gentry move to X place position");
         motorController->reqWritePos(2, -130000); //gentry z move -65mm
         logMessage2("gentry move to Z place position");
@@ -382,7 +403,6 @@ void GentryManager::gentry_motion()
 
         if(motorController->isMotionDone(4)){
             logMessage2("conveyor move done");
-
         }
         else if(motorController->isMotionDone(1)){
             logMessage2("X move done\r\n");

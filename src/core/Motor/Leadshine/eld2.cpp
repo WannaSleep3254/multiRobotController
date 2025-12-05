@@ -96,6 +96,7 @@ namespace Leadshine
                 reqReadServo(axis);     // 0x0405
                 reqReadEncoder(axis);   // 0x602C
                 reqReadError(axis);     // 0x0B03
+//                reqReadState(axis);     // 0x0B05
                 // 필요하면 속도도 같이:
                 // reqReadVelocity(axis);
             }
@@ -153,6 +154,12 @@ namespace Leadshine
     void ELD2::reqReadServo(const int &id)
     {
         QModbusDataUnit encoderData(QModbusDataUnit::HoldingRegisters, 0x0405, 1);
+        driver_->readModbus(encoderData, id);
+    }
+
+    void ELD2::reqReadState(const int &id)
+    {
+        QModbusDataUnit encoderData(QModbusDataUnit::HoldingRegisters, 0x0B05, 3);
         driver_->readModbus(encoderData, id);
     }
 
@@ -373,6 +380,18 @@ namespace Leadshine
             emit readVersion(id, QString("%1.%2%3").arg(val.at(0)).arg(val.at(1)).arg(val.at(2)));
             break;
         }
+
+//        case 0x0B05: { //reqReadState 3
+//            uint16_t state = val.at(0);
+//            emit readState(id, state);
+/*
+            bool inPosition = state & (1 << 4);   // Bit 4
+            if(inPosition)
+                emit motionFinished(id, runtime_[id].targetPos);   // 새 signal
+*/
+//            break;
+//        }
+
 /*
         case 0x0B09 : { //reqReadVelocity 1
             emit readVelocity(id, static_cast<int16_t>(val.at(0)));
@@ -386,13 +405,21 @@ namespace Leadshine
         }*/
         case 0x0B03 : { //reqReadError 1
             emit readError(id, val.at(0));
-            qint16 vel = static_cast<int16_t>(val.at(6));
-            runtime_[id].lastVel = vel;
-            emit readVelocity(id, vel);
 
-            if (isMotionDone(id)) {
-                runtime_[id].moving = false;
-                emit motionFinished(id, runtime_[id].targetPos);   // 새 signal
+            qint16 state = static_cast<int16_t>(val.at(2));
+            qint16 vel = static_cast<int16_t>(val.at(6));
+//            qDebug()<<"Motor"<<id<<"Velocity:"<<vel;
+//            qDebug()<<static_cast<int16_t>(val.at(5));
+            runtime_[id].lastVel = vel;
+//            emit readVelocity(id, vel);
+
+            bool inPosition = state & (1 << 4);   // Bit 4
+            if(inPosition)
+            {
+                if (isMotionDone(id)) {
+                    runtime_[id].moving = false;
+                    emit motionFinished(id, runtime_[id].targetPos);   // 새 signal
+                }
             }
             break;
 
@@ -411,12 +438,9 @@ namespace Leadshine
         // 예: 위치 오차 ±0.01mm, 속도 0 근처
         const float posTol = 5.0f;
         const int   velTol = 3;  // 1pulse/s or 1rpm 등
-//        qDebug()<<QString("Motor %1: Target=%2, Last=%3, Vel=%4").arg(id).arg(rt.targetPos).arg(rt.lastPos).arg(rt.lastVel);
-//        qDebug()<<QString("    PosTol=%1, VelTol=%2").arg(posTol).arg(velTol);
-//        qDebug()<<QString("    PosDiff=%1, VelAbs=%2").arg(qAbs(rt.lastPos - rt.targetPos)).arg(qAbs(rt.lastVel));
 
-        if (qAbs(rt.lastPos - rt.targetPos) < posTol &&
-            qAbs(rt.lastVel) <= velTol ||qAbs(rt.lastVel) ==0 )
+        if (qAbs(rt.lastPos-rt.targetPos) < posTol &&
+            qAbs(rt.lastVel) <= velTol)
         {
             return true;
         }

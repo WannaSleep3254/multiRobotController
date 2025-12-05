@@ -10,15 +10,16 @@ static RobotId parseRobotId(const QString& s)
 
 static CmdType parseCmdType(const QString& s)
 {
+    if (s == "bulk")   return CmdType::Bulk;
     if (s == "sorting")   return CmdType::Sorting;
     if (s == "conveyor")  return CmdType::Conveyor;
     if (s == "align")     return CmdType::Align;
+    if (s == "tool")     return CmdType::Tool;
     return CmdType::Unknown;
 }
 
 static CmdKind parseCmdKind(const QString& s)
 {
-    if (s == "tool")    return CmdKind::Tool;
     if (s == "ready")   return CmdKind::Ready;
     if (s == "pick")    return CmdKind::Pick;
     if (s == "place")   return CmdKind::Place;
@@ -26,6 +27,10 @@ static CmdKind parseCmdKind(const QString& s)
     if (s == "init")    return CmdKind::Init;
     if (s == "assy")    return CmdKind::Assy;
     if (s == "forward") return CmdKind::Forward;
+    if (s == "scrap") return CmdKind::Scrap;
+    if (s == "mount") return CmdKind::Tool_Mount;
+    if (s == "unmount") return CmdKind::Tool_UnMount;
+    if (s == "change") return CmdKind::Tool_Change;
     return CmdKind::Unknown;
 }
 
@@ -41,6 +46,33 @@ static bool parsePoseObj(const QJsonObject& o, Pose6D &out)
     out.rx = o.value("rx").toDouble();
     out.ry = o.value("ry").toDouble();
     out.rz = o.value("rz").toDouble();
+    return true;
+}
+
+static bool parseToolObj(const QJsonObject& o, const CmdKind kind, ToolCommand &out)
+{
+    if ( (!o.contains("name"))&&(kind==CmdKind::Tool_Mount || kind==CmdKind::Tool_UnMount) )
+        return false;
+
+    if ( (!o.contains("from") || !o.contains("to")) && (kind==CmdKind::Tool_Change) )
+        return false;
+
+
+    out.toolName = o.value("name").toString();
+    out.toolFrom = o.value("from").toString();
+    out.toolTo = o.value("to").toString();
+
+    return true;
+}
+
+static bool parseOffsetObj(const QJsonObject& o, const CmdKind kind, sortingOffset &out)
+{
+    if ( !o.contains("height") || !o.contains("thickness") )
+        return false;
+
+    out.height = o.value("height").toInt(0);
+    out.thickness = o.value("thickness").toInt(0);
+
     return true;
 }
 
@@ -78,6 +110,15 @@ bool RobotCommandParser::parse(const QJsonObject& obj, RobotCommand& out)
             out.hasPick = parsePoseObj(poseObj, out.pick);
             break;
         }
+    }
+    else if(obj.contains("tool") && obj["tool"].isObject()) {
+        const auto toolObj = obj["tool"].toObject();
+        out.isTool=parseToolObj(toolObj, out.kind, out.toolCmd);
+        //out.kind
+    }
+    else if(obj.contains("offset") && obj["offset"].isObject()) {
+        const auto offsetObj = obj["offset"].toObject();
+        out.isOffset=parseOffsetObj(offsetObj, out.kind, out.sortOffset);
     }
 
     // 2) 구버전 포맷: pick/place 개별 필드도 계속 지원 (하위호환)

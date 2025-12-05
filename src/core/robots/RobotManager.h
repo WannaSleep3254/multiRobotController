@@ -8,6 +8,7 @@
 
 #include "Pose6D.h"
 #include "LogLevel.h"
+#include "RobotCommand.h"
 
 class QAbstractItemModel;
 class PickListModel;
@@ -84,9 +85,21 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////
     /// 2025-11-21: VisionClient의 제어 API
     /// /////////////////////////////////////////////////////////////////////////////////////
+    /* Tool */
+    // 1. 소팅 툴 장착
+    void cmdBulk_AttachTool();
+    void cmdBulk_DettachTool();
+    void cmdBulk_ChangeTool();
+
+    /* Bulk */
+    void cmdBulk_DoPickup(const Pose6D& pose);
+    void cmdBulk_DoPlace(const Pose6D& pose);
+
     /* Sorting */
     // 1. 소팅 툴 장착
     void cmdSort_AttachTool();
+    void cmdSort_DettachTool();
+    void cmdSort_ChangeTool();
     // 2. 피킹 촬상위치로 이동
     void cmdSort_MoveToPickupReady();
     // 3. 피킹 동작 수행
@@ -94,7 +107,7 @@ public:
     // 4. 컨베이어 이동
     void cmdSort_MoveToConveyor();
     // 5. 플레이스 수행
-    void cmdSort_DoPlace(bool flip, int offset);
+    void cmdSort_DoPlace(bool flip, int offset, int thick=0);
     // gentry 툴 토글
     void cmdSort_GentryTool(bool toggle);
 
@@ -112,6 +125,8 @@ public:
     // 11. 클램프 동작 수행
     void cmdAlign_Clamp(bool open);
 
+    void cmdAlign_Scrap();
+
     ////////////////////////////////////////////////////////////////////////////////////////
 signals:
     void heartbeat(const QString& id, bool ok);
@@ -119,8 +134,8 @@ signals:
     void stateChanged(const QString& id, int state, const QString& name);
     void currentRowChanged(const QString& id, int row);
 
-    void bulkProcessStarted(const QString& id);
-    void bulkProcessFinished(const QString& id);
+//    void bulkProcessStarted(const QString& id);
+//    void bulkProcessFinished(const QString& id);
 
     void log(const QString& line,
              Common::LogLevel level = Common::LogLevel::Info);
@@ -148,6 +163,8 @@ private:
 //    VisionServer* m_vsrv{nullptr};  // ✅ 보관용
     VisionClient* m_vsrv{nullptr};  // ✅ 보관용
     float m_yawOffset{0.0f}; // vision pose yaw offset
+
+    QMap<QString, bool> m_workCompleteSent;
 
 };
 

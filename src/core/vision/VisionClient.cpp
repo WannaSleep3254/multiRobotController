@@ -80,6 +80,8 @@ void VisionClient::sendWorkComplete(const QString& robot, const QString& type, c
         {"robot", robot.toLower()},
         {"type", type},
         {"kind", kind},
+        {"success", true},
+        {"error_code", 0},
         {"seq", static_cast<int>(seq)},
         {"dir",  11}
     };
@@ -91,6 +93,47 @@ void VisionClient::sendWorkComplete(const QString& robot, const QString& type, c
     m_sock->write(json);
     m_sock->flush();
 
+}
+
+void VisionClient::sendToolComplete(const QString& robot, quint32 seq, bool state)
+{
+    if (robot.isEmpty())
+        return;
+
+    if (m_lastCmdKind == CmdKind::Unknown)
+        return;
+
+    QString kind,name,from,to;
+    QJsonObject toolObj;
+    if (m_lastCmdKind == CmdKind::Tool_Mount){
+        kind = "mount";
+        name = m_lastToolCmd.toolName;
+        toolObj["name"] = name;
+    }else if (m_lastCmdKind == CmdKind::Tool_UnMount){
+        kind = "unmount";
+        name = m_lastToolCmd.toolName;
+        toolObj["name"] = name;
+    }else if (m_lastCmdKind == CmdKind::Tool_Change){
+        kind = "change";
+        from = m_lastToolCmd.toolFrom;
+        to = m_lastToolCmd.toolTo;
+        toolObj["from"] = from;
+        toolObj["to"] = to;
+    }
+
+    QJsonObject o{
+        {"robot", robot.toLower()},
+        {"type", "tool"},
+        {"kind", kind},
+        {"tool", toolObj},
+        {"success", true},
+        {"error_code", 0},
+        {"seq", static_cast<int>(seq)},
+        {"dir",  11}
+    };
+    const auto json = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
+    m_sock->write(json);
+    m_sock->flush();
 }
 
 void VisionClient::sendJson(const QJsonObject& obj)
@@ -135,7 +178,6 @@ void VisionClient::onReadyRead()
             continue;
 
         const QString s = QString::fromUtf8(line);
-        emit log(QString("[RX] %1").arg(s));
         emit lineReceived(s);   // 원하면 유지
 
         // ── JSON 파싱
@@ -153,11 +195,19 @@ void VisionClient::onReadyRead()
             const auto status = obj.value("status").toString();
             const auto msg    = obj.value("message").toString();
             emit ackReceived(seq, status, msg);
-        } else {
-            RobotCommand cmd;
-            if (RobotCommandParser::parse(obj, cmd)) {
-                emit commandReceived(cmd);
+        }
+
+        if (dir != 1)
+            continue;   // DIR 1 아닌 CMD는 그냥 무시
+
+        RobotCommand cmd;
+        if (RobotCommandParser::parse(obj, cmd)) {
+            if (cmd.type == CmdType::Tool) {
+                m_lastCmdKind = cmd.kind;
+                m_lastToolCmd = cmd.toolCmd;
             }
+
+            emit commandReceived(cmd);
         }
     }
 }

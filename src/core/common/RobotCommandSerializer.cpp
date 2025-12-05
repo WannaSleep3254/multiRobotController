@@ -12,6 +12,8 @@ static QString robotIdToString(RobotId id)
 static QString cmdTypeToString(CmdType t)
 {
     switch (t) {
+    case CmdType::Tool:  return "tool";
+    case CmdType::Bulk:  return "bulk";
     case CmdType::Sorting:  return "sorting";
     case CmdType::Conveyor: return "conveyor";
     case CmdType::Align:    return "align";
@@ -22,7 +24,6 @@ static QString cmdTypeToString(CmdType t)
 static QString cmdKindToString(CmdKind k)
 {
     switch (k) {
-    case CmdKind::Tool:    return "tool";
     case CmdKind::Ready:   return "ready";
     case CmdKind::Pick:    return "pick";
     case CmdKind::Place:   return "place";
@@ -30,6 +31,9 @@ static QString cmdKindToString(CmdKind k)
     case CmdKind::Init:    return "init";
     case CmdKind::Assy:    return "assy";
     case CmdKind::Forward: return "forward";
+    case CmdKind::Tool_Mount:   return "mount";
+    case CmdKind::Tool_UnMount: return "unmount";
+    case CmdKind::Tool_Change:  return "change";
     default: return "";
     }
 }

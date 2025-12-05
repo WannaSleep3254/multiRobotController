@@ -46,19 +46,19 @@ MainWindow::MainWindow(QWidget *parent)
                 }
                 onLog(prefix + line, level);
             });
-
+#if false
     connect(m_mgr, &RobotManager::bulkProcessFinished, this,
             [this](const QString& robotId){
 //                if (robotId == "A")
 //                    bulkReady();
             });
-
+#endif
     connect(m_mgr, &RobotManager::reqGentryPalce, this, [this]{
-            // TODO Gentry Place 동작 시작
+        // TODO Gentry Place 동작 시작
         qDebug()<<QDateTime::currentDateTime()<<"MainWindow::reqGentryPlace";
         m_gentryMgr->startGantryMove();
-        m_gentryMgr->doGentryPlace();
-
+        int offset_mm = (m_sortingOffset>30)? (m_sortingOffset-30) : 0;
+        m_gentryMgr->doGentryPlace(offset_mm);
     });
 
     connect(m_mgr, &RobotManager::reqGentryReady, this, [this]{
@@ -83,25 +83,26 @@ MainWindow::MainWindow(QWidget *parent)
             [this](bool ok){
                 Q_UNUSED(ok)
                 qDebug()<<QString("Gentry gantry command finished: %1").arg(ok?"OK":"FAIL");
-                bool flip = m_sortingFlip;
+                bool flip   = m_sortingFlip;
                 int  offset = m_sortingOffset;
+                int  thick  = m_sortingThick;
                 bool isDock = m_sortingDock;
 
-                onLog(QString("m_flip: %1, offset: %2").arg(m_sortingFlip?"OK":"FAIL", offset));
-                onLog(QString("flip: %1, offset; %2").arg(flip?"OK":"FAIL", m_sortingOffset));
+                onLog(QString("m_flip: %1, offset: %2").arg(m_sortingFlip?"OK":"FAIL").arg(offset));
+                onLog(QString("flip: %1, offset; %2").arg(flip?"OK":"FAIL").arg(m_sortingOffset));
 
 //                if(ok && m_sortingPlacePorcessActive&& !m_sortingDock){
                 if(m_sortingPlacePorcessActive&& !m_sortingDock){
                     if(!flip)
                     {   //TODO robot->place
                         qDebug()<<"Robot place without flip";
-                        m_mgr->cmdSort_DoPlace(flip, offset);
+                        m_mgr->cmdSort_DoPlace(flip, offset, thick);
                     }
                     else if(flip)
                     {   //TODO robot->dock -> ready
                         qDebug()<<"Robot place with flip - dock first";
                         m_sortingDock = true;
-                        m_mgr->cmdSort_DoPlace(flip, offset);
+                        m_mgr->cmdSort_DoPlace(flip, offset, thick);
                     }
                 }
 //                else if(ok && m_sortingPlacePorcessActive&& m_sortingDock){
@@ -280,16 +281,80 @@ void MainWindow::onRobotCommand(const RobotCommand& cmd)
 
 void MainWindow::handleRobotA(const RobotCommand& cmd)
 {
-    if (cmd.type == CmdType::Sorting) {
+    if(cmd.type == CmdType::Tool) {
+        if(cmd.kind == CmdKind::Tool_Mount) {
+            if(cmd.toolCmd.toolName=="bulk") {
+                onLog("로봇 A 벌크 툴 마운트 처리 필요\r\n");
+                m_visionClient->sendAck(cmd.seq, "ok", "Tool Mount Bulk command received");
+                m_mgr->cmdBulk_AttachTool();
+            }
+            else if(cmd.toolCmd.toolName=="sorting") {
+                onLog("로봇 A 소팅 툴 마운트 처리 필요\r\n");
+                m_visionClient->sendAck(cmd.seq, "ok", "Tool Mount Sorting command received");
+                m_mgr->cmdSort_AttachTool();
+            }
+        }
+        else if(cmd.kind == CmdKind::Tool_UnMount) {
+            if(cmd.toolCmd.toolName=="bulk") {
+                onLog("로봇 A 벌크 툴 언마운트 처리 필요\r\n");
+                m_visionClient->sendAck(cmd.seq, "ok", "Tool UnMount Bulk command received");
+                m_mgr->cmdBulk_DettachTool();
+            }
+            else if(cmd.toolCmd.toolName=="sorting") {
+                onLog("로봇 A 소팅 툴 언마운트 처리 필요\r\n");
+                m_visionClient->sendAck(cmd.seq, "ok", "Tool UnMount Sorting command received");
+                m_mgr->cmdSort_DettachTool();
+            }
+        }
+        else if(cmd.kind == CmdKind::Tool_Change) {
+            if(cmd.toolCmd.toolFrom=="bulk" && cmd.toolCmd.toolTo=="sorting") {
+                onLog("로봇 A 벌크→소팅 툴 체인지 처리 필요\r\n");
+                m_visionClient->sendAck(cmd.seq, "ok", "Tool Change Bulk to Sorting command received");
+                m_mgr->cmdBulk_ChangeTool();
+            }
+            else if(cmd.toolCmd.toolFrom=="sorting" && cmd.toolCmd.toolTo=="bulk") {
+                onLog("로봇 A 소팅→벌크 툴 체인지 처리 필요\r\n");
+                m_visionClient->sendAck(cmd.seq, "ok", "Tool Change Sorting to Bulk command received");
+                m_mgr->cmdSort_ChangeTool();
+            }
+        }
+    }
+    else if(cmd.type == CmdType::Bulk) {
         switch (cmd.kind) {
-        case CmdKind::Tool:
-            onLog("로봇 A 소팅 툴 처리 필요\r\n");
-            m_visionClient->sendAck(0, "ok", "sorting Tool command received");
-            m_mgr->cmdSort_AttachTool();
+        case CmdKind::Pick:
+            if(cmd.hasPick)
+            {
+                onLog("Robot A 벌크 픽 처리 필요, pose:"
+                       + QString("[%1,%2,%3] [%4,%5,%6]")
+                         .arg(cmd.pick.x).arg(cmd.pick.y).arg(cmd.pick.z)
+                         .arg(cmd.pick.rx).arg(cmd.pick.ry).arg(cmd.pick.rz));
+                m_visionClient->sendAck(cmd.seq, "ok", "bulk Pick command received");
+                m_mgr->cmdBulk_DoPickup(cmd.pick);
+            }
+
             break;
+        case CmdKind::Place:
+            if(cmd.hasPlace)
+            {
+                onLog("Robot A 벌크 플레이스 처리 필요, pose:"
+                       + QString("[%1,%2,%3] [%4,%5,%6]")
+                         .arg(cmd.place.x).arg(cmd.place.y).arg(cmd.place.z)
+                         .arg(cmd.place.rx).arg(cmd.place.ry).arg(cmd.place.rz));
+                m_visionClient->sendAck(cmd.seq, "ok", "bulk Place command received");
+                m_mgr->cmdBulk_DoPlace(cmd.place);
+            }
+
+            break;
+        default:
+            break;
+        }
+    }
+    else if (cmd.type == CmdType::Sorting) {
+        switch (cmd.kind) {
+
         case CmdKind::Ready:
             onLog("로봇 A 소팅 레디 처리 필요\r\n");
-            m_visionClient->sendAck(0, "ok", "sorting Ready command received");
+            m_visionClient->sendAck(cmd.seq, "ok", "sorting Ready command received");
             m_mgr->cmdSort_MoveToPickupReady();
             break;
         case CmdKind::Pick:
@@ -297,7 +362,7 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
                 // cmd.pick 사용
                 onLog(QString("로봇 A 소팅 픽 처리 필요, pose: [%1,%2,%3] [%4,%5,%6]\r\n")
                                .arg(cmd.pick.x).arg(cmd.pick.y).arg(cmd.pick.z).arg(cmd.pick.rx).arg(cmd.pick.ry).arg(cmd.pick.rz));
-                m_visionClient->sendAck(0, "ok", "sorting Pick command received");
+                m_visionClient->sendAck(cmd.seq, "ok", "sorting Pick command received");
                 m_mgr->cmdSort_DoPickup(cmd.pick);
             }
             break;
@@ -305,12 +370,13 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
             if (cmd.flip) {
                 // offset: 로봇 후퇴거리/미사용
                 onLog("로봇 A 소팅 플립 처리 필요\r\n");
-                m_visionClient->sendAck(0, "ok", "sorting Place Flip command received");
-//                m_mgr->cmdSort_DoPlace(cmd.flip, cmd.offset);
+                m_visionClient->sendAck(cmd.seq, "ok", "sorting Place Flip command received");
 ////////////////////////////////////////////////////////////////
                 m_sortingPlacePorcessActive = true;
                 m_sortingFlip = true;
-                m_sortingOffset=cmd.offset;
+                m_sortingOffset=cmd.sortOffset.height; //cmd.offset;
+                m_sortingThick=cmd.sortOffset.thickness;
+
                 m_gentryMgr->startGantryMove();
                 m_gentryMgr->setFalgs(false, false, true, false, false);
                 m_mgr->cmdSort_GentryTool(true);
@@ -320,12 +386,14 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
                 // offset: 겐트리와 컨베어간의 높이차이 -> Z축 환산필요
                 onLog(QString("로봇 A 소팅 논플립 처리 필요, offset: %1\r\n")
                                .arg(cmd.offset));
-                m_visionClient->sendAck(0, "ok", "sorting Place Non-Flip command received");
+                m_visionClient->sendAck(cmd.seq, "ok", "sorting Place Non-Flip command received");
 //                m_mgr->cmdSort_DoPlace(cmd.flip, cmd.offset);
 ////////////////////////////////////////////////////////////////
                 m_sortingPlacePorcessActive = true;
                 m_sortingFlip =false;
-                m_sortingOffset=cmd.offset;
+                m_sortingOffset=cmd.sortOffset.height;//cmd.offset;
+                m_sortingThick=cmd.sortOffset.thickness;
+
                 m_gentryMgr->startGantryMove();
                 m_gentryMgr->setFalgs(false, true, false, false, false);
                 m_gentryMgr->gentry_motion();
@@ -338,7 +406,7 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
     } else if (cmd.type == CmdType::Conveyor) {
         if (cmd.kind == CmdKind::Forward) {
             onLog("로봇 A 컨베이어 포워드 처리 필요\r\n");
-            m_visionClient->sendAck(0, "ok", "conveyor Forward command received");
+            m_visionClient->sendAck(cmd.seq, "ok", "conveyor Forward command received");
             //m_mgr->cmdSort_MoveToConveyor();
             m_gentryMgr->startConveyorMove();
             m_gentryMgr->setFalgs(true, false, false, false, false);
@@ -355,18 +423,18 @@ void MainWindow::handleRobotB(const RobotCommand& cmd)
     switch (cmd.kind) {
     case CmdKind::Init:  // TODO: 초기화 명령 처리
         onLog("로봇 B 얼라인 이닛 처리 필요\r\n");
-        m_visionClient->sendAck(0, "ok", "align Init command received");
+        m_visionClient->sendAck(cmd.seq, "ok", "align Init command received");
         m_mgr->cmdAlign_Initialize();
 
         break;
     case CmdKind::Assy:  // TODO: 어셈블리 명령 처리
         onLog("로봇 B 얼라인 어셈블리 처리 필요\r\n");
-        m_visionClient->sendAck(0, "ok", "align Assy command received");
+        m_visionClient->sendAck(cmd.seq, "ok", "align Assy command received");
         m_mgr->cmdAlign_MoveToAssyReady();
         break;
     case CmdKind::Ready: // TODO: 레디 명령 처리
         onLog("로봇 B 얼라인 레디 처리 필요\r\n");
-        m_visionClient->sendAck(0, "ok", "align Ready command received");
+        m_visionClient->sendAck(cmd.seq, "ok", "align Ready command received");
         m_mgr->cmdAlign_MoveToPickupReady();
         break;
     case CmdKind::Pick:  // TODO: 픽 명령 처리
@@ -374,7 +442,7 @@ void MainWindow::handleRobotB(const RobotCommand& cmd)
             // cmd.pick 사용
             onLog(QString("로봇 B 얼라인 픽 처리 필요, pose: [%1,%2,%3] [%4,%5,%6]\r\n")
                            .arg(cmd.pick.x).arg(cmd.pick.y).arg(cmd.pick.z).arg(cmd.pick.rx).arg(cmd.pick.ry).arg(cmd.pick.rz));
-            m_visionClient->sendAck(0, "ok", "align Pick command received");
+            m_visionClient->sendAck(cmd.seq, "ok", "align Pick command received");
             m_mgr->cmdAlign_DoPickup(cmd.pick);
         }
         break;
@@ -383,7 +451,7 @@ void MainWindow::handleRobotB(const RobotCommand& cmd)
             // cmd.place 사용
             onLog(QString("로봇 B 얼라인 플레이스 처리 필요, pose: [%1,%2,%3] [%4,%5,%6]\r\n")
                            .arg(cmd.place.x).arg(cmd.place.y).arg(cmd.place.z).arg(cmd.place.rx).arg(cmd.place.ry).arg(cmd.place.rz));
-            m_visionClient->sendAck(0, "ok", "align Place command received");
+            m_visionClient->sendAck(cmd.seq, "ok", "align Place command received");
             m_mgr->cmdAlign_DoPlace(cmd.place);
         }
         break;
@@ -391,13 +459,18 @@ void MainWindow::handleRobotB(const RobotCommand& cmd)
         if (cmd.clamp == "open") {
             onLog("로봇 B 클램프 오픈 처리 필요\r\n");
             qDebug()<<"25-11-24: Robot B Clamp Open command received";
-            m_visionClient->sendAck(0, "ok", "align Clamp Open command received");
+            m_visionClient->sendAck(cmd.seq, "ok", "align Clamp Open command received");
             m_mgr->cmdAlign_Clamp(false);
         } else if (cmd.clamp == "close") {
             onLog("로봇 B 클램프 클로즈 처리 필요\r\n");
-            m_visionClient->sendAck(0, "ok", "align Clamp Close command received");
+            m_visionClient->sendAck(cmd.seq, "ok", "align Clamp Close command received");
             m_mgr->cmdAlign_Clamp(true);
         }
+        break;
+    case CmdKind::Scrap:
+        onLog("로봇 B 스크랩 처리 필요\r\n");
+        m_visionClient->sendAck(cmd.seq, "ok", "align Scrap command received");
+        m_mgr->cmdAlign_Scrap();
         break;
     default:
         break;

@@ -31,7 +31,7 @@ public:
     void setFalgs(bool conveyor_fwd, bool flip_fwd, bool flip_rev, bool gty_place, bool gty_home_place);
     void gentry_motion();
 
-    void doGentryPlace();
+    void doGentryPlace(int offset_z=0);
     void doGentryReady();
 
     void startGantryMove();   // 1-2-3축 동시

@@ -21,6 +21,7 @@ public:
     void sendPose(const PickPose& p, const QString& kind, const int dir, const int id, quint32 seq = 0, int speed_pct = 50);
     void sendAck(quint32 seq, const QString& status, const QString& msg = QString());
     void sendWorkComplete(const QString& robot, const QString& type, const QString& kind, quint32 seq, bool clampState = false);
+    void sendToolComplete(const QString& robot, quint32 seq, bool state);
 
 signals:
     void connected();
@@ -41,6 +42,9 @@ private:
 private:
     QTcpSocket* m_sock = nullptr;
     QByteArray m_inbuf;
+
+    CmdKind m_lastCmdKind {CmdKind::Unknown};
+    ToolCommand m_lastToolCmd;
 };
 
 #endif // VISIONCLIENT_H
