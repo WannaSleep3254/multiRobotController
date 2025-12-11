@@ -46,13 +46,7 @@ MainWindow::MainWindow(QWidget *parent)
                 }
                 onLog(prefix + line, level);
             });
-#if false
-    connect(m_mgr, &RobotManager::bulkProcessFinished, this,
-            [this](const QString& robotId){
-//                if (robotId == "A")
-//                    bulkReady();
-            });
-#endif
+
     connect(m_mgr, &RobotManager::reqGentryPalce, this, [this]{
         // TODO Gentry Place 동작 시작
         qDebug()<<QDateTime::currentDateTime()<<"MainWindow::reqGentryPlace";
@@ -99,7 +93,6 @@ MainWindow::MainWindow(QWidget *parent)
                     else if(flip&& pose==GantryPose::Docking)
                     {   //TODO robot->dock -> ready
                         qDebug()<<"Robot place with flip - dock first"<<gantryPoseToString(pose)<<ok;
-//                        m_mgr->cmdSort_GentryTool(true); // 겐트리 Tool On);
                     }
                     else if(flip&& pose==GantryPose::Place){
                         // 겐트리 Tool Off
@@ -409,12 +402,6 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
                 m_gentryMgr->startGantryMove();
                 int offset_mm = (m_sortingOffset>30)? (m_sortingOffset-30+10) : 0;
                 m_gentryMgr->doGentryPlace(offset_mm);
-/*
-                m_gentryMgr->startGantryMove();
-                m_gentryMgr->setFalgs(false, false, true, false, false);
-                m_mgr->cmdSort_GentryTool(true);
-                m_gentryMgr->gentry_motion();
-*/
 ////////////////////////////////////////////////////////////////
             } else {
                 // offset: 겐트리와 컨베어간의 높이차이 -> Z축 환산필요

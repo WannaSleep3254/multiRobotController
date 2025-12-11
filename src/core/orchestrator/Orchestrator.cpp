@@ -472,6 +472,7 @@ void Orchestrator::publishPickPlacePoses(const QVector<double>& pick, const QVec
         m_bus->writeCoil(A_PUBLISH_PLACE, false);
     });
 }
+
 void Orchestrator::publishToolComnad(const QVector<quint16>& cmds)
 {
     m_bus->writeHoldingBlock(100, cmds);
@@ -650,6 +651,40 @@ void Orchestrator::publishPoseToRobot1(const QVector<double>& pose, int speedPct
     m_bus->writeCoil(A_PUBLISH_PICK, true);
     emit log("[FSM] PUBLISH_REQ=1 (Robot1)");
     // 이후 FSM은 기존 cycle() 로직: BUSY↑ → DONE↑ → PUBLISH_REQ=0 → DONE↓ 반환
+}
+
+void Orchestrator::publishArrangePoses(const QVector<double>& pick, const QVector<double>& place)
+{
+    int pick_base = A_TARGET_BASE_PICK;
+    int place_base = A_TARGET_BASE_PLACE;
+
+    qDebug()<<"[ORCH] publishArrangePoses:"
+            <<"pick="<<pick
+            <<"place="<<place;
+    // 포즈를 12워드(6float)로 인코딩해서 쓰기
+    QVector<quint16> pick_regs;
+    pick_regs.reserve(12);
+    for (int i=0;i<6;i++) {
+        quint16 hi, lo;
+        floatToRegs(float(pick[i]), hi, lo);
+        pick_regs << hi << lo;
+    }
+    m_bus->writeHoldingBlock(pick_base, pick_regs);
+
+    QVector<quint16> place_regs;
+    place_regs.reserve(12);
+    for (int i=0;i<6;i++) {
+        quint16 hi, lo;
+        floatToRegs(float(place[i]), hi, lo);
+        place_regs << hi << lo;
+    }
+    m_bus->writeHoldingBlock(place_base, place_regs);
+    QTimer::singleShot(50, this, [this]{
+        m_bus->writeCoil(A_PUBLISH_PICK, true);
+    });
+    QTimer::singleShot(200, this, [this]{
+        m_bus->writeCoil(A_PUBLISH_PICK, false);
+    });
 }
 
 void Orchestrator::publishBulkMode(const int &mode)

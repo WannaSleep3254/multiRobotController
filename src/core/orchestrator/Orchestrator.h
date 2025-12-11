@@ -72,6 +72,7 @@ public slots:
     void publishFlip_Offset(bool flip, int offset, float yaw, int thick);
 
     void publishPoseToRobot1(const QVector<double>& pose, int speedPct = 50);
+    void publishArrangePoses(const QVector<double>& pick, const QVector<double>& place);
 
     void publishBulkMode(const int &mode);
 

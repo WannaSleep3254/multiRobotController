@@ -903,6 +903,23 @@ void RobotManager::cmdSort_Arrange(const Pose6D &origin, const Pose6D &dest)
     qDebug()<<"[RM] cmdSort_Arrange origin:"<<origin.x<<origin.y<<origin.z<<origin.rx<<origin.ry<<origin.rz;
     qDebug()<<"[RM] cmdSort_Arrange dest:"<<dest.x<<dest.y<<dest.z<<dest.rx<<dest.ry<<dest.rz;
 
+
+    const QVector<double> v_1{ origin.x,origin.y,origin.z,origin.rx,origin.ry,origin.rz };
+    const QVector<double> v_2{ dest.x,dest.y,dest.z,dest.rx,dest.ry,dest.rz };
+    /////////////////////////////////////////////////////////////////////
+    // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
+    if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
+        //it->orch->publishBulkPoseWithKind(v_1, "pick");
+        //it->orch->publishBulkPoseWithKind(v_2, "place");
+        it->orch->publishArrangePoses(v_1,v_2);
+
+        if (it->model) it->model->add(origin); // 필요 시 큐에 쌓고 나중에 실행
+        if (it->model) it->model->add(dest); // 필요 시 큐에 쌓고 나중에 실행
+    } else {
+        if (it->model) it->model->add(origin); // 필요 시 큐에 쌓고 나중에 실행
+        if (it->model) it->model->add(dest); // 필요 시 큐에 쌓고 나중에 실행
+    }
+    /// ///////////////////////////////////////////////////////////////////
     triggerByKey(id, "DI11", 500);
 }
 

@@ -177,13 +177,13 @@ void GentryManager::setup_motorStateMonitoring()
     });
 }
 
+//void GentryManager::doGentryPlace(int offset_x, int offset_z)
 void GentryManager::doGentryPlace(int offset_z)
 {
- //   motorController->reqWritePos(1, 260000); //gentry x move 130mm
-//    motorController->reqWritePos(1, 0); //gentry x move 0mm
-    motorController->reqWritePos(1, 74000); //gentry x move 37mm
+    m_targetGentryX = 0+2000*37; // TK-1: 74000;
+    motorController->reqWritePos(1, m_targetGentryX); //gentry x move 37mm
     logMessage2("gentry move to X place position");
-    //motorController->reqWritePos(2, -250000); //gentry z move -125mm: 1mm per 2000 pulse
+
     m_targetGentryZ = -250000+2000*offset_z;
     motorController->reqWritePos(2, m_targetGentryZ); //gentry z move -125mm: 1mm per 2000 pulse
     logMessage2("gentry move to Z place position");
@@ -250,7 +250,7 @@ void GentryManager::onAxisFinished(int axis, int seq, bool ok)
             {   // docking
                 currentPose = GantryPose::Docking;
             }
-            else if(near(xPos,74000,10) &&
+            else if(near(xPos,74000,10) && // near(xPos,m_targetGentryX,10)
                     near(zPos, m_targetGentryZ,10) && //near(zPos,-250000,10) &&
                     near(pickerAngle,-25020,10))
             {   // place
