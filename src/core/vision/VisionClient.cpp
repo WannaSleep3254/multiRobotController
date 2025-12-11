@@ -90,6 +90,7 @@ void VisionClient::sendWorkComplete(const QString& robot, const QString& type, c
         qDebug()<<QString("25-11-24: VisionClient::sendWorkComplete clamp state: %1").arg(clampState?"close":"open");
     }
     const auto json = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
+    qDebug()<<QString("25-11-24: VisionClient::sendWorkComplete json: %1").arg(QString::fromUtf8(json).trimmed());
     m_sock->write(json);
     m_sock->flush();
 
@@ -206,7 +207,6 @@ void VisionClient::onReadyRead()
                 m_lastCmdKind = cmd.kind;
                 m_lastToolCmd = cmd.toolCmd;
             }
-
             emit commandReceived(cmd);
         }
     }

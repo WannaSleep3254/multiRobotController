@@ -127,7 +127,6 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
     connect(m_bus, &ModbusClient::discreteInputsRead, this, [this](int start, QVector<bool> data){
         if (data.isEmpty()) return;
 
-        //qDebug()<<"[ORCH] discreteInputsRead start="<<start<<"data="<<data<<data.size();
         auto get = [&](int addr, bool& out){
             int idx = addr - start;
             if (idx >= 0 && idx < data.size())
@@ -140,9 +139,10 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         get(A_PICK_DONE,   done);
 
         // DO3/DO4/DO5 펄스 감지
-        bool do3=m_lastDO3, do4=m_lastDO4, do5=m_lastDO5;
-        bool do6=m_lastDO6, do7=m_lastDO7, do8=m_lastDO8;
-        bool do9=m_lastDO9, do10=m_lastDO10;
+        bool do3=m_lastDO3, do4=m_lastDO4,   do5=m_lastDO5;
+        bool do6=m_lastDO6, do7=m_lastDO7,   do8=m_lastDO8;
+        bool do9=m_lastDO9, do10=m_lastDO10, do11=m_lastDO11;
+        bool do12=m_lastDO12;
 
         get(A_DO3_PULSE , do3);
         get(A_DO4_PULSE , do4);
@@ -152,6 +152,8 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         get(A_DO8_PULSE , do8);
         get(A_DO9_PULSE , do9);
         get(A_DO10_PULSE , do10);
+        get(A_DO11_PULSE , do11);
+        get(A_DO12_PULSE , do12);
 /*
         // 에지 감지
         bool rRise = ( ready && !m_lastReady);
@@ -228,17 +230,54 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         {
             emit processPulse(m_robotId, 7);
         }
+        if (!m_lastDO11 && do11)
+        {
+            emit processPulse(m_robotId, 8);
+        }
+        if (!m_lastDO12 && do12)
+        {
+            emit processPulse(m_robotId, 9);
+        }
         m_lastDO3 = do3; m_lastDO4 = do4; m_lastDO5 = do5;
         m_lastDO6 = do6; m_lastDO7 = do7; m_lastDO8 = do8;
         m_lastDO8 = do8; m_lastDO9 = do9; m_lastDO10 = do10;
+        m_lastDO11 = do11; m_lastDO12 = do12;
     });
 
     connect(m_bus, &ModbusClient::inputRead, this, [this](int start, const QVector<quint16>& data){
         // 디버그용: 입력 레지스터 읽기 결과 처리
         if (data.isEmpty()) return;
 
+        if(start==310 && data.size()>=13) {
+            RobotStateFeedback st;
+
+            st.enabled          = (data[0] == 1);
+            st.mode             = data[1];
+            st.runningState     = data[2];
+            st.toolNumber       = data[3];
+            st.workpieceNumber  = data[4];
+            st.emergencyStop    = (data[5] == 1);
+            st.softLimitExceeded= (data[6] == 1);
+            st.mainError        = data[7];
+            st.subError         = data[8];
+            st.collision        = (data[9] == 1);
+            st.motionArrive     = (data[10] == 1);
+            st.safetyStopSI0    = (data[11] == 1);
+            st.safetyStopSI1    = (data[12] == 1);
+/*
+            qDebug()<<"[RobotStateFeedback]"
+                    <<"enabled:"<<st.enabled
+                    <<"mode:"<<st.mode
+                    <<"runningState:"<<st.runningState
+                    <<"toolNumber:"<<st.toolNumber
+                    <<"workpieceNumber:"<<st.workpieceNumber
+                    <<"emergencyStop:"<<st.emergencyStop
+                    <<"softLimitExceeded:"<<st.softLimitExceeded
+                    <<"mainError:"<<st.mainError;
+*/
+        }
         // 예: 주소 340부터 12개 레지스터 읽기
-        if (start == IR_JOINT_BASE && data.size() >= IR_WORD_PER_POSE) {
+        else if (start == IR_JOINT_BASE && data.size() >= IR_WORD_PER_POSE) {
             Pose6D joint;
             joint.x  = regsToFloat(data[0],  data[1]);
             joint.y  = regsToFloat(data[2],  data[3]);
@@ -261,6 +300,7 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
             m_kinState.tcp = tcp;
             m_kinState.hasTcp = true;
         }
+
         if (m_kinState.hasTcp && m_kinState.hasJoints) {
             m_kinState.tsMs = QDateTime::currentMSecsSinceEpoch();
             emit kinematicsUpdated(m_robotId, m_kinState);
@@ -324,17 +364,20 @@ void Orchestrator::applyAddressMap(const QVariantMap& m)
     getAddr(di, "DO8_PULSE", A_DO8_PULSE);
     getAddr(di, "DO9_PULSE", A_DO9_PULSE);
     getAddr(di, "DO10_PULSE", A_DO10_PULSE);
+    getAddr(di, "DO11_PULSE", A_DO11_PULSE);
 
     getAddr(coils, "PUBLISH_PICK", A_PUBLISH_PICK);
     getAddr(coils, "PUBLISH_PLACE", A_PUBLISH_PLACE);
-    getAddr(coils, "DI2", A_DI2);
-    getAddr(coils, "DI3", A_DI3);
-    getAddr(coils, "DI4", A_DI4);
-    getAddr(coils, "DI5", A_DI5);
-    getAddr(coils, "DI6", A_DI6);
-    getAddr(coils, "DI7", A_DI7);
-    getAddr(coils, "DI8", A_DI8);
-    getAddr(coils, "DI9", A_DI9);
+    getAddr(coils, "DI2",  A_DI2);
+    getAddr(coils, "DI3",  A_DI3);
+    getAddr(coils, "DI4",  A_DI4);
+    getAddr(coils, "DI5",  A_DI5);
+    getAddr(coils, "DI6",  A_DI6);
+    getAddr(coils, "DI7",  A_DI7);
+    getAddr(coils, "DI8",  A_DI8);
+    getAddr(coils, "DI9",  A_DI9);
+    getAddr(coils, "DI10", A_DI10);
+    getAddr(coils, "DI11", A_DI11);
 
     getAddr(holding, "TARGET_POSE_BASE", A_TARGET_BASE);
     getAddr(holding, "TARGET_POSE_PICK", A_TARGET_BASE_PICK);
@@ -350,12 +393,17 @@ void Orchestrator::applyAddressMap(const QVariantMap& m)
 
 void Orchestrator::cycle()
 {
+    // 상태 레지스터 주기적 읽기
+//    m_bus->readInputs(310, 13);
+#if false
+    // 조인트 값 읽기
     if(IR_JOINT_BASE > 0)
         m_bus->readInputs(IR_JOINT_BASE, IR_WORD_PER_POSE);
+    // TCP 값 읽기
     if(IR_TCP_BASE > 0)
         m_bus->readInputs(IR_TCP_BASE, IR_WORD_PER_POSE);
-
-    m_bus->readDiscreteInputs(A_ROBOT_READY, 11);
+#endif
+    m_bus->readDiscreteInputs(A_ROBOT_READY, 13);
 }
 
 QString Orchestrator::stateName(Orchestrator::State s)
@@ -602,4 +650,13 @@ void Orchestrator::publishPoseToRobot1(const QVector<double>& pose, int speedPct
     m_bus->writeCoil(A_PUBLISH_PICK, true);
     emit log("[FSM] PUBLISH_REQ=1 (Robot1)");
     // 이후 FSM은 기존 cycle() 로직: BUSY↑ → DONE↑ → PUBLISH_REQ=0 → DONE↓ 반환
+}
+
+void Orchestrator::publishBulkMode(const int &mode)
+{
+    // bulk 모드 설정 (HOLDING 102번지에 모드 값 기록)
+    QVector<quint16> regs;
+    regs.reserve(1);
+    regs << static_cast<quint16>(mode);
+    m_bus->writeHoldingBlock(102, regs);
 }

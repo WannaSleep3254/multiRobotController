@@ -6,6 +6,17 @@
 
 #include "eld2.h"
 
+enum class GantryPose {
+    None,
+    Standby,
+    Docking,
+    Place
+};
+
+// 문자열 변환 함수 선언
+QString gantryPoseToString(GantryPose pose);
+GantryPose stringToGantryPose(const QString& s);
+
 class GentryManager : public QObject
 {
     Q_OBJECT
@@ -43,11 +54,15 @@ public:
 signals:
     void log(const QString& msg);
 
-    void gantryCommandFinished(bool ok);
+    void gantryCommandFinished(bool ok, GantryPose pose);
     void conveyorCommandFinished(bool ok);
 
     void motorServoStatus(int id, bool on);
     void motorComStatus(int id, bool connected);
+
+public:
+    GantryPose currentPose = GantryPose::None;
+    GantryPose getCurrentPose() const { return currentPose; }
 
 private:
     qint8 motion_seq;
@@ -65,6 +80,10 @@ private:
     bool m_gantryOk{true}, m_convOk{true};
     QSet<int> m_gantryPendingAxes;
     QSet<int> m_conveyorPendingAxes;
+
+    QHash<int, float> m_targetPos;      // axis → target position
+    int m_targetGentryX{0};
+    int m_targetGentryZ{0};
 };
 
 #endif // GENTRYMANAGER_H

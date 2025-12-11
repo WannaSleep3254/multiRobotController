@@ -186,13 +186,19 @@ void RobotPanel::onStart()
 {
     qDebug()<<"RobotPanel::onStart() for robot"<<m_id;
     if (m_mgr && !m_id.isEmpty())
+    {
         m_mgr->start(m_id);
+        m_chkVisionMode->setChecked(true); // ✅ 시작시 비전모드 켜기
+    }
 }
 
 void RobotPanel::onStop()
 {
     if (m_mgr && !m_id.isEmpty())
+    {
         m_mgr->stop(m_id);
+        m_chkVisionMode->setChecked(false); // ✅ 정지시 비전모드 끄기
+    }
 }
 
 void RobotPanel::onRepeatToggled(bool on)

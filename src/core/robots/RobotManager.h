@@ -8,7 +8,7 @@
 
 #include "Pose6D.h"
 #include "LogLevel.h"
-#include "RobotCommand.h"
+//#include "RobotCommand.h"
 
 class QAbstractItemModel;
 class PickListModel;
@@ -22,7 +22,7 @@ struct RobotContext {
     QPointer<PickListModel> model;
     QPointer<ModbusClient>  bus;
     QPointer<Orchestrator>  orch;
-    QVariantMap addr; // AddressMap
+    QVariantMap addr_; // AddressMap
 };
 
 class RobotManager : public QObject {
@@ -92,8 +92,8 @@ public:
     void cmdBulk_ChangeTool();
 
     /* Bulk */
-    void cmdBulk_DoPickup(const Pose6D& pose);
-    void cmdBulk_DoPlace(const Pose6D& pose);
+    void cmdBulk_DoPickup(const Pose6D& pose, const int &mode);
+    void cmdBulk_DoPlace(const Pose6D& pose, const int &mode);
 
     /* Sorting */
     // 1. 소팅 툴 장착
@@ -103,13 +103,15 @@ public:
     // 2. 피킹 촬상위치로 이동
     void cmdSort_MoveToPickupReady();
     // 3. 피킹 동작 수행
-    void cmdSort_DoPickup(const Pose6D &pose);
+    void cmdSort_DoPickup(const Pose6D &pose, bool flip, int offset, int thick);
     // 4. 컨베이어 이동
     void cmdSort_MoveToConveyor();
     // 5. 플레이스 수행
     void cmdSort_DoPlace(bool flip, int offset, int thick=0);
     // gentry 툴 토글
     void cmdSort_GentryTool(bool toggle);
+
+    void cmdSort_Arrange(const Pose6D &origin, const Pose6D &dest);
 
     /* Aligin */
     // 6. 얼라인 초기화
@@ -127,6 +129,11 @@ public:
 
     void cmdAlign_Scrap();
 
+    // Interface
+    void setAutoMode(const QString& id, bool on);
+    void startMainProgram(const QString& id);
+    void stopMainProgram(const QString& id);
+    void pauseMainProgram(const QString& id);
     ////////////////////////////////////////////////////////////////////////////////////////
 signals:
     void heartbeat(const QString& id, bool ok);

@@ -40,7 +40,7 @@ void RobotManager::applyExtras(const QString& id, const QVariantMap& extras) {
     if (!m_ctx.contains(id)) return;
     auto& c = m_ctx[id];
     if (extras.contains("speed_pct")) {
-        int addrSpeed = c.addr.value("holding").toMap().value("SPEED_PCT").toInt();
+        int addrSpeed = c.addr_.value("holding").toMap().value("SPEED_PCT").toInt();
         if (addrSpeed >= 0) {
             quint16 v = quint16(extras.value("speed_pct").toInt());
             c.bus->writeHolding(addrSpeed, v);
@@ -116,7 +116,7 @@ void RobotManager::addOrConnect(const QString& id, const QString& host, int port
         m_ctx.insert(id, ctx);
     }
     auto& c = m_ctx[id];
-    c.addr = addr;
+    c.addr_ = addr;
     if (!c.bus)  c.bus  = new ModbusClient(owner ? owner : this);
     if (!c.orch) c.orch = new Orchestrator(c.bus, c.model, owner ? owner : this);
     c.orch->applyAddressMap(addr);
@@ -311,7 +311,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 }
                 m_workCompleteSent[key] = true;
                 QTimer::singleShot(10, this, [=]() {
-                    m_vsrv->sendWorkComplete(id, "sorting", "ready", 0);
+                    m_vsrv->sendWorkComplete(id, "sorting", "standby", 0);
                 });
                 QTimer::singleShot(100, this, [=]() {
                     m_workCompleteSent[key] = false;
@@ -320,6 +320,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
             case 2: // PICK
             {
                 QString key = QString("%1_pick").arg(rid);
+                qDebug()<<"RobotManager::processPulse PICK key="<<key;
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
                     return;
                 }
@@ -329,6 +330,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 });
                 QTimer::singleShot(100, this, [=]() {
                     m_workCompleteSent[key] = false;
+                    qDebug()<<"RobotManager::processPulse PICK complete key="<<key;
                 });
             }   break;
             case 3: // PLACE : non-flip Complete
@@ -341,6 +343,9 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(10, this, [=]() {
                     m_vsrv->sendWorkComplete(id, "sorting", "place", 0);
                 });
+                QTimer::singleShot(20, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "sorting", "idle", 0);
+                });
                 QTimer::singleShot(100, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
@@ -348,13 +353,13 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
             }   break;
             case 4: // PLACE : flip dock
             {
-                emit reqGentryPalce();
+//                emit reqGentryPalce();
             }   break;
             case 5: // PLACE : flip complete
             {
-                m_vsrv->sendWorkComplete(id, "sorting", "place", 0);
-                emit sortProcessFinished(id);
-                emit reqGentryReady();
+//                m_vsrv->sendWorkComplete(id, "sorting", "place", 0);
+//                emit sortProcessFinished(id);
+//                emit reqGentryReady();
             }   break;
             case 6:
             {
@@ -379,6 +384,35 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 m_workCompleteSent[key] = true;
                 QTimer::singleShot(10, this, [=]() {
                     m_vsrv->sendWorkComplete(id, "bulk", "place", 0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
+            case 8:
+            {
+                QString key = QString("%1_arrange").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "sorting", "arrange", 0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+
+            }   break;
+            case 9:
+            {
+                QString key = QString("%1_idle").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(500, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "sorting", "idle", 0);
                 });
                 QTimer::singleShot(100, this, [=]() {
                     m_workCompleteSent[key] = false;
@@ -411,7 +445,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 }
                 m_workCompleteSent[key] = true;
                 QTimer::singleShot(10, this, [=]() {
-                    m_vsrv->sendWorkComplete(id, "align", "ready", 0);
+                    m_vsrv->sendWorkComplete(id, "align", "standby", 0);
                 });
                 QTimer::singleShot(100, this, [=]() {
                     m_workCompleteSent[key] = false;
@@ -567,12 +601,16 @@ void RobotManager::triggerByKey(const QString& id, const QString& coilKey, int p
 {
     auto it = m_ctx.find(id);
     if (it == m_ctx.end() || !it->bus) {
+
         emit log(QString("[RM] trigger: no bus for %1").arg(id));
         return;
     }
 
-    const auto coils   = it.value().addr.value("coils").toMap();
+    const auto coils   = it.value().addr_.value("coils").toMap();
+
     int addr = coils.value(coilKey).toInt();
+//    qDebug() << "coilKey =" << coilKey;
+//    qDebug() << "coils keys =" << coils.keys();
 
     if (addr <= 0) {
         emit log(QString("[RM] trigger: invalid key %1 for %2").arg(coilKey, id));
@@ -645,7 +683,7 @@ void RobotManager::cmdBulk_ChangeTool()
 }
 
 /* Bulk */
-void RobotManager::cmdBulk_DoPickup(const Pose6D& pose)
+void RobotManager::cmdBulk_DoPickup(const Pose6D& pose, const int& mode)
 {
     QString id("A");
     auto it = m_ctx.find(id);
@@ -658,6 +696,7 @@ void RobotManager::cmdBulk_DoPickup(const Pose6D& pose)
     /////////////////////////////////////////////////////////////////////
     // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
     if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
+        it->orch->publishBulkMode(mode);
         it->orch->publishBulkPoseWithKind(v, "pick");
         triggerByKey(id, "DI8", 500);
         emit logByRobot(id, QString("[RM] cmdBulk_DoPickup triggered for %1").arg(id), Common::LogLevel::Info);
@@ -668,7 +707,7 @@ void RobotManager::cmdBulk_DoPickup(const Pose6D& pose)
     /// ///////////////////////////////////////////////////////////////////
 }
 
-void RobotManager::cmdBulk_DoPlace(const Pose6D& pose)
+void RobotManager::cmdBulk_DoPlace(const Pose6D& pose, const int &mode)
 {
     QString id("A");
     auto it = m_ctx.find(id);
@@ -681,6 +720,7 @@ void RobotManager::cmdBulk_DoPlace(const Pose6D& pose)
     /////////////////////////////////////////////////////////////////////
     // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
     if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
+        it->orch->publishBulkMode(mode);
         it->orch->publishBulkPoseWithKind(v, "place");
         triggerByKey(id, "DI9", 500);
         emit logByRobot(id, QString("[RM] cmdBulk_DoPlace triggered for %1").arg(id), Common::LogLevel::Info);
@@ -756,7 +796,7 @@ void RobotManager::cmdSort_MoveToPickupReady()
     emit logByRobot(id, QString("[RM] cmdSort_MoveToPickupReady triggered for %1").arg(id), Common::LogLevel::Info);
 }
 // 3. 피킹 동작 수행
-void RobotManager::cmdSort_DoPickup(const Pose6D& pose)
+void RobotManager::cmdSort_DoPickup(const Pose6D& pose, bool flip, int offset, int thick)
 {
     QString id("A");
     auto it = m_ctx.find(id);
@@ -784,7 +824,10 @@ void RobotManager::cmdSort_DoPickup(const Pose6D& pose)
     if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
         it->orch->publishPoseWithKind(v, 50, "pick");
         triggerByKey(id, "DI5", 500);
+        it->orch->publishFlip_Offset(flip, offset, m_yawOffset, thick);
         emit logByRobot(id, QString("[RM] cmdSort_DoPickup triggered for %1").arg(id), Common::LogLevel::Info);
+
+
         if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
     } else {
         if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
@@ -813,8 +856,8 @@ void RobotManager::cmdSort_DoPlace(bool flip, int offset, int thick)
     }
     if (flip) {
         // flip 처리
-        it->bus->writeCoil(110, true); // 110번 코일을 여닫기);
-        it->orch->publishFlip_Offset(true, offset, m_yawOffset, thick);
+//        it->bus->writeCoil(110, true); // 110번 코일을 여닫기);
+//        it->orch->publishFlip_Offset(true, offset, m_yawOffset, thick);
     } else {
         // non-flip 처리
         it->orch->publishFlip_Offset(false, offset, m_yawOffset, thick);
@@ -832,11 +875,37 @@ void RobotManager::cmdSort_GentryTool(bool toggle)
         emit log(QString("[RM] trigger: no bus for %1").arg(id));
         return;
     }
+/*
     it->bus->writeCoil(110, toggle); // 110번 코일을 여닫기);
 
     triggerByKey(id, "DI7", 500);
     emit logByRobot(id, QString("[RM] cmdSort_GentryTool %1 triggered for %2").arg(toggle?"ON":"OFF").arg(id), Common::LogLevel::Info);
+*/
+
+    QPointer<ModbusClient> busPtr = it->bus;
+    busPtr->writeCoil(303, false);
+    busPtr->writeCoil(303, true);
+    QTimer::singleShot(500, this, [busPtr]{
+        if (!busPtr) return;
+        busPtr->writeCoil(303, false);
+    });
 }
+
+void RobotManager::cmdSort_Arrange(const Pose6D &origin, const Pose6D &dest)
+{
+    QString id("A");
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+
+    qDebug()<<"[RM] cmdSort_Arrange origin:"<<origin.x<<origin.y<<origin.z<<origin.rx<<origin.ry<<origin.rz;
+    qDebug()<<"[RM] cmdSort_Arrange dest:"<<dest.x<<dest.y<<dest.z<<dest.rx<<dest.ry<<dest.rz;
+
+    triggerByKey(id, "DI11", 500);
+}
+
 /* Aligin */
 // 6. 얼라인 초기화
 void RobotManager::cmdAlign_Initialize()
@@ -942,4 +1011,68 @@ void RobotManager::cmdAlign_Scrap()
     }
     triggerByKey(id, "DI9", 500);
     emit logByRobot(id, QString("[RM] Screap command sent"), Common::LogLevel::Info);
+}
+
+void RobotManager::setAutoMode(const QString& id, bool on)
+{
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    QPointer<ModbusClient> busPtr = it->bus;
+    busPtr->writeCoil(505, true);
+    QTimer::singleShot(500, this, [busPtr]{
+        if (!busPtr) return;
+            busPtr->writeCoil(505, false);
+    });
+}
+
+void RobotManager::startMainProgram(const QString& id)
+{
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    QPointer<ModbusClient> busPtr = it->bus;
+    busPtr->writeCoil(506, false);
+    busPtr->writeCoil(506, true);
+    QTimer::singleShot(500, this, [busPtr]{
+        if (!busPtr) return;
+        busPtr->writeCoil(506, false);
+    });
+}
+
+void RobotManager::stopMainProgram(const QString& id)
+{
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    QPointer<ModbusClient> busPtr = it->bus;
+    busPtr->writeCoil(503, false);
+    busPtr->writeCoil(503, true);
+    QTimer::singleShot(500, this, [busPtr]{
+        if (!busPtr) return;
+        busPtr->writeCoil(503, false);
+    });
+}
+
+void RobotManager::pauseMainProgram(const QString& id)
+{
+    /*
+    auto it = m_ctx.find(id);
+    if (it == m_ctx.end() || !it->bus) {
+        emit log(QString("[RM] trigger: no bus for %1").arg(id));
+        return;
+    }
+    QPointer<ModbusClient> busPtr = it->bus;
+    busPtr->writeCoil(505, true);
+    QTimer::singleShot(500, this, [busPtr]{
+        if (!busPtr) return;
+        busPtr->writeCoil(505, false);
+    });
+    */
 }

@@ -32,10 +32,10 @@ namespace Leadshine
         // 0번은 dummy / 기본값
         config_.append(Config (1, 10, 100, 100)); // index 0: default
         // 1~4번: 실제 4축 (원하는 lead/속도 값으로 조정)
-        config_.append(Config (1, 5, 750, 1500)); // AxisX / Gantry X
-        config_.append(Config (1, 5, 500, 500)); // AxisY / Gantry Z
-        config_.append(Config (15, 1, 50, 200)); // AxisZ / Gantry Picker
-        config_.append(Config (30, 1, 2500, 2500)); // AxisC / Conveyor
+        config_.append(Config (1, 5, 750, 2500));   //  Gantry X 1500
+        config_.append(Config (1, 5, 700, 1000));   //  Gantry Z  500
+        config_.append(Config (15, 1, 50, 300));    //  Gantry Picker 200
+        config_.append(Config (30, 1, 2500, 2500)); //  AxisC / Conveyor
 
         runtime_.resize(config_.size());
 
@@ -55,11 +55,7 @@ namespace Leadshine
 //                qDebug()<<"state: "<<state;
                 break;
             case QModbusDevice::ConnectedState:
-                timer_->start(200);
-//                reqReadVersion(Axis::GantryX);
-//                reqReadVersion(Axis::GantryZ);
-//                reqReadVersion(Axis::GantryPicker);
-//                reqReadVersion(Axis::ConveyorAxis);
+                timer_->start(50);
                 break;
             case QModbusDevice::ClosingState:
                 timer_->stop();
@@ -96,9 +92,6 @@ namespace Leadshine
                 reqReadServo(axis);     // 0x0405
                 reqReadEncoder(axis);   // 0x602C
                 reqReadError(axis);     // 0x0B03
-//                reqReadState(axis);     // 0x0B05
-                // 필요하면 속도도 같이:
-                // reqReadVelocity(axis);
             }
             else
             {

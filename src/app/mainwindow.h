@@ -45,6 +45,16 @@ private slots:
     void on_btnConnect_clicked();
     void on_btnDisconnect_clicked();
 
+    void on_pushButton_Atuo_clicked();
+
+    void on_pushButton_Manual_clicked();
+
+    void on_pushButton_Start_clicked();
+
+    void on_pushButton_Stop_clicked();
+
+    void on_pushButton_Pause_clicked();
+
 private:
     Ui::MainWindow *ui;
 
@@ -76,5 +86,6 @@ private:
     bool m_sortingDock{false};
     int  m_sortingOffset{0};
     int  m_sortingThick{0};
+    bool m_gantryPickupState{false};
 };
 #endif // MAINWINDOW_H

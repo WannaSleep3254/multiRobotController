@@ -20,7 +20,8 @@ static CmdType parseCmdType(const QString& s)
 
 static CmdKind parseCmdKind(const QString& s)
 {
-    if (s == "ready")   return CmdKind::Ready;
+    //if (s == "ready")   return CmdKind::Ready;
+    if (s == "standby")   return CmdKind::Ready;
     if (s == "pick")    return CmdKind::Pick;
     if (s == "place")   return CmdKind::Place;
     if (s == "clamp")   return CmdKind::Clamp;
@@ -31,6 +32,7 @@ static CmdKind parseCmdKind(const QString& s)
     if (s == "mount") return CmdKind::Tool_Mount;
     if (s == "unmount") return CmdKind::Tool_UnMount;
     if (s == "change") return CmdKind::Tool_Change;
+    if (s == "arrange") return CmdKind::Arrange;
     return CmdKind::Unknown;
 }
 
@@ -76,6 +78,22 @@ static bool parseOffsetObj(const QJsonObject& o, const CmdKind kind, sortingOffs
     return true;
 }
 
+static bool parseArrangeObj(const QJsonObject& o, arrangeCommnad &out)
+{
+    if ( !o.contains("start") || !o.contains("dest") )
+        return false;
+
+    const auto poseObj = o["start"].toObject();
+    if (!parsePoseObj(poseObj, out.poseOrig))
+        return false;
+
+    const auto poseObj2 = o["dest"].toObject();
+    if (!parsePoseObj(poseObj2, out.poseDest))
+        return false;
+
+    return true;
+}
+
 bool RobotCommandParser::parse(const QJsonObject& obj, RobotCommand& out)
 {
     // 공통 필드
@@ -94,6 +112,8 @@ bool RobotCommandParser::parse(const QJsonObject& obj, RobotCommand& out)
     out.offset = obj.value("offset").toInt(0);
     out.clamp  = obj.value("clamp").toString();
 
+    out.mode = obj.value("mode").toString("dual");
+
     // 1) 새로운 포맷: pose 하나만 있는 경우
     if (obj.contains("pose") && obj["pose"].isObject()) {
         const auto poseObj = obj["pose"].toObject();
@@ -111,14 +131,18 @@ bool RobotCommandParser::parse(const QJsonObject& obj, RobotCommand& out)
             break;
         }
     }
-    else if(obj.contains("tool") && obj["tool"].isObject()) {
+    if(obj.contains("tool") && obj["tool"].isObject()) {
         const auto toolObj = obj["tool"].toObject();
         out.isTool=parseToolObj(toolObj, out.kind, out.toolCmd);
         //out.kind
     }
-    else if(obj.contains("offset") && obj["offset"].isObject()) {
+    if(obj.contains("offset") && obj["offset"].isObject()) {
         const auto offsetObj = obj["offset"].toObject();
         out.isOffset=parseOffsetObj(offsetObj, out.kind, out.sortOffset);
+    }
+    if(obj.contains("arrange") && obj["arrange"].isObject()) {
+        const auto arrangeObj = obj["arrange"].toObject();
+        out.isArrange=parseArrangeObj(arrangeObj, out.arrangeCmd);
     }
 
     // 2) 구버전 포맷: pick/place 개별 필드도 계속 지원 (하위호환)

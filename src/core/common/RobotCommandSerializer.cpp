@@ -24,13 +24,13 @@ static QString cmdTypeToString(CmdType t)
 static QString cmdKindToString(CmdKind k)
 {
     switch (k) {
-    case CmdKind::Ready:   return "ready";
-    case CmdKind::Pick:    return "pick";
-    case CmdKind::Place:   return "place";
-    case CmdKind::Clamp:   return "clamp";
-    case CmdKind::Init:    return "init";
-    case CmdKind::Assy:    return "assy";
-    case CmdKind::Forward: return "forward";
+    case CmdKind::Ready:        return "standby";
+    case CmdKind::Pick:         return "pick";
+    case CmdKind::Place:        return "place";
+    case CmdKind::Clamp:        return "clamp";
+    case CmdKind::Init:         return "init";
+    case CmdKind::Assy:         return "assy";
+    case CmdKind::Forward:      return "forward";
     case CmdKind::Tool_Mount:   return "mount";
     case CmdKind::Tool_UnMount: return "unmount";
     case CmdKind::Tool_Change:  return "change";

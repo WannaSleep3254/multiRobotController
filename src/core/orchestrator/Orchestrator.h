@@ -13,6 +13,23 @@ class ModbusClient;
 class PickListModel;
 class QTimer;
 
+struct RobotStateFeedback
+{
+    bool enabled;
+    int mode;
+    int runningState;
+    int toolNumber;
+    int workpieceNumber;
+    bool emergencyStop;
+    bool softLimitExceeded;
+    int mainError;
+    int subError;
+    bool collision;
+    bool motionArrive;
+    bool safetyStopSI0;
+    bool safetyStopSI1;
+};
+
 class Orchestrator : public QObject
 {
     Q_OBJECT
@@ -55,6 +72,8 @@ public slots:
     void publishFlip_Offset(bool flip, int offset, float yaw, int thick);
 
     void publishPoseToRobot1(const QVector<double>& pose, int speedPct = 50);
+
+    void publishBulkMode(const int &mode);
 
 signals:
 //    void log(const QString& line, Orchestrator::LogLevel level = Orchestrator::LogLevel::Info);
@@ -100,6 +119,8 @@ private:
     int A_DI7           {107};      // coils
     int A_DI8           {108};      // coils
     int A_DI9           {109};      // coils
+    int A_DI10          {110};      // coils
+    int A_DI11          {111};      // coils
 
     int A_ROBOT_READY   {100};      // discrete_inputs
     int A_PICK_DONE     {101};      // discrete_inputs
@@ -113,6 +134,8 @@ private:
     int A_DO8_PULSE     {108};
     int A_DO9_PULSE     {109};
     int A_DO10_PULSE    {110};
+    int A_DO11_PULSE    {111};
+    int A_DO12_PULSE    {112};
 
     int A_TARGET_BASE   {132};      // holding: TARGET_POSE_STAGING_BASE (132..143)
     int A_TARGET_BASE_PICK   {132}; // holding: TARGET_POSE_STAGING_BASE (132..143)
@@ -136,11 +159,12 @@ private:
     bool m_lastBusy{false};
     bool m_lastDone{false};
 
-    bool m_lastDI2{false}, m_lastDI3{false}, m_lastDI4{false};
+    bool m_lastDI2{false}, m_lastDI3{false},  m_lastDI4{false};
     bool m_lastDO2{false};
-    bool m_lastDO3{false}, m_lastDO4{false}, m_lastDO5{false};
-    bool m_lastDO6{false}, m_lastDO7{false}, m_lastDO8{false};
-    bool m_lastDO9{false}, m_lastDO10{false};
+    bool m_lastDO3{false}, m_lastDO4{false},  m_lastDO5{false};
+    bool m_lastDO6{false}, m_lastDO7{false},  m_lastDO8{false};
+    bool m_lastDO9{false}, m_lastDO10{false}, m_lastDO11{false};
+    bool m_lastDO12{false};
 
     quint16 m_seq{0};
     float m_yawOffset{0.0f};

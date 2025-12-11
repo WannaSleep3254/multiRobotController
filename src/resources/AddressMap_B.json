@@ -9,7 +9,9 @@
 	"DI6": 106,
 	"DI7": 107,
 	"DI8": 108,
-	"DI9": 109
+	"DI9": 109,
+	"DI10": 110,
+	"DI11": 111
   },
   "discrete_inputs": {
     "ROBOT_READY": 100,

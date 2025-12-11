@@ -32,6 +32,7 @@ enum class CmdKind {
     Tool_UnMount,
     Tool_Change,
     Scrap,
+    Arrange,
     Unknown
 };
 
@@ -55,6 +56,11 @@ struct sortingOffset {
     int thickness;
 };
 
+struct arrangeCommnad {
+    Pose6D poseOrig;
+    Pose6D poseDest;
+};
+
 struct RobotCommand
 {
     RobotId  robot{RobotId::Unknown};
@@ -71,6 +77,9 @@ struct RobotCommand
     bool    isOffset{false};   // offset 필드 사용 여부
     sortingOffset sortOffset{}; // A-sorting place 에서 쓰는 offset 상세
 
+    bool    isArrange{false};    // arrange 명령 여부
+    arrangeCommnad arrangeCmd{};
+
     QString  clamp;             // "open"/"close"
 
     bool     hasPick{false};
@@ -80,6 +89,8 @@ struct RobotCommand
 
     bool     isTool{false};
     ToolCommand toolCmd{};
+
+    QString mode;               // 벌크 모드: "dual" or "single"
 
     QJsonObject raw;            // 디버깅용 원본 JSON
 };

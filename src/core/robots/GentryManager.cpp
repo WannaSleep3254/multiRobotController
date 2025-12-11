@@ -17,6 +17,28 @@
 #define motion_done 13
 #define gentry_rdy 100
 
+QString gantryPoseToString(GantryPose pose)
+{
+    switch (pose) {
+    case GantryPose::None:     return "none";
+    case GantryPose::Standby:  return "standby";
+    case GantryPose::Docking:  return "docking";
+    case GantryPose::Place:    return "place";
+    }
+    return "unknown";
+}
+
+GantryPose stringToGantryPose(const QString& s)
+{
+    const QString v = s.trimmed().toLower();
+
+    if (v == "standby")  return GantryPose::Standby;
+    if (v == "docking")  return GantryPose::Docking;
+    if (v == "place")    return GantryPose::Place;
+
+    return GantryPose::None;
+}
+
 GentryManager::GentryManager(QObject *parent)
     : QObject{parent}
 {
@@ -24,13 +46,13 @@ GentryManager::GentryManager(QObject *parent)
 
     setup_motorStateMonitoring();
 
-//    motorController->setPort("COM10", "9600");
+//    motorController->setPort("COM10", "115200");
 //    motorController->doConnect();
 }
 
 void GentryManager::setPort()
 {
-    motorController->setPort("COM10", "9600");
+    motorController->setPort("COM10", "115200");
 }
 
 void GentryManager::doConnect()
@@ -150,6 +172,7 @@ void GentryManager::setup_motorStateMonitoring()
     });
     QObject::connect(motorController, &Leadshine::ELD2::motionFinished,this,[=](int id, float targetPos){
         emit log(QString("%1번 모터 이동 완료: %2").arg(id).arg(targetPos));
+        m_targetPos[id] = targetPos;
         onAxisFinished(id, 0, true);
     });
 }
@@ -161,7 +184,8 @@ void GentryManager::doGentryPlace(int offset_z)
     motorController->reqWritePos(1, 74000); //gentry x move 37mm
     logMessage2("gentry move to X place position");
     //motorController->reqWritePos(2, -250000); //gentry z move -125mm: 1mm per 2000 pulse
-    motorController->reqWritePos(2, -250000+2000*offset_z); //gentry z move -125mm: 1mm per 2000 pulse
+    m_targetGentryZ = -250000+2000*offset_z;
+    motorController->reqWritePos(2, m_targetGentryZ); //gentry z move -125mm: 1mm per 2000 pulse
     logMessage2("gentry move to Z place position");
     motorController->reqWritePos(3, -25020); //picker rotate -90 degree
     logMessage2("picker rotate -90 degree");
@@ -207,47 +231,47 @@ void GentryManager::startConveyorMove() // 4축
 
 void GentryManager::onAxisFinished(int axis, int seq, bool ok)
 {
-#if false
-    auto handleMap = [&](QHash<int, PendingGroup>& map,
-                         bool& finished, bool& resultOk)
-    {
-        finished  = false;
-        resultOk  = false;
-
-        auto it = map.find(seq);
-        if (it == map.end())
-            return;
-
-        it->pendingAxes.remove(axis);
-        it->ok = it->ok && ok;
-
-        if (it->pendingAxes.isEmpty()) {
-            finished  = true;
-            resultOk  = it->ok;
-            map.erase(it);
-        }
+    auto near = [](int a, int b, int tol){
+        return std::abs(a - b) <= tol;
     };
 
-    bool finished = false;
-    bool resultOk = false;
-
-    if (axis >= 1 && axis <= 3) {          // 겐트리축
-        handleMap(m_gantryMap, finished, resultOk);
-        if (finished)
-            emit gantryCommandFinished(seq, resultOk);
-    }
-    else if (axis == 4) {                  // 컨베어축
-        handleMap(m_conveyorMap, finished, resultOk);
-        if (finished)
-            emit conveyorCommandFinished(seq, resultOk);
-    }
-#endif
     if (axis >= 1 && axis <= 3) {
         m_gantryOk = m_gantryOk && ok;
         m_gantryPendingAxes.remove(axis);
 
         if (m_gantryPendingAxes.isEmpty()) {
-            emit gantryCommandFinished(m_gantryOk);
+            const float xPos        = m_targetPos.value(1, 0.0f);
+            const float zPos        = m_targetPos.value(2, 0.0f);
+            const float pickerAngle = m_targetPos.value(3, 0.0f);
+/////////////////////////////////////////////////////////////////////
+            if( near(xPos,0,10) &&
+                near(zPos,0,10) &&
+                near(pickerAngle,0,10))
+            {   // docking
+                currentPose = GantryPose::Docking;
+            }
+            else if(near(xPos,74000,10) &&
+                    near(zPos, m_targetGentryZ,10) && //near(zPos,-250000,10) &&
+                    near(pickerAngle,-25020,10))
+            {   // place
+                currentPose = GantryPose::Place;
+            }
+            else if(near(xPos,-260000,10) &&
+                    near(zPos,0,10) &&
+                    near(pickerAngle, -25020,10))
+            {   // stand-by
+                currentPose = GantryPose::Standby;
+            }
+            else
+            {
+                qDebug()<<"Gentry position unknown:"
+                       <<QString("X:%1, Z:%2, P:%3, place_cmd: 74000, %4 , -25020")
+                                .arg(xPos).arg(zPos).arg(pickerAngle).arg(m_targetGentryZ);
+                currentPose = GantryPose::None;
+            }
+/////////////////////////////////////////////////////////////////////
+            qDebug()<<QString("Gentry currentPose=%1").arg(gantryPoseToString(currentPose));
+            emit gantryCommandFinished(m_gantryOk, currentPose);
             m_gantryOk = true;
         }
     }
@@ -370,7 +394,7 @@ void GentryManager::gentry_motion()
         logMessage2("gentry move to X home position");
         motorController->reqWritePos(2, 0); //gentry z move 0mm
         logMessage2("gentry move to Z home position");
-        motorController->reqWritePos(3, -25020); //picker rotate 0 degree
+        motorController->reqWritePos(3, -25020); //picker rotate -90 degree
         logMessage2("picker rotate 0 degree");
         //send motion done msg to M.C
         motion_seq = motion_done;

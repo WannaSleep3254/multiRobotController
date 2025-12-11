@@ -9,7 +9,9 @@
 	"DI6": 106,
 	"DI7": 107,
 	"DI8": 108,
-	"DI9": 109
+	"DI9": 109,
+	"DI10": 110,
+	"DI11": 111
   },
   "discrete_inputs": {
     "ROBOT_READY": 100,
@@ -22,7 +24,8 @@
 	"DO7_PULSE": 107,
 	"DO8_PULSE": 108,
 	"DO9_PULSE": 109,
-	"DO10_PULSE": 110
+	"DO10_PULSE": 110,
+	"DO11_PULSE": 111
   },
   "holding": {
     "TARGET_POSE_BASE": 132,   "_comment" : "132..143 (float×6)",

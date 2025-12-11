@@ -57,7 +57,7 @@ MainWindow::MainWindow(QWidget *parent)
         // TODO Gentry Place 동작 시작
         qDebug()<<QDateTime::currentDateTime()<<"MainWindow::reqGentryPlace";
         m_gentryMgr->startGantryMove();
-        int offset_mm = (m_sortingOffset>30)? (m_sortingOffset-30) : 0;
+        int offset_mm = (m_sortingOffset>30)? (m_sortingOffset-30+10) : 0;
         m_gentryMgr->doGentryPlace(offset_mm);
     });
 
@@ -80,37 +80,43 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     connect(m_gentryMgr, &GentryManager::gantryCommandFinished, this,
-            [this](bool ok){
+            [this](bool ok, GantryPose pose){
                 Q_UNUSED(ok)
                 qDebug()<<QString("Gentry gantry command finished: %1").arg(ok?"OK":"FAIL");
                 bool flip   = m_sortingFlip;
                 int  offset = m_sortingOffset;
                 int  thick  = m_sortingThick;
-                bool isDock = m_sortingDock;
 
                 onLog(QString("m_flip: %1, offset: %2").arg(m_sortingFlip?"OK":"FAIL").arg(offset));
                 onLog(QString("flip: %1, offset; %2").arg(flip?"OK":"FAIL").arg(m_sortingOffset));
 
-//                if(ok && m_sortingPlacePorcessActive&& !m_sortingDock){
-                if(m_sortingPlacePorcessActive&& !m_sortingDock){
-                    if(!flip)
+                if(m_sortingPlacePorcessActive){
+                    if(!flip&& pose==GantryPose::Standby)
                     {   //TODO robot->place
-                        qDebug()<<"Robot place without flip";
+                        qDebug()<<"Robot place without flip"<<gantryPoseToString(pose)<<ok;
                         m_mgr->cmdSort_DoPlace(flip, offset, thick);
                     }
-                    else if(flip)
+                    else if(flip&& pose==GantryPose::Docking)
                     {   //TODO robot->dock -> ready
-                        qDebug()<<"Robot place with flip - dock first";
-                        m_sortingDock = true;
-                        m_mgr->cmdSort_DoPlace(flip, offset, thick);
+                        qDebug()<<"Robot place with flip - dock first"<<gantryPoseToString(pose)<<ok;
+//                        m_mgr->cmdSort_GentryTool(true); // 겐트리 Tool On);
+                    }
+                    else if(flip&& pose==GantryPose::Place){
+                        // 겐트리 Tool Off
+                        qDebug()<<"Gentry place pose"<<gantryPoseToString(pose)<<ok;
+                        m_mgr->cmdSort_GentryTool(false);
+
+                        m_sortingPlacePorcessActive=false;
+                        m_gantryPickupState = false;
+
+                        QTimer::singleShot(100, this, [this]() {
+                            m_visionClient->sendWorkComplete("A", "sorting", "place", 0);
+                            m_gentryMgr->doGentryReady();
+                        });
+
                     }
                 }
-//                else if(ok && m_sortingPlacePorcessActive&& m_sortingDock){
-                else if(m_sortingPlacePorcessActive&& m_sortingDock){
-                    // 겐트리 Tool Off
-                    m_sortingDock = false;
-                    m_mgr->cmdSort_GentryTool(false);
-                }
+
             });
 
 
@@ -329,7 +335,9 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
                          .arg(cmd.pick.x).arg(cmd.pick.y).arg(cmd.pick.z)
                          .arg(cmd.pick.rx).arg(cmd.pick.ry).arg(cmd.pick.rz));
                 m_visionClient->sendAck(cmd.seq, "ok", "bulk Pick command received");
-                m_mgr->cmdBulk_DoPickup(cmd.pick);
+                const int mode = (cmd.mode=="single")? 2 : 0;
+
+                m_mgr->cmdBulk_DoPickup(cmd.pick, mode);
             }
 
             break;
@@ -341,7 +349,9 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
                          .arg(cmd.place.x).arg(cmd.place.y).arg(cmd.place.z)
                          .arg(cmd.place.rx).arg(cmd.place.ry).arg(cmd.place.rz));
                 m_visionClient->sendAck(cmd.seq, "ok", "bulk Place command received");
-                m_mgr->cmdBulk_DoPlace(cmd.place);
+                const int mode = (cmd.mode=="single")? 2 : 0;
+
+                m_mgr->cmdBulk_DoPlace(cmd.place, mode);
             }
 
             break;
@@ -358,12 +368,31 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
             m_mgr->cmdSort_MoveToPickupReady();
             break;
         case CmdKind::Pick:
-            if (cmd.hasPick) {
+            if (cmd.hasPick && cmd.isOffset) {
                 // cmd.pick 사용
                 onLog(QString("로봇 A 소팅 픽 처리 필요, pose: [%1,%2,%3] [%4,%5,%6]\r\n")
                                .arg(cmd.pick.x).arg(cmd.pick.y).arg(cmd.pick.z).arg(cmd.pick.rx).arg(cmd.pick.ry).arg(cmd.pick.rz));
+
+                if(cmd.flip) {
+                    m_gentryMgr->startGantryMove();
+                    m_gentryMgr->setFalgs(false, false, true, false, false);
+                    m_gentryMgr->gentry_motion();
+                    m_gantryPickupState = true;
+                }
+                else {
+                    if(!m_gantryPickupState)
+                    {
+                        m_gentryMgr->startGantryMove();
+                        m_gentryMgr->setFalgs(false, true, false, false, false);
+                        m_gentryMgr->gentry_motion();
+                    }
+                }
                 m_visionClient->sendAck(cmd.seq, "ok", "sorting Pick command received");
-                m_mgr->cmdSort_DoPickup(cmd.pick);
+                m_sortingFlip = cmd.flip;
+                m_sortingOffset = cmd.sortOffset.height;
+                m_sortingThick= cmd.sortOffset.thickness;
+
+                m_mgr->cmdSort_DoPickup(cmd.pick,m_sortingFlip, m_sortingOffset, m_sortingThick);
             }
             break;
         case CmdKind::Place:
@@ -378,9 +407,14 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
                 m_sortingThick=cmd.sortOffset.thickness;
 
                 m_gentryMgr->startGantryMove();
+                int offset_mm = (m_sortingOffset>30)? (m_sortingOffset-30+10) : 0;
+                m_gentryMgr->doGentryPlace(offset_mm);
+/*
+                m_gentryMgr->startGantryMove();
                 m_gentryMgr->setFalgs(false, false, true, false, false);
                 m_mgr->cmdSort_GentryTool(true);
                 m_gentryMgr->gentry_motion();
+*/
 ////////////////////////////////////////////////////////////////
             } else {
                 // offset: 겐트리와 컨베어간의 높이차이 -> Z축 환산필요
@@ -400,6 +434,25 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
 ////////////////////////////////////////////////////////////////
             }
             break;
+
+        case CmdKind::Arrange: {
+            if(cmd.isArrange)
+            {
+/*
+                onLog("로봇 A 소팅 어레인지 처리 필요, poseOrig:"
+                       + QString("[%1,%2,%3] [%4,%5,%6]")
+                         .arg(cmd.arrangeCmd.poseOrig.x).arg(cmd.arrangeCmd.poseOrig.y).arg(cmd.arrangeCmd.poseOrig.z)
+                         .arg(cmd.arrangeCmd.poseOrig.rx).arg(cmd.arrangeCmd.poseOrig.ry).arg(cmd.arrangeCmd.poseOrig.rz)
+                       + QString(" -> poseDest:")
+                       + QString("[%1,%2,%3] [%4,%5,%6]")
+                         .arg(cmd.arrangeCmd.poseDest.x).arg(cmd.arrangeCmd.poseDest.y).arg(cmd.arrangeCmd.poseDest.z)
+                         .arg(cmd.arrangeCmd.poseDest.rx).arg(cmd.arrangeCmd.poseDest.ry).arg(cmd.arrangeCmd.poseDest.rz));
+                m_visionClient->sendAck(cmd.seq, "ok", "sorting Arrange command received");
+*/
+                m_mgr->cmdSort_Arrange(cmd.arrangeCmd.poseOrig, cmd.arrangeCmd.poseDest);
+
+            }
+        } break;
         default:
             break;
         }
@@ -489,5 +542,35 @@ void MainWindow::on_btnConnect_clicked()
 void MainWindow::on_btnDisconnect_clicked()
 {
     m_visionClient->disconnectFrom();
+}
+
+
+void MainWindow::on_pushButton_Atuo_clicked()
+{
+    m_mgr->setAutoMode("A", true);
+}
+
+
+void MainWindow::on_pushButton_Manual_clicked()
+{
+    m_mgr->setAutoMode("A", false);
+}
+
+
+void MainWindow::on_pushButton_Start_clicked()
+{
+    m_mgr->startMainProgram("A");
+}
+
+
+void MainWindow::on_pushButton_Stop_clicked()
+{
+    m_mgr->stopMainProgram("A");
+}
+
+
+void MainWindow::on_pushButton_Pause_clicked()
+{
+
 }
 
