@@ -177,28 +177,27 @@ void GentryManager::setup_motorStateMonitoring()
     });
 }
 
-//void GentryManager::doGentryPlace(int offset_x, int offset_z)
-void GentryManager::doGentryPlace(int offset_z)
+void GentryManager::doGentryPlace(int offset_x, int offset_z)
 {
-    m_targetGentryX = 0+2000*37; // TK-1: 74000;
+    // offset_x: 플래이스 시 X축 추가 이동거리 (mm)
+    m_targetGentryX = 0+2000*offset_x;                //37; // TK-1: 74000;
     motorController->reqWritePos(1, m_targetGentryX); //gentry x move 37mm
-    logMessage2("gentry move to X place position");
-
+    // offset_z: 플래이스 시 Z축 추가 이동거리 (mm)
     m_targetGentryZ = -250000+2000*offset_z;
     motorController->reqWritePos(2, m_targetGentryZ); //gentry z move -125mm: 1mm per 2000 pulse
-    logMessage2("gentry move to Z place position");
-    motorController->reqWritePos(3, -25020); //picker rotate -90 degree
-    logMessage2("picker rotate -90 degree");
+    //picker rotate -90 degree
+    motorController->reqWritePos(3, -25020);
+
+    logMessage2(QString("gentry move to X:%1 mm, Z:%2 mm position").arg(m_targetGentryX/2000).arg(m_targetGentryZ/2000));
 }
 
 void GentryManager::doGentryReady()
 {
     motorController->reqWritePos(1, -260000); //gentry x move -130mm
-    logMessage2("gentry move to X home position");
     motorController->reqWritePos(2, 0); //gentry z move 0mm
-    logMessage2("gentry move to Z home position");
     motorController->reqWritePos(3, -25020); //picker rotate -90 degree
-    logMessage2("picker rotate -90 degree");
+
+    logMessage2("gentry move to ready position");
 }
 
 void GentryManager::startGantryMove()   // 1-2-3축 동시

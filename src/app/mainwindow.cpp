@@ -52,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
         qDebug()<<QDateTime::currentDateTime()<<"MainWindow::reqGentryPlace";
         m_gentryMgr->startGantryMove();
         int offset_mm = (m_sortingOffset>30)? (m_sortingOffset-30+10) : 0;
-        m_gentryMgr->doGentryPlace(offset_mm);
+        m_gentryMgr->doGentryPlace(37, offset_mm);
     });
 
     connect(m_mgr, &RobotManager::reqGentryReady, this, [this]{
@@ -401,7 +401,7 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
 
                 m_gentryMgr->startGantryMove();
                 int offset_mm = (m_sortingOffset>30)? (m_sortingOffset-30+10) : 0;
-                m_gentryMgr->doGentryPlace(offset_mm);
+                m_gentryMgr->doGentryPlace(37, offset_mm);
 ////////////////////////////////////////////////////////////////
             } else {
                 // offset: 겐트리와 컨베어간의 높이차이 -> Z축 환산필요
@@ -447,7 +447,7 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
         if (cmd.kind == CmdKind::Forward) {
             onLog("로봇 A 컨베이어 포워드 처리 필요\r\n");
             m_visionClient->sendAck(cmd.seq, "ok", "conveyor Forward command received");
-            //m_mgr->cmdSort_MoveToConveyor();
+
             m_gentryMgr->startConveyorMove();
             m_gentryMgr->setFalgs(true, false, false, false, false);
             m_gentryMgr->gentry_motion();
@@ -495,7 +495,7 @@ void MainWindow::handleRobotB(const RobotCommand& cmd)
             m_mgr->cmdAlign_DoPlace(cmd.place);
         }
         break;
-    case CmdKind::Clamp:
+    case CmdKind::Clamp: // 2025-12-11: desperate!
         if (cmd.clamp == "open") {
             onLog("로봇 B 클램프 오픈 처리 필요\r\n");
             qDebug()<<"25-11-24: Robot B Clamp Open command received";
@@ -507,7 +507,7 @@ void MainWindow::handleRobotB(const RobotCommand& cmd)
             m_mgr->cmdAlign_Clamp(true);
         }
         break;
-    case CmdKind::Scrap:
+    case CmdKind::Scrap: // 2025-12-11: desperate!
         onLog("로봇 B 스크랩 처리 필요\r\n");
         m_visionClient->sendAck(cmd.seq, "ok", "align Scrap command received");
         m_mgr->cmdAlign_Scrap();

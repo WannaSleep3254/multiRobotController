@@ -20,7 +20,7 @@
       <item>
        <widget class="QLineEdit" name="lineEdit_IP">
         <property name="text">
-         <string>192.168.57.101</string>
+         <string>192.168.60.101</string>
         </property>
         <property name="placeholderText">
          <string>192.168.57.2</string>
@@ -76,6 +76,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="pushButton_Atuo">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>자동</string>
         </property>
@@ -83,6 +86,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="pushButton_Manual">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>수동</string>
         </property>
@@ -90,6 +96,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="pushButton_Start">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>Start</string>
         </property>
@@ -97,6 +106,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="pushButton_Stop">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>Stop</string>
         </property>
@@ -104,6 +116,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="pushButton_Pause">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>Pause</string>
         </property>

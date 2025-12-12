@@ -76,9 +76,9 @@ public:
     bool visionMode(const QString& id) const;
 
     // ✅ VisionServer → MainWindow 경유로 호출할 처리 API
-    void processVisionPose(const QString& id, const QString& kind, const Pose6D& p, const QVariantMap& extras);
+//    void processVisionPose(const QString& id, const QString& kind, const Pose6D& p, const QVariantMap& extras);
     // 벌크 픽&플레이스 좌표 처리
-    void processVisionPoseBulk(const QString& id, const Pose6D& pick, const Pose6D& place, const QVariantMap& extras);
+//    void processVisionPoseBulk(const QString& id, const Pose6D& pick, const Pose6D& place, const QVariantMap& extras);
     // 코일 트리거
     void triggerByKey(const QString& id, const QString& coilKey, int pulseMs = 100);
 

@@ -288,7 +288,11 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
         if (rid == "A") {
             switch(idx)
             {
-            case 0: // Tool attach complete
+            case 0: // 프로그램 시작
+            case 1: // 동작 수행
+            case 2: // none
+                break;
+            case 3: // 툴 교체 완료
             {
                 QString key = QString("%1_tool").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -303,7 +307,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 });
 
             }   break;
-            case 1: // Ready
+            case 4: // 대기자세 완료
             {
                 QString key = QString("%1_ready").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -317,7 +321,11 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     m_workCompleteSent[key] = false;
                 });
             }   break;
-            case 2: // PICK
+            case 5: // none
+            {
+                //                emit reqGentryPalce();
+            }   break;
+            case 6: // 소팅 PICK
             {
                 QString key = QString("%1_pick").arg(rid);
                 qDebug()<<"RobotManager::processPulse PICK key="<<key;
@@ -333,7 +341,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     qDebug()<<"RobotManager::processPulse PICK complete key="<<key;
                 });
             }   break;
-            case 3: // PLACE : non-flip Complete
+            case 7: // 소팅 PLACE
             {
                 QString key = QString("%1_place").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -351,17 +359,13 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 });
                 emit sortProcessFinished(id);
             }   break;
-            case 4: // PLACE : flip dock
-            {
-//                emit reqGentryPalce();
-            }   break;
-            case 5: // PLACE : flip complete
+            case 8: // 갠트리 툴
             {
 //                m_vsrv->sendWorkComplete(id, "sorting", "place", 0);
 //                emit sortProcessFinished(id);
 //                emit reqGentryReady();
             }   break;
-            case 6:
+            case 9: // 벌크 픽
             {
                 QString key = QString("%1_bulk_place").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -375,7 +379,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     m_workCompleteSent[key] = false;
                 });
             }   break;
-            case 7:
+            case 10:    // 벌크 플레이스
             {
                 QString key = QString("%1_bulk_place").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -389,7 +393,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     m_workCompleteSent[key] = false;
                 });
             }   break;
-            case 8:
+            case 11:    // arrange
             {
                 QString key = QString("%1_arrange").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -404,7 +408,21 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 });
 
             }   break;
-            case 9:
+            {
+                QString key = QString("%1_arrange").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "sorting", "arrange", 0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+
+            }   break;
+            case 12:    // IDLE: 소팅 완료 후 대기 상태
             {
                 QString key = QString("%1_idle").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -423,7 +441,10 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
         else if (rid == "B") {
             switch(idx)
             {
-            case 0: // INIT
+            case 0:  // 프로그램 시작
+            case 1:  // 동작
+                break;
+            case 2: // INIT
             {
                 QString key = QString("%1_init").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -437,7 +458,9 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     m_workCompleteSent[key] = false;
                 });
             }   break;
-            case 1: // READY
+            case 3:  // none
+                break;
+            case 4: // READY
             {
                 QString key = QString("%1_ready").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -451,7 +474,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     m_workCompleteSent[key] = false;
                 });
             }   break;
-            case 2: //ASSY
+            case 5: //ASSY
             {
                 QString key = QString("%1_assy").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -465,7 +488,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     m_workCompleteSent[key] = false;
                 });
             }   break;
-            case 3: // PICK
+            case 6: // PICK
             {
                 QString key = QString("%1_pick").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -479,7 +502,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     m_workCompleteSent[key] = false;
                 });
             }   break;
-            case 4: // PLACE
+            case 7: // PLACE
             {
                 QString key = QString("%1_pick").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -493,7 +516,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     m_workCompleteSent[key] = false;
                 });
             }   break;
-            case 5: // CLAMP
+            case 8: // CLAMP close
             {
                 QString key = QString("%1_clamp_1").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -507,7 +530,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     m_workCompleteSent[key] = false;
                 });
             }   break;
-            case 6: // CLAMP
+            case 9: // CLAMP open
             {
                 QString key = QString("%1_clamp_2").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -521,7 +544,9 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     m_workCompleteSent[key] = false;
                 });
             }   break;
-            case 7: // scrap
+            case 10:  // none
+                break;
+            case 11: // scrap
             {
                 QString key = QString("%1_scrap").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
@@ -535,6 +560,8 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     m_workCompleteSent[key] = false;
                 });
             }   break;
+            case 12:  //
+                break;
             }
         }
     });
@@ -549,7 +576,7 @@ void RobotManager::setVisionMode(const QString& id, bool on) {
 bool RobotManager::visionMode(const QString& id) const {
     return m_visionMode.value(id, false);
 }
-
+/*
 void RobotManager::processVisionPose(const QString& id, const QString &kind, const Pose6D& p, const QVariantMap& extras)
 {
     auto it = m_ctx.find(id);
@@ -596,7 +623,7 @@ void RobotManager::processVisionPoseBulk(const QString& id, const Pose6D& pick, 
         }
     }
 }
-
+*/
 void RobotManager::triggerByKey(const QString& id, const QString& coilKey, int pulseMs)
 {
     auto it = m_ctx.find(id);
@@ -822,12 +849,11 @@ void RobotManager::cmdSort_DoPickup(const Pose6D& pose, bool flip, int offset, i
     /////////////////////////////////////////////////////////////////////
     // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
     if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
-        it->orch->publishPoseWithKind(v, 50, "pick");
+
         triggerByKey(id, "DI5", 500);
-        it->orch->publishFlip_Offset(flip, offset, m_yawOffset, thick);
+        it->orch->publishSortPick(v,flip, offset, m_yawOffset, thick);
+
         emit logByRobot(id, QString("[RM] cmdSort_DoPickup triggered for %1").arg(id), Common::LogLevel::Info);
-
-
         if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
     } else {
         if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
@@ -909,8 +935,7 @@ void RobotManager::cmdSort_Arrange(const Pose6D &origin, const Pose6D &dest)
     /////////////////////////////////////////////////////////////////////
     // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
     if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
-        //it->orch->publishBulkPoseWithKind(v_1, "pick");
-        //it->orch->publishBulkPoseWithKind(v_2, "place");
+        triggerByKey(id, "DI11", 500);
         it->orch->publishArrangePoses(v_1,v_2);
 
         if (it->model) it->model->add(origin); // 필요 시 큐에 쌓고 나중에 실행
@@ -920,7 +945,7 @@ void RobotManager::cmdSort_Arrange(const Pose6D &origin, const Pose6D &dest)
         if (it->model) it->model->add(dest); // 필요 시 큐에 쌓고 나중에 실행
     }
     /// ///////////////////////////////////////////////////////////////////
-    triggerByKey(id, "DI11", 500);
+
 }
 
 /* Aligin */
@@ -973,9 +998,11 @@ void RobotManager::cmdAlign_DoPickup(const Pose6D& pose)
     const QVector<double> v{ pose.x,pose.y,pose.z,pose.rx,pose.ry,pose.rz };
     // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
     if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
-        it->orch->publishPoseWithKind(v, 50, "pick");
-        if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+//        it->orch->publishPoseWithKind(v, 50, "pick");
         triggerByKey(id, "DI6", 500);
+        it->orch->publishAlignPick(v);
+        if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+
         emit logByRobot(id, QString("[RM] cmdAlign_DoPickup triggered for %1").arg(id), Common::LogLevel::Info);
     } else {
         if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
@@ -995,14 +1022,18 @@ void RobotManager::cmdAlign_DoPlace(const Pose6D& pose)
     const QVector<double> v{ pose.x,pose.y,pose.z,pose.rx,pose.ry,pose.rz };
     // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
     if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
-        it->orch->publishPoseWithKind(v, 50, "place");
+//        it->orch->publishPoseWithKind(v, 50, "place");
+        triggerByKey(id, "DI7", 500);
+        it->orch->publishAlignPlace(v);
         if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+
+        emit logByRobot(id, QString("[RM] cmdAlign_DoPlace triggered for %1").arg(id), Common::LogLevel::Info);
     } else {
         if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
     }
     /// ///////////////////////////////////////////////////////////////////
-    triggerByKey(id, "DI7", 500);
-    emit logByRobot(id, QString("[RM] cmdAlign_DoPlace triggered for %1").arg(id), Common::LogLevel::Info);
+
+
 }
 // 11. 클램프 동작 수행
 void RobotManager::cmdAlign_Clamp(bool open)

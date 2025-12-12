@@ -154,94 +154,76 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         get(A_DO10_PULSE , do10);
         get(A_DO11_PULSE , do11);
         get(A_DO12_PULSE , do12);
-/*
-        // 에지 감지
-        bool rRise = ( ready && !m_lastReady);
-        bool bRise = ( busy && !m_lastBusy );
-        bool bFall = (!busy &&  m_lastBusy );
-        bool dRise = ( done && !m_lastDone);
-        bool dFall = (!done &&  m_lastDone);
 
-        switch (m_state) {
-        case State::WaitRobotReady:
-            //if (rRise && !busy) {
-            if (ready && !busy) {
-                setState(State::PublishTarget);
-            }
-            break;
-        case State::WaitPickStart:
-            if (bRise) {
-                setState(State::WaitPickDone);
-                m_stateTick.restart();
-            }
-            break;
-        case State::WaitPickDone:
-            if (bFall && done) {
-                //m_bus->writeCoil(A_PUBLISH_REQ, false);
-                if (A_PUBLISH_PICK >= 0) m_bus->writeCoil(A_PUBLISH_PICK, false);
-                setState(State::WaitDoneClear);
-                m_stateTick.restart();
-            }
-            break;
-        case State::WaitDoneClear:
-            if (dFall) {
-                //setState(State::PublishTarget);
-                setState(State::WaitRobotReady);
-                emit finishedCurrentCycle();
-            }
-            break;
-        default: break;
-        }
-        // 상태 업데이트
-        m_lastReady = ready;
-        m_lastBusy  = busy;
-        m_lastDone  = done;
-*/
+#if true
         // === 상승에지 → 공정 인덱스 배출 ===
-        if (!m_lastDO3 && do3)
-        {
+        if (!m_lastDO3 && do3) {
+            emit processPulse(m_robotId, 3);//, 0);
+        }
+        if (!m_lastDO4 && do4) {
+            emit processPulse(m_robotId, 4);//, 1);
+        }
+        if (!m_lastDO5 && do5) {
+            emit processPulse(m_robotId, 5);//, 2);
+        }
+        if (!m_lastDO6 && do6) {
+            emit processPulse(m_robotId, 6);//, 3);
+        }
+        if (!m_lastDO7 && do7) {
+            emit processPulse(m_robotId, 7);//, 4);
+        }
+        if (!m_lastDO8 && do8) {
+            emit processPulse(m_robotId, 8);//, 5);
+        }
+        if (!m_lastDO9 && do9) {
+            emit processPulse(m_robotId, 9);//, 6);
+        }
+        if (!m_lastDO10 && do10) {
+            emit processPulse(m_robotId, 10);//, 7);
+        }
+        if (!m_lastDO11 && do11) {
+            emit processPulse(m_robotId, 11);//, 8);
+        }
+        if (!m_lastDO12 && do12) {
+            emit processPulse(m_robotId, 12);//, 9);
+        }
+#else
+        // === 하강에지 → 공정 인덱스 배출 ===
+        if (m_lastDO3 && !do3) {
             emit processPulse(m_robotId, 0);
         }
-        if (!m_lastDO4 && do4)
-        {
+        if (m_lastDO4 && !do4) {
             emit processPulse(m_robotId, 1);
         }
-        if (!m_lastDO5 && do5)
-        {
+        if (m_lastDO5 && !do5) {
             emit processPulse(m_robotId, 2);
         }
-        if (!m_lastDO6 && do6)
-        {
+        if (m_lastDO6 && !do6) {
             emit processPulse(m_robotId, 3);
         }
-        if (!m_lastDO7 && do7)
-        {
+        if (m_lastDO7 && !do7) {
             emit processPulse(m_robotId, 4);
         }
-        if (!m_lastDO8 && do8)
-        {
+        if (m_lastDO8 && !do8) {
             emit processPulse(m_robotId, 5);
         }
-        if (!m_lastDO9 && do9)
-        {
+        if (m_lastDO9 && !do9) {
             emit processPulse(m_robotId, 6);
         }
-        if (!m_lastDO10 && do10)
-        {
+        if (m_lastDO10 && !do10) {
             emit processPulse(m_robotId, 7);
         }
-        if (!m_lastDO11 && do11)
-        {
+        if (m_lastDO11 && !do11) {
             emit processPulse(m_robotId, 8);
         }
-        if (!m_lastDO12 && do12)
-        {
+        if (m_lastDO12 && !do12) {
             emit processPulse(m_robotId, 9);
         }
-        m_lastDO3 = do3; m_lastDO4 = do4; m_lastDO5 = do5;
-        m_lastDO6 = do6; m_lastDO7 = do7; m_lastDO8 = do8;
-        m_lastDO8 = do8; m_lastDO9 = do9; m_lastDO10 = do10;
-        m_lastDO11 = do11; m_lastDO12 = do12;
+#endif
+        m_lastDO3 = do3;    m_lastDO4 = do4;    m_lastDO5 = do5;
+        m_lastDO6 = do6;    m_lastDO7 = do7;    m_lastDO8 = do8;
+        m_lastDO9 = do9;    m_lastDO10 = do10;  m_lastDO11 = do11;
+        m_lastDO12 = do12;
     });
 
     connect(m_bus, &ModbusClient::inputRead, this, [this](int start, const QVector<quint16>& data){
@@ -478,6 +460,110 @@ void Orchestrator::publishToolComnad(const QVector<quint16>& cmds)
     m_bus->writeHoldingBlock(100, cmds);
 }
 // KJW 2025-11-24: 포즈 발행 함수 개선:
+void Orchestrator::publishSortPick(const QVector<double>& pose, bool flip, int offset, float yaw, int thick)
+{
+    int base = A_TARGET_BASE_PICK;
+
+    if( 60 < pose[5] && pose[5]<= 90 )
+    {
+        yaw = +30;
+        m_yawOffset=+30;
+    }
+    else if(90 <= pose[5] && pose[5] <120)
+    {
+        yaw = -30;
+        m_yawOffset=-30;
+    }
+
+    EulerZYX rpy = toolRotate(pose[3], pose[4], pose[5], yaw);
+    QVector<double> rotate_pose{pose};
+    rotate_pose[3] = rpy.roll;
+    rotate_pose[4] = rpy.pitch;
+    rotate_pose[5] = rpy.yaw;
+
+
+    QVector<quint16> regs;
+    regs.reserve(20);
+    for (int i=0;i<6;i++) {
+        quint16 hi, lo;
+        floatToRegs(float(rotate_pose[i]), hi, lo);
+        regs << hi << lo;
+    }
+
+    float val[4];
+    val[0] = flip ? 1.0f : 0.0f;
+    val[1] = static_cast<double>(offset);
+    val[2] = yaw;
+    val[3] = static_cast<double>(thick);
+
+    for (int i=0;i<4;i++) {
+        quint16 hi, lo;
+        floatToRegs(val[i], hi, lo);
+        regs << hi << lo;
+    }
+
+    m_bus->writeHoldingBlock(base, regs);
+
+    QTimer::singleShot(10, this, [this]{
+        m_bus->writeCoil(A_PUBLISH_PICK, true);
+    });
+    QTimer::singleShot(500, this, [this]{
+        m_bus->writeCoil(A_PUBLISH_PICK, false);
+    });
+}
+
+void Orchestrator::publishAlignPick(const QVector<double>& pose)
+{
+    int base = A_TARGET_BASE_PICK;
+
+    EulerZYX rpy = toolRotate(pose[3], pose[4], pose[5], 0);
+    QVector<double> rotate_pose{pose};
+    rotate_pose[3] = rpy.roll;
+    rotate_pose[4] = rpy.pitch;
+    rotate_pose[5] = rpy.yaw;
+
+    QVector<quint16> regs; regs.reserve(12);
+    for (int i=0;i<6;i++) {
+        quint16 hi, lo;
+        floatToRegs(float(rotate_pose[i]), hi, lo);
+        regs << hi << lo;
+    }
+    m_bus->writeHoldingBlock(base, regs);
+
+    QTimer::singleShot(10, this, [this]{
+        m_bus->writeCoil(A_PUBLISH_PICK, true);
+    });
+    QTimer::singleShot(500, this, [this]{
+        m_bus->writeCoil(A_PUBLISH_PICK, false);
+    });
+}
+
+void Orchestrator::publishAlignPlace(const QVector<double>& pose)
+{
+    int base = A_TARGET_BASE_PLACE;
+
+    EulerZYX rpy = toolRotate(pose[3], pose[4], pose[5], 0);
+    QVector<double> rotate_pose{pose};
+    rotate_pose[3] = rpy.roll;
+    rotate_pose[4] = rpy.pitch;
+    rotate_pose[5] = rpy.yaw;
+
+    QVector<quint16> regs; regs.reserve(12);
+    for (int i=0;i<6;i++) {
+        quint16 hi, lo;
+        floatToRegs(float(rotate_pose[i]), hi, lo);
+        regs << hi << lo;
+    }
+    m_bus->writeHoldingBlock(base, regs);
+
+    QTimer::singleShot(10, this, [this]{
+        m_bus->writeCoil(A_PUBLISH_PLACE, true);
+    });
+    QTimer::singleShot(500, this, [this]{
+        m_bus->writeCoil(A_PUBLISH_PLACE, false);
+    });
+}
+
 void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct, const QString& kind)
 {
     qDebug() <<"[ORCH] publishPoseWithKind:"

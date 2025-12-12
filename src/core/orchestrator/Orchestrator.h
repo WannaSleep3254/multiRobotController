@@ -67,6 +67,10 @@ public slots:
 
     void publishToolComnad(const QVector<quint16>& cmds);
 
+    void publishSortPick(const QVector<double>& pose, bool flip, int offset, float yaw, int thick);
+    void publishAlignPick(const QVector<double>& pose);
+    void publishAlignPlace(const QVector<double>& pose);
+
     void publishPoseWithKind(const QVector<double>& pose, int speedPct, const QString& kind);
     void publishBulkPoseWithKind(const QVector<double>& pose, const QString& kind);
     void publishFlip_Offset(bool flip, int offset, float yaw, int thick);
@@ -77,7 +81,7 @@ public slots:
     void publishBulkMode(const int &mode);
 
 signals:
-//    void log(const QString& line, Orchestrator::LogLevel level = Orchestrator::LogLevel::Info);
+
     void log(const QString& line, Common::LogLevel level = Common::LogLevel::Info);
     void stateChanged(int state, QString name);
     void currentRowChanged(int row);
