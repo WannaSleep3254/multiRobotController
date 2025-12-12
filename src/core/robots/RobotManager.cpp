@@ -333,7 +333,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     return;
                 }
                 m_workCompleteSent[key] = true;
-                QTimer::singleShot(10, this, [=]() {
+                QTimer::singleShot(6, this, [=]() {
                     m_vsrv->sendWorkComplete(id, "sorting", "pick", 0);
                 });
                 QTimer::singleShot(100, this, [=]() {
@@ -351,7 +351,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(10, this, [=]() {
                     m_vsrv->sendWorkComplete(id, "sorting", "place", 0);
                 });
-                QTimer::singleShot(20, this, [=]() {
+                QTimer::singleShot(15, this, [=]() {
                     m_vsrv->sendWorkComplete(id, "sorting", "idle", 0);
                 });
                 QTimer::singleShot(100, this, [=]() {
