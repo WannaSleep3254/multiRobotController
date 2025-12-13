@@ -141,6 +141,8 @@ private:
     int A_DO10_PULSE    {110};
     int A_DO11_PULSE    {111};
     int A_DO12_PULSE    {112};
+    int A_DO13_PULSE    {113};
+    int A_DO14_PULSE    {114};
 
     int A_TARGET_BASE   {132};      // holding: TARGET_POSE_STAGING_BASE (132..143)
     int A_TARGET_BASE_PICK   {132}; // holding: TARGET_POSE_STAGING_BASE (132..143)
@@ -169,7 +171,7 @@ private:
     bool m_lastDO3{false}, m_lastDO4{false},  m_lastDO5{false};
     bool m_lastDO6{false}, m_lastDO7{false},  m_lastDO8{false};
     bool m_lastDO9{false}, m_lastDO10{false}, m_lastDO11{false};
-    bool m_lastDO12{false};
+    bool m_lastDO12{false}, m_lastDO13{false}, m_lastDO14{false};
 
     quint16 m_seq{0};
     float m_yawOffset{0.0f};

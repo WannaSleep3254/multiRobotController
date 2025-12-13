@@ -117,6 +117,7 @@ MainWindow::MainWindow(QWidget *parent)
             [this](bool ok){
                 Q_UNUSED(ok)
                 qDebug()<<QString("Conveyor command finished: %1").arg(ok?"OK":"FAIL");
+
                 m_visionClient->sendWorkComplete("a", "conveyor", "forward", 0);
             });
 

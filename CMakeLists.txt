@@ -16,8 +16,8 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
 add_library(multiRobotController_core STATIC
-    src/core/network/Server.cpp
-    src/core/network/Server.h
+    #src/core/network/Server.cpp
+    #src/core/network/Server.h
 
     src/core/modbus/ModbusClient.cpp
     src/core/modbus/ModbusClient.h

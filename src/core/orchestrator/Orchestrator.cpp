@@ -11,6 +11,34 @@
 #define DEG2RAD(deg) ((deg) * M_PI / 180.0)  // 도 → 라디안 변환
 #define RAD2DEG(rad) ((rad) * 180.0 / M_PI)  // 라디안 → 도 변환
 
+/////////////////////////////
+ /*
+#include <cmath>
+constexpr double center = 90.0;   // 기준 yaw
+constexpr double range  = 60.0;   // 적용 범위 ±60°
+constexpr double maxOffset = 60.0;
+
+float getYawOffset(float rz)
+{
+    float diff = rz-center;
+    if(std::abs(diff) > range)
+        return 0.0f;
+
+    double ratio = std::cos((diff / range) * M_PI_2); // 1 → 0
+    float m_yawOffset = maxOffset * ratio;
+
+    // 좌우 방향 부호
+    if (rz > center)
+        m_yawOffset = -m_yawOffset;
+
+    return m_yawOffset;
+}
+
+*/
+
+/////////////////////////////
+
+
 struct EulerZYX {
     double roll;
     double pitch;
@@ -142,7 +170,7 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         bool do3=m_lastDO3, do4=m_lastDO4,   do5=m_lastDO5;
         bool do6=m_lastDO6, do7=m_lastDO7,   do8=m_lastDO8;
         bool do9=m_lastDO9, do10=m_lastDO10, do11=m_lastDO11;
-        bool do12=m_lastDO12;
+        bool do12=m_lastDO12, do13=m_lastDO13, do14=m_lastDO14;
 
         get(A_DO3_PULSE , do3);
         get(A_DO4_PULSE , do4);
@@ -154,6 +182,8 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         get(A_DO10_PULSE , do10);
         get(A_DO11_PULSE , do11);
         get(A_DO12_PULSE , do12);
+        get(A_DO13_PULSE , do13);
+        get(A_DO14_PULSE , do14);
 
 #if true
         // === 상승에지 → 공정 인덱스 배출 ===
@@ -186,6 +216,12 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         }
         if (!m_lastDO12 && do12) {
             emit processPulse(m_robotId, 12);//, 9);
+        }
+        if (!m_lastDO13 && do13) {
+            emit processPulse(m_robotId, 13);//, 10);
+        }
+        if (!m_lastDO14 && do14) {
+            emit processPulse(m_robotId, 14);//, 11);
         }
 #else
         // === 하강에지 → 공정 인덱스 배출 ===
@@ -223,7 +259,7 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         m_lastDO3 = do3;    m_lastDO4 = do4;    m_lastDO5 = do5;
         m_lastDO6 = do6;    m_lastDO7 = do7;    m_lastDO8 = do8;
         m_lastDO9 = do9;    m_lastDO10 = do10;  m_lastDO11 = do11;
-        m_lastDO12 = do12;
+        m_lastDO12 = do12;  m_lastDO13 = do13;   m_lastDO14 = do14;
     });
 
     connect(m_bus, &ModbusClient::inputRead, this, [this](int start, const QVector<quint16>& data){
@@ -385,7 +421,7 @@ void Orchestrator::cycle()
     if(IR_TCP_BASE > 0)
         m_bus->readInputs(IR_TCP_BASE, IR_WORD_PER_POSE);
 #endif
-    m_bus->readDiscreteInputs(A_ROBOT_READY, 13);
+    m_bus->readDiscreteInputs(A_ROBOT_READY, 15);
 }
 
 QString Orchestrator::stateName(Orchestrator::State s)
@@ -464,15 +500,15 @@ void Orchestrator::publishSortPick(const QVector<double>& pose, bool flip, int o
 {
     int base = A_TARGET_BASE_PICK;
 
-    if( 60 < pose[5] && pose[5]<= 90 )
+    if( 30 < pose[5] && pose[5]<= 90 )
     {
-        yaw = +30;
-        m_yawOffset=+30;
+        yaw = +60;
+        m_yawOffset=+60;
     }
-    else if(90 <= pose[5] && pose[5] <120)
+    else if(90 <= pose[5] && pose[5] <150)
     {
-        yaw = -30;
-        m_yawOffset=-30;
+        yaw = -60;
+        m_yawOffset=-60;
     }
 
     EulerZYX rpy = toolRotate(pose[3], pose[4], pose[5], yaw);
@@ -589,15 +625,15 @@ void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct
 #if true
         if(m_robotId == "A")
         {
-            if( 60 < pose[5] && pose[5]<= 90 )
+            if( 30 < pose[5] && pose[5]<= 90 )
             {
-                yaw = +30;
-                m_yawOffset=+30;
+                yaw = +60;
+                m_yawOffset=+60;
             }
-            else if(90 <= pose[5] && pose[5] <120)
+            else if(90 <= pose[5] && pose[5] <150)
             {
-                yaw = -30;
-                m_yawOffset=-30;
+                yaw = -60;
+                m_yawOffset=-60;
             }
         }
 #endif

@@ -66,9 +66,30 @@ void VisionClient::sendAck(quint32 seq, const QString& status, const QString& ms
     };
     if (!msg.isEmpty()) o["message"] = msg;
 
-    const auto json = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
-//    m_sock->write(json);
-//    m_sock->flush();
+    const QByteArray json = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
+//    enqueueJson(json);
+}
+
+void VisionClient::sendFeedbackPose(const QString& robot, const QString& from, const QString& to, quint32 seq)
+{
+    if (robot.isEmpty())
+        return;
+
+    QJsonObject o{
+        {"robot", robot.toLower()},
+        {"type", "tool"},
+        {"kind","moving"},
+        {"tool", QJsonObject {
+            {"from", from},
+            {"to", to}
+        }},
+        {"seq", static_cast<int>(seq)},
+        {"dir", 11}
+    };
+
+    const QByteArray json = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
+    qDebug()<<QDateTime::currentDateTime()<<QString("VisionClient::sendFeedbackPose json: %1").arg(QString::fromUtf8(json).trimmed());
+    enqueueJson(json);
 }
 
 void VisionClient::sendWorkComplete(const QString& robot, const QString& type, const QString& kind, quint32 seq, bool clampState)
@@ -87,13 +108,12 @@ void VisionClient::sendWorkComplete(const QString& robot, const QString& type, c
     };
     if (robot.toLower()=="b" && type == "align"&& kind == "clamp") {
         o["clamp"] = clampState ? "close" : "open";
-        qDebug()<<QString("25-11-24: VisionClient::sendWorkComplete clamp state: %1").arg(clampState?"close":"open");
+        qDebug()<<QDateTime::currentDateTime()<<QString("VisionClient::sendWorkComplete clamp state: %1").arg(clampState?"close":"open");
     }
-    const auto json = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
-    qDebug()<<QString("25-11-24: VisionClient::sendWorkComplete json: %1").arg(QString::fromUtf8(json).trimmed());
-    m_sock->write(json);
-    m_sock->flush();
+    const QByteArray json = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
+    qDebug()<<QDateTime::currentDateTime()<<QString("VisionClient::sendWorkComplete json: %1").arg(QString::fromUtf8(json).trimmed());
 
+    enqueueJson(json);
 }
 
 void VisionClient::sendToolComplete(const QString& robot, quint32 seq, bool state)
@@ -132,9 +152,50 @@ void VisionClient::sendToolComplete(const QString& robot, quint32 seq, bool stat
         {"seq", static_cast<int>(seq)},
         {"dir",  11}
     };
-    const auto json = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
-    m_sock->write(json);
-    m_sock->flush();
+    const QByteArray json = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
+    enqueueJson(json);
+}
+
+void VisionClient::enqueueJson(const QByteArray& json)
+{
+    if (json.isEmpty())
+        return;
+
+    m_jsonQueue.enqueue(json);
+
+    // 타이머가 안 돌고 있으면 시작
+    if (!m_jsonTimer.isActive()) {
+        m_jsonTimer.setTimerType(Qt::PreciseTimer);
+
+        connect(&m_jsonTimer, &QTimer::timeout, this, &VisionClient::onTxJson, Qt::UniqueConnection);
+        m_jsonTimer.start(m_jsonIntervalMs);
+    }
+}
+
+void VisionClient::onTxJson()
+{
+    if (!m_sock || m_sock->state() != QAbstractSocket::ConnectedState)
+    {
+        m_jsonTimer.stop();
+        m_jsonQueue.clear();
+
+        return;
+    }
+
+    if (m_jsonQueue.isEmpty()) {
+        m_jsonTimer.stop();
+        return;
+    }
+
+    const QByteArray byte_json = m_jsonQueue.dequeue();
+    quint64 len =m_sock->write(byte_json);
+    qDebug()<<QDateTime::currentDateTime()<<QString("VisionClient::onTxJson sent %1 bytes: %2").arg(len).arg(QString::fromUtf8(byte_json).trimmed());
+//    m_sock->flush();
+/*
+    // 다 비면 타이머 정지
+    if (m_jsonQueue.isEmpty())
+        m_jsonTimer.stop();
+*/
 }
 
 void VisionClient::sendJson(const QJsonObject& obj)
@@ -145,8 +206,7 @@ void VisionClient::sendJson(const QJsonObject& obj)
     }
 
     const QByteArray json = QJsonDocument(obj).toJson(QJsonDocument::Compact) + '\n';
-    m_sock->write(json);
-    m_sock->flush();
+    enqueueJson(json);
     emit log(QString("[TX] %1").arg(QString::fromUtf8(json).trimmed()));
 }
 
@@ -203,6 +263,9 @@ void VisionClient::onReadyRead()
 
         RobotCommand cmd;
         if (RobotCommandParser::parse(obj, cmd)) {
+            const QByteArray compact = QJsonDocument(obj).toJson(QJsonDocument::Compact);
+            qDebug()<<QDateTime::currentDateTime()<<compact.trimmed();
+
             if (cmd.type == CmdType::Tool) {
                 m_lastCmdKind = cmd.kind;
                 m_lastToolCmd = cmd.toolCmd;

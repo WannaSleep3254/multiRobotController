@@ -302,7 +302,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(10, this, [=]() {
                     m_vsrv->sendToolComplete(id, 0, true);
                 });
-                QTimer::singleShot(100, this, [=]() {
+                QTimer::singleShot(50, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
 
@@ -317,13 +317,26 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(10, this, [=]() {
                     m_vsrv->sendWorkComplete(id, "sorting", "standby", 0);
                 });
-                QTimer::singleShot(100, this, [=]() {
+                QTimer::singleShot(50, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
             }   break;
             case 5: // none
             {
-                //                emit reqGentryPalce();
+                QString key = QString("%1_pick_nonFlip").arg(rid);
+                qDebug()<<"RobotManager::processPulse PICK nonflip key="<<key;
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(10, this, [=]() {
+                    m_vsrv->sendWorkComplete(id, "sorting", "pick", 0);
+                });
+                QTimer::singleShot(50, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                    qDebug()<<"RobotManager::processPulse PICK complete key="<<key;
+                });
+
             }   break;
             case 6: // 소팅 PICK
             {
@@ -333,10 +346,10 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     return;
                 }
                 m_workCompleteSent[key] = true;
-                QTimer::singleShot(6, this, [=]() {
+                QTimer::singleShot(10, this, [=]() {
                     m_vsrv->sendWorkComplete(id, "sorting", "pick", 0);
                 });
-                QTimer::singleShot(100, this, [=]() {
+                QTimer::singleShot(50, this, [=]() {
                     m_workCompleteSent[key] = false;
                     qDebug()<<"RobotManager::processPulse PICK complete key="<<key;
                 });
@@ -351,10 +364,10 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(10, this, [=]() {
                     m_vsrv->sendWorkComplete(id, "sorting", "place", 0);
                 });
-                QTimer::singleShot(15, this, [=]() {
+                QTimer::singleShot(20, this, [=]() {
                     m_vsrv->sendWorkComplete(id, "sorting", "idle", 0);
                 });
-                QTimer::singleShot(100, this, [=]() {
+                QTimer::singleShot(50, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
                 emit sortProcessFinished(id);
@@ -375,7 +388,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(10, this, [=]() {
                     m_vsrv->sendWorkComplete(rid, "bulk", "pick", 0);
                 });
-                QTimer::singleShot(100, this, [=]() {
+                QTimer::singleShot(50, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
             }   break;
@@ -389,7 +402,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(10, this, [=]() {
                     m_vsrv->sendWorkComplete(id, "bulk", "place", 0);
                 });
-                QTimer::singleShot(100, this, [=]() {
+                QTimer::singleShot(50, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
             }   break;
@@ -403,7 +416,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(10, this, [=]() {
                     m_vsrv->sendWorkComplete(id, "sorting", "arrange", 0);
                 });
-                QTimer::singleShot(100, this, [=]() {
+                QTimer::singleShot(50, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
 
@@ -417,7 +430,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(10, this, [=]() {
                     m_vsrv->sendWorkComplete(id, "sorting", "arrange", 0);
                 });
-                QTimer::singleShot(100, this, [=]() {
+                QTimer::singleShot(50, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
 
@@ -429,8 +442,36 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     return;
                 }
                 m_workCompleteSent[key] = true;
-                QTimer::singleShot(500, this, [=]() {
+                QTimer::singleShot(10, this, [=]() {
                     m_vsrv->sendWorkComplete(id, "sorting", "idle", 0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
+            case 13:    // 툴 체인지 중 촬상가능위치: Bulk to Sorting
+            {
+                QString key = QString("%1_capture_1").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(500, this, [=]() {
+                    m_vsrv->sendFeedbackPose(id,"bulk","sorting",0);
+                });
+                QTimer::singleShot(100, this, [=]() {
+                    m_workCompleteSent[key] = false;
+                });
+            }   break;
+            case 14:    // 툴 체인지 중 촬상가능위치: Sorting to Bulk
+            {
+                QString key = QString("%1_capture_2").arg(rid);
+                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
+                    return;
+                }
+                m_workCompleteSent[key] = true;
+                QTimer::singleShot(500, this, [=]() {
+                    m_vsrv->sendFeedbackPose(id,"sorting","bulk", 0);
                 });
                 QTimer::singleShot(100, this, [=]() {
                     m_workCompleteSent[key] = false;
@@ -576,54 +617,7 @@ void RobotManager::setVisionMode(const QString& id, bool on) {
 bool RobotManager::visionMode(const QString& id) const {
     return m_visionMode.value(id, false);
 }
-/*
-void RobotManager::processVisionPose(const QString& id, const QString &kind, const Pose6D& p, const QVariantMap& extras)
-{
-    auto it = m_ctx.find(id);
-    if (it == m_ctx.end() || !it->orch) {
-        emit log(QString("[RM] no orchestrator for %1").arg(id)); return;
-    }
-    const int speed = extras.value("speed_pct", 50).toInt();
-    const QVector<double> v{ p.x,p.y,p.z,p.rx,p.ry,p.rz };
 
-    // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
-    if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
-        it->orch->publishPoseWithKind(v, speed, kind);
-        if (it->model) it->model->add(p); // 필요 시 큐에 쌓고 나중에 실행
-    } else {
-        if (it->model) it->model->add(p); // 필요 시 큐에 쌓고 나중에 실행
-    }
-}
-
-void RobotManager::processVisionPoseBulk(const QString& id, const Pose6D& pick, const Pose6D& place, const QVariantMap& extras)
-{
-//    qDebug()<<"[RM] processVisionPoseBulk for"<<id;
-    auto it = m_ctx.find(id);
-    if (it == m_ctx.end() || !it->orch) {
-        emit log(QString("[RM] no orchestrator for %1").arg(id)); return;
-    }
-    const int speed = extras.value("speed_pct", 50).toInt();
-    const QVector<double> vPick { pick.x,  pick.y,  pick.z,  pick.rx,  pick.ry,  pick.rz };
-    const QVector<double> vPlace{ place.x, place.y, place.z, place.rx, place.ry, place.rz };
-    if (pick.z<-8.5)
-    {
-//        vPick[2] = -8.5;
-    }
-    // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
-    if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
-        it->orch->publishPickPlacePoses(vPick, vPlace, speed);
-        if (it->model) {
-            it->model->add(pick);
-            it->model->add(place);
-        }
-    } else {
-        if (it->model) {
-            it->model->add(pick);
-            it->model->add(place);
-        }
-    }
-}
-*/
 void RobotManager::triggerByKey(const QString& id, const QString& coilKey, int pulseMs)
 {
     auto it = m_ctx.find(id);
@@ -834,13 +828,13 @@ void RobotManager::cmdSort_DoPickup(const Pose6D& pose, bool flip, int offset, i
     /////////////////////////////////////////////////////////////////////
     const QVector<double> v{ pose.x,pose.y,pose.z,pose.rx,pose.ry,pose.rz };
 
-    if( 60 < v[5] && v[5]<= 90 )
+    if( 30 < v[5] && v[5]<= 90 )
     {
-        m_yawOffset=+30;
+        m_yawOffset=+60;
     }
-    else if(90 <= v[5] && v[5] <120)
+else if(90 <= v[5] && v[5] <150)
     {
-        m_yawOffset=-30;
+        m_yawOffset=-60;
     }
     else
     {

@@ -25,7 +25,10 @@
 	"DO8_PULSE": 108,
 	"DO9_PULSE": 109,
 	"DO10_PULSE": 110,
-	"DO11_PULSE": 111
+	"DO11_PULSE": 111,
+	"DO12_PULSE": 112,
+	"DO13_PULSE": 113,
+	"DO14_PULSE": 114
   },
   "holding": {
     "TARGET_POSE_BASE": 132,   "_comment" : "132..143 (float×6)",
