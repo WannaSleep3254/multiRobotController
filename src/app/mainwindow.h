@@ -86,6 +86,7 @@ private:
     bool m_sortingDock{false};
     int  m_sortingOffset{0};
     int  m_sortingThick{0};
+    int  m_sortingShfit{0};
     bool m_gantryPickupState{false};
 };
 #endif // MAINWINDOW_H

@@ -415,7 +415,6 @@ namespace Leadshine
                 }
             }
             break;
-
         }
         }
 
@@ -427,6 +426,8 @@ namespace Leadshine
         if (!rt.moving)
             return false;
 
+        if(id==4)
+            return true;
 
         // 예: 위치 오차 ±0.01mm, 속도 0 근처
         const float posTol = 5.0f;

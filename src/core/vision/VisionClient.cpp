@@ -183,7 +183,6 @@ void VisionClient::onTxJson()
     }
 
     if (m_jsonQueue.isEmpty()) {
-        m_jsonTimer.stop();
         return;
     }
 
@@ -261,10 +260,11 @@ void VisionClient::onReadyRead()
         if (dir != 1)
             continue;   // DIR 1 아닌 CMD는 그냥 무시
 
+        qDebug()<<"parse";
         RobotCommand cmd;
         if (RobotCommandParser::parse(obj, cmd)) {
-            const QByteArray compact = QJsonDocument(obj).toJson(QJsonDocument::Compact);
-            qDebug()<<QDateTime::currentDateTime()<<compact.trimmed();
+            //const QByteArray compact = QJsonDocument(obj).toJson(QJsonDocument::Compact);
+            //qDebug()<<QDateTime::currentDateTime()<<type<<dir<< int(cmd.kind);
 
             if (cmd.type == CmdType::Tool) {
                 m_lastCmdKind = cmd.kind;

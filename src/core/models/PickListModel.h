@@ -13,7 +13,8 @@ public:
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex& idx, int role) const override;
+    QVariant extracted() const;
+    QVariant data(const QModelIndex &idx, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
     void add(const Pose6D& p);

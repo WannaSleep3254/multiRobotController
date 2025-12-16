@@ -45,9 +45,6 @@ GentryManager::GentryManager(QObject *parent)
     motorController = new Leadshine::ELD2();
 
     setup_motorStateMonitoring();
-
-//    motorController->setPort("COM10", "115200");
-//    motorController->doConnect();
 }
 
 void GentryManager::setPort()
@@ -113,7 +110,7 @@ void GentryManager::setup_motorStateMonitoring()
     QStringList stateMotorError;
     stateMotorError<<"NoError"<<"ReadError"<<"WriteError"<<"ConnectionError"<<"ConfigurationError"
                     <<"TimeoutError"<<"ProtocolError"<<"ReplyAbortedError"<<"UnknownError";
-    //QObject::connect(motorController, &Leadshine::ELD2::comState, this, [=](int state){
+
     QObject::connect(motorController, &Leadshine::ELD2::errorState, this, [=](int state){
         // 에러 상태
         /**
@@ -200,6 +197,13 @@ void GentryManager::doGentryReady()
     logMessage2("gentry move to ready position");
 }
 
+void GentryManager::doConveyorForwardOneStep()
+{
+    motorController->reqWriteShift(4, -402220);// conveyor 260mm shift
+
+    logMessage2("conveyor move fwd one step");
+}
+
 void GentryManager::startGantryMove()   // 1-2-3축 동시
 {
     /*
@@ -244,12 +248,12 @@ void GentryManager::onAxisFinished(int axis, int seq, bool ok)
             const float pickerAngle = m_targetPos.value(3, 0.0f);
 /////////////////////////////////////////////////////////////////////
             if( near(xPos,0,10) &&
-                near(zPos,0,10) &&
+                near(zPos,-14000,10) &&//near(zPos,0,10) &&
                 near(pickerAngle,0,10))
             {   // docking
                 currentPose = GantryPose::Docking;
             }
-            else if(near(xPos,74000,10) && // near(xPos,m_targetGentryX,10)
+            else if(near(xPos,m_targetGentryX,10) && // near(xPos,m_targetGentryX,10)
                     near(zPos, m_targetGentryZ,10) && //near(zPos,-250000,10) &&
                     near(pickerAngle,-25020,10))
             {   // place
@@ -277,11 +281,12 @@ void GentryManager::onAxisFinished(int axis, int seq, bool ok)
     else if (axis == 4) {
         m_convOk = m_convOk && ok;
         m_conveyorPendingAxes.remove(axis);
-
+//        emit conveyorCommandFinished(m_convOk);
         if (m_conveyorPendingAxes.isEmpty()) {
             emit conveyorCommandFinished(m_convOk);
             m_convOk = true;
         }
+
     }
 }
 
@@ -366,7 +371,8 @@ void GentryManager::gentry_motion()
     case gty_x_docking_pos: //gentry & robot x docking position
         motorController->reqWritePos(1, 0); //gentry x move 0mm
         logMessage2("gentry move to X docking position");
-        motorController->reqWritePos(2, 0); //gentry z move 0mm
+        //motorController->reqWritePos(2, 0); //gentry z move 0mm
+        motorController->reqWritePos(2, -14000); //gentry z move -7mm
         logMessage2("gentry move to Z docking position");
         motorController->reqWritePos(3, 0); //picker rotate 0 degree
         logMessage2("picker rotate 0 degree");
@@ -426,6 +432,7 @@ void GentryManager::gentry_motion()
 
         if(motorController->isMotionDone(4)){
             logMessage2("conveyor move done");
+            qDebug()<<QString("conveyor move done");
         }
         else if(motorController->isMotionDone(1)){
             logMessage2("X move done\r\n");

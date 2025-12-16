@@ -9,6 +9,7 @@
 #include "Pose6D.h"
 #include "LogLevel.h"
 //#include "RobotCommand.h"
+#include "RobotCommandQueue.h"
 
 class QAbstractItemModel;
 class PickListModel;
@@ -23,24 +24,19 @@ struct RobotContext {
     QPointer<ModbusClient>  bus;
     QPointer<Orchestrator>  orch;
     QVariantMap addr_; // AddressMap
+
+    QPointer<RobotCommandQueue> cmdq; // ✅ 추가
 };
 
 class RobotManager : public QObject {
     Q_OBJECT
 public:
     explicit RobotManager(QObject* parent=nullptr);
-#if false // legacy - 미사용
-    // 로봇 컨텍스트 생성/등록
-    void addRobot(const QString& id, const QString& host, int port,
-                  const QVariantMap& addr, QObject* owner);
-#endif
-//    void setVisionServer(VisionServer* srv)  { m_vsrv = srv; }
+
     void setVisionClient(VisionClient* srv)  { m_vsrv = srv; }
 
     // 비전에서 온 포즈를 해당 로봇 큐로 적재
     void enqueuePose(const QString& id, const Pose6D& p);
-    // MainWindow에서 바로 호출: TCP(6자유도) 즉시 발행
-    void publishPoseNow(const QString& id, const Pose6D& p, int speedPct = 50);
 
     // 옵션 파라미터 실시간 반영 (예: 속도)
     void applyExtras(const QString& id, const QVariantMap& extras);

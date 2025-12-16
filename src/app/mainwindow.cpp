@@ -24,6 +24,7 @@
 
 #include <QSplitter>
 
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -116,9 +117,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_gentryMgr, &GentryManager::conveyorCommandFinished, this,
             [this](bool ok){
                 Q_UNUSED(ok)
-                qDebug()<<QString("Conveyor command finished: %1").arg(ok?"OK":"FAIL");
 
-                m_visionClient->sendWorkComplete("a", "conveyor", "forward", 0);
+                onLog(QString("Conveyor command finished: %1").arg(ok?"OK":"FAIL"));
+                qInfo()<<QDateTime::currentDateTime()<<"KJW"<<QString("Conveyor command finished: %1").arg(ok?"OK":"FAIL");
+        /*
+                QTimer::singleShot(100, this, [this]() {
+                    m_visionClient->sendWorkComplete("a", "conveyor", "forward", 0);
+                });
+        */
             });
 
     m_split  = new QSplitter(Qt::Horizontal, this);
@@ -169,6 +175,7 @@ void MainWindow::initVisionClient()
     // 로그 메시지 처리
     connect(m_visionClient, &VisionClient::lineReceived, this, [this](const QString& line){
         onLog(QString("[VC] Line received: %1").arg(line));
+        qDebug()<<QDateTime::currentDateTime()<<"VisionClient line received:"<<line;
     });
     connect(m_visionClient, &VisionClient::commandReceived, this, &MainWindow::onRobotCommand);
 
@@ -310,12 +317,17 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
             if(cmd.toolCmd.toolFrom=="bulk" && cmd.toolCmd.toolTo=="sorting") {
                 onLog("로봇 A 벌크→소팅 툴 체인지 처리 필요\r\n");
                 m_visionClient->sendAck(cmd.seq, "ok", "Tool Change Bulk to Sorting command received");
-                m_mgr->cmdBulk_ChangeTool();
+                QTimer::singleShot(100, this, [this]() {
+                    m_mgr->cmdBulk_ChangeTool();
+                });
+
             }
             else if(cmd.toolCmd.toolFrom=="sorting" && cmd.toolCmd.toolTo=="bulk") {
                 onLog("로봇 A 소팅→벌크 툴 체인지 처리 필요\r\n");
                 m_visionClient->sendAck(cmd.seq, "ok", "Tool Change Sorting to Bulk command received");
-                m_mgr->cmdSort_ChangeTool();
+                QTimer::singleShot(100, this, [this]() {
+                    m_mgr->cmdSort_ChangeTool();
+                });
             }
         }
     }
@@ -385,7 +397,9 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
                 m_sortingFlip = cmd.flip;
                 m_sortingOffset = cmd.sortOffset.height;
                 m_sortingThick= cmd.sortOffset.thickness;
+//                m_sortingShfit = cmd.sortOffset.shift;
 
+//                Pose6D pick_pose =  cmd.pick;
                 m_mgr->cmdSort_DoPickup(cmd.pick,m_sortingFlip, m_sortingOffset, m_sortingThick);
             }
             break;
@@ -399,10 +413,12 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
                 m_sortingFlip = true;
                 m_sortingOffset=cmd.sortOffset.height; //cmd.offset;
                 m_sortingThick=cmd.sortOffset.thickness;
+//                m_sortingShfit = cmd.sortOffset.shift;
 
                 m_gentryMgr->startGantryMove();
                 int offset_mm = (m_sortingOffset>30)? (m_sortingOffset-30+10) : 0;
-                m_gentryMgr->doGentryPlace(37, offset_mm);
+                m_sortingShfit=m_sortingThick;
+                m_gentryMgr->doGentryPlace(m_sortingShfit, offset_mm);
 ////////////////////////////////////////////////////////////////
             } else {
                 // offset: 겐트리와 컨베어간의 높이차이 -> Z축 환산필요
@@ -415,6 +431,7 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
                 m_sortingFlip =false;
                 m_sortingOffset=cmd.sortOffset.height;//cmd.offset;
                 m_sortingThick=cmd.sortOffset.thickness;
+//                m_sortingShfit = cmd.sortOffset.shift;
 
                 m_gentryMgr->startGantryMove();
                 m_gentryMgr->setFalgs(false, true, false, false, false);
@@ -447,11 +464,15 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
     } else if (cmd.type == CmdType::Conveyor) {
         if (cmd.kind == CmdKind::Forward) {
             onLog("로봇 A 컨베이어 포워드 처리 필요\r\n");
-            m_visionClient->sendAck(cmd.seq, "ok", "conveyor Forward command received");
+            qInfo()<<QDateTime::currentDateTime()<<"KJW"<<"Robot A Conveyor Forward command received";
 
-            m_gentryMgr->startConveyorMove();
-            m_gentryMgr->setFalgs(true, false, false, false, false);
-            m_gentryMgr->gentry_motion();
+            m_visionClient->sendAck(cmd.seq, "ok", "conveyor Forward command received");
+            QTimer::singleShot(1000, this, [this]{
+                m_gentryMgr->startConveyorMove();
+                m_gentryMgr->doConveyorForwardOneStep();
+//                m_gentryMgr->setFalgs(true, false, false, false, false);
+//                m_gentryMgr->gentry_motion();
+            });
         }
     }
 }

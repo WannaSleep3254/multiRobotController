@@ -69,11 +69,13 @@ static bool parseToolObj(const QJsonObject& o, const CmdKind kind, ToolCommand &
 
 static bool parseOffsetObj(const QJsonObject& o, const CmdKind kind, sortingOffset &out)
 {
-    if ( !o.contains("height") || !o.contains("thickness") )
+//    if ( !o.contains("height") || !o.contains("thickness")|| !o.contains("shfit") )
+    if ( !o.contains("height") || !o.contains("thickness"))
         return false;
 
     out.height = o.value("height").toInt(0);
     out.thickness = o.value("thickness").toInt(0);
+//    out.shift = o.value("shift").toInt(0);
 
     return true;
 }

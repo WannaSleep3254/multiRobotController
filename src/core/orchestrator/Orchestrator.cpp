@@ -146,10 +146,10 @@ static inline float regsToFloat(quint16 hi, quint16 lo) {
 }
 
 Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* parent)
-    : QObject(parent), m_bus(bus), m_model(model), m_timer(new QTimer(this))
+    : QObject(parent), m_bus(bus), m_model(model), m_cycleTimer(new QTimer(this))
 {
-    m_timer->setInterval(10);
-    connect(m_timer, &QTimer::timeout, this, &Orchestrator::cycle);
+    m_cycleTimer->setInterval(50);
+    connect(m_cycleTimer, &QTimer::timeout, this, &Orchestrator::cycle);
 
     // READY/DONE/BUSY 읽기 및 에지 처리
     connect(m_bus, &ModbusClient::discreteInputsRead, this, [this](int start, QVector<bool> data){
@@ -167,11 +167,13 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         get(A_PICK_DONE,   done);
 
         // DO3/DO4/DO5 펄스 감지
+        bool do1=m_lastDO1;
         bool do3=m_lastDO3, do4=m_lastDO4,   do5=m_lastDO5;
         bool do6=m_lastDO6, do7=m_lastDO7,   do8=m_lastDO8;
         bool do9=m_lastDO9, do10=m_lastDO10, do11=m_lastDO11;
         bool do12=m_lastDO12, do13=m_lastDO13, do14=m_lastDO14;
 
+        get(A_DO1_PULSE , do1);
         get(A_DO3_PULSE , do3);
         get(A_DO4_PULSE , do4);
         get(A_DO5_PULSE , do5);
@@ -187,6 +189,12 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
 
 #if true
         // === 상승에지 → 공정 인덱스 배출 ===
+        if (!m_lastDO1 && do1) {
+            emit processPulse(m_robotId, 1);//, 0);
+        }
+        else if (m_lastDO1 && !do1) {
+            emit processPulse(m_robotId, 2);//, 0);
+        }
         if (!m_lastDO3 && do3) {
             emit processPulse(m_robotId, 3);//, 0);
         }
@@ -256,6 +264,7 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
             emit processPulse(m_robotId, 9);
         }
 #endif
+        m_lastDO1 = do1;
         m_lastDO3 = do3;    m_lastDO4 = do4;    m_lastDO5 = do5;
         m_lastDO6 = do6;    m_lastDO7 = do7;    m_lastDO8 = do8;
         m_lastDO9 = do9;    m_lastDO10 = do10;  m_lastDO11 = do11;
@@ -336,13 +345,13 @@ void Orchestrator::start()
 //    m_state = State::WaitRobotReady;
     emit log("[RUN] Orchestrator started", Common::LogLevel::Info);
     setState(State::WaitRobotReady);
-    m_timer->start();
+    m_cycleTimer->start();
     m_stateTick.restart();
 }
 
 void Orchestrator::stop()
 {
-    m_timer->stop();
+    m_cycleTimer->stop();
     m_state = State::Idle;
 
     m_bus->writeCoil(A_PUBLISH_PICK, false);
@@ -422,6 +431,14 @@ void Orchestrator::cycle()
         m_bus->readInputs(IR_TCP_BASE, IR_WORD_PER_POSE);
 #endif
     m_bus->readDiscreteInputs(A_ROBOT_READY, 15);
+/*
+    MbOp op;
+    op.kind = MbOp::Kind::ReadDiscreteInputs;
+    op.start = 100;
+    op.count = 15;
+    op.key = "poll:DI:100:15";
+    m_bus->enqueue(op);
+*/
 }
 
 QString Orchestrator::stateName(Orchestrator::State s)
@@ -750,7 +767,7 @@ void Orchestrator::publishFlip_Offset(bool flip, int offset, float yaw, int thic
 
     m_bus->writeHoldingBlock(base, regs);
 }
-
+/*
 void Orchestrator::publishPoseToRobot1(const QVector<double>& pose, int speedPct)
 {
     if (pose.size() < 6) {
@@ -774,7 +791,7 @@ void Orchestrator::publishPoseToRobot1(const QVector<double>& pose, int speedPct
     emit log("[FSM] PUBLISH_REQ=1 (Robot1)");
     // 이후 FSM은 기존 cycle() 로직: BUSY↑ → DONE↑ → PUBLISH_REQ=0 → DONE↓ 반환
 }
-
+*/
 void Orchestrator::publishArrangePoses(const QVector<double>& pick, const QVector<double>& place)
 {
     int pick_base = A_TARGET_BASE_PICK;
@@ -816,4 +833,32 @@ void Orchestrator::publishBulkMode(const int &mode)
     regs.reserve(1);
     regs << static_cast<quint16>(mode);
     m_bus->writeHoldingBlock(102, regs);
+}
+
+QVector<quint16> Orchestrator::makeSortPickRegs(const QVector<double>& pose,
+                                                bool flip,
+                                                int offset,
+                                                int yawOffset,
+                                                int thick)
+{
+    QVector<quint16> regs;
+    regs.reserve(20); // 10 floats × 2 words
+
+    // pose 6개
+    for (int i = 0; i < 6; ++i) {
+        quint16 hi=0, lo=0;
+        floatToRegs(float(pose[i]), hi, lo);
+        regs << hi << lo;
+    }
+
+    // flip / offset / yaw / thick
+    {
+        quint16 hi=0, lo=0;
+        floatToRegs(float(flip ? 1 : 0), hi, lo); regs << hi << lo;
+        floatToRegs(float(offset),        hi, lo); regs << hi << lo;
+        floatToRegs(float(yawOffset),     hi, lo); regs << hi << lo;
+        floatToRegs(float(thick),         hi, lo); regs << hi << lo;
+    }
+
+    return regs;
 }

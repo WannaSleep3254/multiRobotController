@@ -36,6 +36,8 @@ add_library(multiRobotController_core STATIC
     src/core/models/PickListModel.cpp
     src/core/models/PickListModel.h
 
+    src/core/robots/RobotCommandQueue.h
+
     src/core/robots/RobotManager.h
     src/core/robots/RobotManager.cpp
 
@@ -44,6 +46,8 @@ add_library(multiRobotController_core STATIC
 
     src/core/tf/EulerAngleConverter.cpp
     src/core/tf/EulerAngleConverter.h
+
+    #src/core/tf/RobotPoseValidator.h
 
     src/core/Motor/Com/modbus.cpp
     src/core/Motor/Com/modbus.h

@@ -57,7 +57,7 @@ private:
 
     QQueue<QByteArray> m_jsonQueue;
     QTimer m_jsonTimer;
-    int m_jsonIntervalMs{10};
+    int m_jsonIntervalMs{1};
 };
 
 #endif // VISIONCLIENT_H

@@ -48,24 +48,32 @@ int PickListModel::columnCount(const QModelIndex& parent) const {
     return 6;
 }
 
-QVariant PickListModel::data(const QModelIndex& idx, int role) const {
+QVariant PickListModel::extracted() const { return QBrush(QColor(0xFFF4CE)); }
+QVariant PickListModel::data(const QModelIndex &idx, int role) const {
     if (!idx.isValid() || idx.row() < 0 || idx.row() >= m_data.size())
         return {};
 
-    if(role == Qt::BackgroundRole && idx.row() == m_activeRow) {
-        return QBrush(QColor("#FFF4CE")); // yellow-400
+    if (role == Qt::BackgroundRole && idx.row() == m_activeRow) {
+        return extracted(); // yellow-400
     }
 
     if (role == Qt::DisplayRole) {
-        const auto& p = m_data[idx.row()];
+        const auto &p = m_data[idx.row()];
         switch (idx.column()) {
-        case 0: return p.x;
-        case 1: return p.y;
-        case 2: return p.z;
-        case 3: return p.rx;
-        case 4: return p.ry;
-        case 5: return p.rz;
-        default: break;
+        case 0:
+            return p.x;
+        case 1:
+            return p.y;
+        case 2:
+            return p.z;
+        case 3:
+            return p.rx;
+        case 4:
+            return p.ry;
+        case 5:
+            return p.rz;
+        default:
+            break;
         }
     }
     return {};

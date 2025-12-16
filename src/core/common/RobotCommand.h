@@ -54,6 +54,7 @@ struct ToolCommand {
 struct sortingOffset {
     int height;
     int thickness;
+    int shift;
 };
 
 struct arrangeCommnad {

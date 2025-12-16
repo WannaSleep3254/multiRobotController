@@ -4,6 +4,11 @@
 #include <QStyleFactory>
 #include <QPalette>
 #include <QStyle>
+#include <QFile>
+#include <QDir>
+#include <QDateTime>
+#include <QTextStream>
+
 
 #pragma comment(linker, "/entry::WinMainCRTStartup /subsystem:console")
 
@@ -55,11 +60,49 @@ static void applyLightPalette() {
     qApp->setStyleSheet("");
 }
 
+void LogToFile(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+
+    const QString logDirPath = QStringLiteral("C:/Work/multiRobotController/tmp");
+    QDir().mkpath(logDirPath);   // 없으면 생성
+
+    const QString logFilePath = logDirPath + "/log_"+ QDate::currentDate().toString("yyMMdd") + ".txt";
+
+    QFile file(logFilePath);
+    if(!file.open(QIODevice::Append | QIODevice::Text)) {
+        return;
+    }
+    QTextStream out(&file);
+
+    QString curtime = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
+    //context.file, context.line, context.function
+    switch (type) {
+    case QtDebugMsg:
+        out << "[Debug]" << curtime <<": "<< msg << "\n";
+        break;
+    case QtInfoMsg:
+        out << "[Info]" << curtime <<": " << msg << "\n";
+        break;
+    case QtWarningMsg:
+        out << "[Warning]" << curtime <<": " << msg << "\n";
+        break;
+    case QtCriticalMsg:
+        out << "[Critical]" << curtime <<": " << msg << context.function << context.line << "\n";
+        break;
+    case QtFatalMsg:
+        out << "[Fatal]" << curtime <<": " << msg << "\n";
+        abort();
+    }
+    file.close();
+}
+
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
     applyLightPalette(); // 기본 라이트 모드 적용
+    qInstallMessageHandler(LogToFile);
 
     MainWindow w;
     w.show();

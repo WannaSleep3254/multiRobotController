@@ -15,9 +15,11 @@ ModbusClient::ModbusClient(QObject *parent)
         emit error(QString("Modbus error %1: %2").arg(e).arg(m_client->errorString()));
         emit log(QString("%1").arg(m_client->errorString()), Common::LogLevel::Error); // Error
     });
-    connect(m_ping, &QTimer::timeout, this, &ModbusClient::onTimeoutPing);
+//    connect(m_ping, &QTimer::timeout, this, &ModbusClient::onTimeoutPing);
+//    m_ping->setInterval(1000);
 
-    m_ping->setInterval(1000);
+    m_pumpTimer.setSingleShot(true);
+    connect(&m_pumpTimer, &QTimer::timeout, this, &ModbusClient::pump);
 }
 
 ModbusClient::~ModbusClient()
@@ -201,4 +203,131 @@ void ModbusClient::writeHoldingBlock(int start, const QVector<quint16>& values)
 
 bool ModbusClient::isConnected() const {
     return m_client && m_client->state() == QModbusDevice::ConnectedState;
+}
+
+//////////////////////////////////////////////////////
+void ModbusClient::enqueue(const MbOp& in)
+{
+    if (!isConnected()) return;
+
+    MbOp op = in;
+    op.id = op.id.isNull() ? QUuid::createUuid() : op.id;
+
+    // (선택) 폴링 중복(coalescing): 같은 key가 이미 대기중이면 추가 안 함
+    if (!op.key.isEmpty()) {
+        if (m_pendingByKey.contains(op.key)) {
+            emit opDropped(op.key, "coalesced");
+            return;
+        }
+        m_pendingByKey.insert(op.key, 1);
+    }
+
+    // 큐 폭주 방지
+    if (m_q.size() >= m_maxQueue) {
+        if (!op.key.isEmpty()) m_pendingByKey.remove(op.key);
+        emit opDropped(op.key, "queue overflow");
+        return;
+    }
+
+    m_q.enqueue(op);
+    if (!m_inFlight && !m_pumpTimer.isActive())
+        m_pumpTimer.start(0);
+}
+
+void ModbusClient::pump()
+{
+    if (m_inFlight) return;
+    if (m_q.isEmpty()) return;
+
+    const MbOp op = m_q.dequeue();
+    m_inFlight = true;
+    startOp(op);
+}
+
+void ModbusClient::startOp(const MbOp& op)
+{
+    auto clearKey = [this, op](){
+        if (!op.key.isEmpty()) m_pendingByKey.remove(op.key);
+    };
+
+    QModbusReply* reply = nullptr;
+
+    switch (op.kind) {
+    case MbOp::Kind::ReadDiscreteInputs:
+        reply = m_client->sendReadRequest(
+            QModbusDataUnit(QModbusDataUnit::DiscreteInputs, op.start, op.count), 1);
+        break;
+
+    case MbOp::Kind::ReadInputs:
+        reply = m_client->sendReadRequest(
+            QModbusDataUnit(QModbusDataUnit::InputRegisters, op.start, op.count), 1);
+        break;
+
+    case MbOp::Kind::ReadHolding:
+        reply = m_client->sendReadRequest(
+            QModbusDataUnit(QModbusDataUnit::HoldingRegisters, op.start, op.count), 1);
+        break;
+
+    case MbOp::Kind::WriteCoil: {
+        QModbusDataUnit u(QModbusDataUnit::Coils, op.start, 1);
+        u.setValue(0, op.coilValue);
+        reply = m_client->sendWriteRequest(u, 1);
+        break;
+    }
+    case MbOp::Kind::WriteHolding: {
+        QModbusDataUnit u(QModbusDataUnit::HoldingRegisters, op.start, 1);
+        u.setValue(0, op.holdingValue);
+        reply = m_client->sendWriteRequest(u, 1);
+        break;
+    }
+    case MbOp::Kind::WriteHoldingBlock: {
+        QModbusDataUnit u(QModbusDataUnit::HoldingRegisters, op.start, op.blockValues.size());
+        for (int i=0;i<op.blockValues.size();++i) u.setValue(i, op.blockValues[i]);
+        reply = m_client->sendWriteRequest(u, 1);
+        break;
+    }
+
+    // 나머지도 동일하게 케이스 추가 (ReadHolding/WriteHoldingBlock 등)
+    default:
+        break;
+    }
+
+    if (!reply) {
+        clearKey();
+        m_inFlight = false;
+        emit opFinished(op.id, false, "sendRequest failed");
+        if (!m_pumpTimer.isActive()) m_pumpTimer.start(0);
+        return;
+    }
+
+    connect(reply, &QModbusReply::finished, this, [this, reply, op, clearKey](){
+        const bool ok = (reply->error() == QModbusDevice::NoError);
+        const QString err = ok ? "" : reply->errorString();
+
+        if (ok) {
+            const auto u = reply->result();
+            if (op.kind == MbOp::Kind::ReadDiscreteInputs) {
+                QVector<bool> data; data.reserve(u.valueCount());
+                for (uint i=0;i<u.valueCount();++i) data.push_back(u.value(i));
+                emit discreteInputsRead(op.start, data);
+            } else if (op.kind == MbOp::Kind::ReadInputs) {
+                QVector<quint16> data; data.reserve(u.valueCount());
+                for (uint i=0;i<u.valueCount();++i) data.push_back(u.value(i));
+                emit inputRead(op.start, data);
+            } else if (op.kind == MbOp::Kind::ReadHolding) {
+                QVector<quint16> data; data.reserve(u.valueCount());
+                for (uint i=0;i<u.valueCount();++i) data.push_back(u.value(i));
+                emit holdingRead(op.start, data);
+            }
+        }
+
+        reply->deleteLater();
+        clearKey();
+
+        m_inFlight = false;
+        emit opFinished(op.id, ok, err);
+
+        if (!m_pumpTimer.isActive())
+            m_pumpTimer.start(0);
+    });
 }

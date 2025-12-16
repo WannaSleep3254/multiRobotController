@@ -45,6 +45,8 @@ public:
     void doGentryPlace(int offset_x=37, int offset_z=0);
     void doGentryReady();
 
+    void doConveyorForwardOneStep();
+
     void startGantryMove();   // 1-2-3축 동시
     void startConveyorMove(); // 4축
 

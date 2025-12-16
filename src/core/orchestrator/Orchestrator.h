@@ -75,7 +75,7 @@ public slots:
     void publishBulkPoseWithKind(const QVector<double>& pose, const QString& kind);
     void publishFlip_Offset(bool flip, int offset, float yaw, int thick);
 
-    void publishPoseToRobot1(const QVector<double>& pose, int speedPct = 50);
+//    void publishPoseToRobot1(const QVector<double>& pose, int speedPct = 50);
     void publishArrangePoses(const QVector<double>& pick, const QVector<double>& place);
 
     void publishBulkMode(const int &mode);
@@ -107,7 +107,7 @@ private:
 
     ModbusClient* m_bus{nullptr};
     PickListModel* m_model{nullptr};
-    QTimer* m_timer{nullptr};
+    QTimer* m_cycleTimer{nullptr};
     int m_currentRow{-1};
 
     bool m_repeat{false};
@@ -130,6 +130,7 @@ private:
     int A_ROBOT_READY   {100};      // discrete_inputs
     int A_PICK_DONE     {101};      // discrete_inputs
     int A_ROBOT_BUSY    {102};      // discrete_inputs
+    int A_DO1_PULSE     {101};
     int A_DO2_PULSE     {102};
     int A_DO3_PULSE     {103};
     int A_DO4_PULSE     {104};
@@ -167,7 +168,7 @@ private:
     bool m_lastDone{false};
 
     bool m_lastDI2{false}, m_lastDI3{false},  m_lastDI4{false};
-    bool m_lastDO2{false};
+    bool m_lastDO1{false}, m_lastDO2{false};
     bool m_lastDO3{false}, m_lastDO4{false},  m_lastDO5{false};
     bool m_lastDO6{false}, m_lastDO7{false},  m_lastDO8{false};
     bool m_lastDO9{false}, m_lastDO10{false}, m_lastDO11{false};
@@ -186,6 +187,14 @@ public:
         return (A_ROBOT_READY >= 0 && A_ROBOT_BUSY >= 0 && A_PICK_DONE >= 0 &&
                 A_PUBLISH_PICK >= 0 && A_TARGET_BASE >= 0);
     }
+
+public:
+    static QVector<quint16> makeSortPickRegs(const QVector<double>& pose,
+                                             bool flip,
+                                             int offset,
+                                             int yawOffset,
+                                             int thick);
+
 };
 
 #endif // ORCHESTRATOR_H

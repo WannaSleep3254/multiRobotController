@@ -4,12 +4,85 @@
 #include "Orchestrator.h"
 #include "vision/VisionClient.h"
 
-//#include "vision/VisionServer.h"
-
 #include <QTimer>
 #include <QFile>
 #include <QTextStream>
 #include <QVector>
+
+namespace {
+    using Step = RobotCommandQueue::Step;
+
+    Step stepWriteCoil(QObject* owner, ModbusClient* bus, int addr, bool value)
+    {
+        return [=](std::function<void(bool)> done){
+            MbOp op;
+            op.kind = MbOp::Kind::WriteCoil;
+            op.start = addr;
+            op.coilValue = value;
+            op.id = QUuid::createUuid();
+
+            QMetaObject::Connection c;
+            c = QObject::connect(bus, &ModbusClient::opFinished, owner,
+                                 [=, &c](QUuid id, bool ok, const QString&){
+                                     if (id != op.id) return;
+                                     QObject::disconnect(c);
+                                     done(ok);
+                                 });
+
+            bus->enqueue(op);
+        };
+    }
+
+    Step stepDelay(QObject* owner, int ms)
+    {
+        return [=](std::function<void(bool)> done){
+            QTimer::singleShot(ms, owner, [=]{ done(true); });
+        };
+    }
+
+    // ON → (pulseMs 후) OFF
+    Step stepPulseCoil(QObject* owner, ModbusClient* bus, int addr, int pulseMs)
+    {
+        return [=](std::function<void(bool)> done){
+            QList<Step> seq;
+            seq << stepWriteCoil(owner, bus, addr, true);
+            seq << stepDelay(owner, pulseMs);
+            seq << stepWriteCoil(owner, bus, addr, false);
+
+            // seq를 즉석에서 실행
+            auto* runner = new RobotCommandQueue(owner);
+            runner->enqueue(seq);
+            QObject::connect(runner, &QObject::destroyed, owner, []{});
+            // 마지막 step이 끝나면 done을 호출하게 하려면 runner를 조금 확장하는 게 정석인데,
+            // 간단히 pulse는 마지막 write 완료 시 done 되게 아래처럼 구현하는 방식이 더 깔끔함(아래 3번에서)
+            done(true);
+        };
+    }
+
+    Step stepWriteHoldingBlock(QObject* owner,
+                               ModbusClient* bus,
+                               int start,
+                               const QVector<quint16>& vals)
+    {
+        return [=](std::function<void(bool)> done){
+            MbOp op;
+            op.kind = MbOp::Kind::WriteHoldingBlock;
+            op.start = start;
+            op.blockValues = vals;
+            op.id = QUuid::createUuid();
+
+            QMetaObject::Connection c;
+            c = QObject::connect(bus, &ModbusClient::opFinished, owner,
+                                 [=, &c](QUuid id, bool ok, const QString&){
+                                     if (id != op.id) return;
+                                     QObject::disconnect(c);
+                                     done(ok);
+                                 });
+
+            bus->enqueue(op);
+        };
+    }
+}
 
 RobotManager::RobotManager(QObject* parent) : QObject(parent)
 {
@@ -19,21 +92,6 @@ RobotManager::RobotManager(QObject* parent) : QObject(parent)
 void RobotManager::enqueuePose(const QString& id, const Pose6D &p) {
     if (m_ctx.contains(id))
         m_ctx[id].model->add(p);
-}
-
-void RobotManager::publishPoseNow(const QString& id, const Pose6D& p, int speedPct)
-{
-    auto it = m_ctx.find(id);
-    if (it == m_ctx.end() || !it->orch) {
-        emit log(QString("[RM] publishPoseNow failed: no orch for %1").arg(id),
-                 Common::LogLevel::Warn);
-        return;
-    }
-    const QVector<double> pose{ p.x, p.y, p.z, p.rx, p.ry, p.rz };
-    it->orch->publishPoseToRobot1(pose, speedPct); // 기존 함수 재사용
-    emit log(QString("[RM] publishPoseNow(%1) sent (speed=%2)")
-                 .arg(id).arg(speedPct),
-             Common::LogLevel::Info);
 }
 
 void RobotManager::applyExtras(const QString& id, const QVariantMap& extras) {
@@ -113,6 +171,7 @@ void RobotManager::addOrConnect(const QString& id, const QString& host, int port
         RobotContext ctx;
         ctx.id    = id;
         ctx.model = new PickListModel(owner ? owner : this); // 모델은 항상 보유
+        if (!ctx.cmdq) ctx.cmdq = new RobotCommandQueue(owner ? owner : this);
         m_ctx.insert(id, ctx);
     }
     auto& c = m_ctx[id];
@@ -289,9 +348,16 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
             switch(idx)
             {
             case 0: // 프로그램 시작
-            case 1: // 동작 수행
-            case 2: // none
                 break;
+
+            case 1: // 동작 수행
+                qInfo()<<QDateTime::currentDateTime()<<": "<<"command Start";
+                break;
+
+            case 2: // none
+                qInfo()<<QDateTime::currentDateTime()<<": "<<"command Complete";
+                break;
+
             case 3: // 툴 교체 완료
             {
                 QString key = QString("%1_tool").arg(rid);
@@ -305,7 +371,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(50, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
-
+                qInfo()<<QDateTime::currentDateTime()<<": "<<"Tool Complete";
             }   break;
             case 4: // 대기자세 완료
             {
@@ -320,11 +386,12 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(50, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
+                qInfo()<<QDateTime::currentDateTime()<<": "<<"Standby Complete";
             }   break;
             case 5: // none
             {
                 QString key = QString("%1_pick_nonFlip").arg(rid);
-                qDebug()<<"RobotManager::processPulse PICK nonflip key="<<key;
+                qInfo()<<"RobotManager::processPulse PICK nonflip key="<<key;
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
                     return;
                 }
@@ -336,6 +403,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     m_workCompleteSent[key] = false;
                     qDebug()<<"RobotManager::processPulse PICK complete key="<<key;
                 });
+                qInfo()<<QDateTime::currentDateTime()<<": "<<"Sort Pick_non-Flip Complete";
 
             }   break;
             case 6: // 소팅 PICK
@@ -353,6 +421,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                     m_workCompleteSent[key] = false;
                     qDebug()<<"RobotManager::processPulse PICK complete key="<<key;
                 });
+                qInfo()<<QDateTime::currentDateTime()<<": "<<"Sort Pick_Flip Complete";
             }   break;
             case 7: // 소팅 PLACE
             {
@@ -370,6 +439,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(50, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
+                qInfo()<<QDateTime::currentDateTime()<<": "<<"Sort Place Complete";
                 emit sortProcessFinished(id);
             }   break;
             case 8: // 갠트리 툴
@@ -380,7 +450,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
             }   break;
             case 9: // 벌크 픽
             {
-                QString key = QString("%1_bulk_place").arg(rid);
+                QString key = QString("%1_bulk_pick").arg(rid);
                 if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
                     return;
                 }
@@ -391,6 +461,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(50, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
+                qInfo()<<QDateTime::currentDateTime()<<": "<<"Bulk Pick Complete";
             }   break;
             case 10:    // 벌크 플레이스
             {
@@ -405,6 +476,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(50, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
+                qInfo()<<QDateTime::currentDateTime()<<": "<<"Bulk Place Complete";
             }   break;
             case 11:    // arrange
             {
@@ -419,22 +491,9 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(50, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
-
+                qInfo()<<QDateTime::currentDateTime()<<": "<<"Arrange Complete";
             }   break;
-            {
-                QString key = QString("%1_arrange").arg(rid);
-                if (m_workCompleteSent.value(key, false)) {// 이미 전송된 상태 → 무시
-                    return;
-                }
-                m_workCompleteSent[key] = true;
-                QTimer::singleShot(10, this, [=]() {
-                    m_vsrv->sendWorkComplete(id, "sorting", "arrange", 0);
-                });
-                QTimer::singleShot(50, this, [=]() {
-                    m_workCompleteSent[key] = false;
-                });
 
-            }   break;
             case 12:    // IDLE: 소팅 완료 후 대기 상태
             {
                 QString key = QString("%1_idle").arg(rid);
@@ -448,6 +507,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(100, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
+                qInfo()<<QDateTime::currentDateTime()<<": "<<"IDLE  Complete";
             }   break;
             case 13:    // 툴 체인지 중 촬상가능위치: Bulk to Sorting
             {
@@ -462,6 +522,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(100, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
+                qInfo()<<QDateTime::currentDateTime()<<": "<<"CAPTURE 1 Complete";
             }   break;
             case 14:    // 툴 체인지 중 촬상가능위치: Sorting to Bulk
             {
@@ -476,6 +537,7 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
                 QTimer::singleShot(100, this, [=]() {
                     m_workCompleteSent[key] = false;
                 });
+                qInfo()<<QDateTime::currentDateTime()<<": "<<"CAPTURE 2 Complete";
             }   break;
             }
         }
@@ -628,16 +690,22 @@ void RobotManager::triggerByKey(const QString& id, const QString& coilKey, int p
     }
 
     const auto coils   = it.value().addr_.value("coils").toMap();
-
     int addr = coils.value(coilKey).toInt();
-//    qDebug() << "coilKey =" << coilKey;
-//    qDebug() << "coils keys =" << coils.keys();
-
     if (addr <= 0) {
         emit log(QString("[RM] trigger: invalid key %1 for %2").arg(coilKey, id));
         return;
     }
-    // true → (pulseMs 후) false 로 펄스
+/*
+    auto* bus = it->bus.data();
+    auto* owner = this;
+
+    QList<RobotCommandQueue::Step> steps;
+    steps << stepWriteCoil(owner, bus, addr, true);
+    steps << stepDelay(owner, pulseMs);
+    steps << stepWriteCoil(owner, bus, addr, false);
+    it->cmdq->enqueue(steps);
+*/
+
     QPointer<ModbusClient> busPtr = it->bus;
     busPtr->writeCoil(addr, true);
     QTimer::singleShot(pulseMs, this, [busPtr, addr]{
@@ -699,7 +767,10 @@ void RobotManager::cmdBulk_ChangeTool()
     regs << 3 << 1;
     it->orch->publishToolComnad(regs);
     // Bulk to Sorting
-    triggerByKey(id, "DI2", 500);
+    QTimer::singleShot(100, this, [this, id]() {
+        triggerByKey(id, "DI2", 500);
+    });
+
     emit logByRobot(id, QString("[RM] cmdBulk_ChangeTool triggered for %1").arg(id), Common::LogLevel::Info);
 }
 
@@ -783,8 +854,10 @@ void RobotManager::cmdSort_DettachTool()
     regs.reserve(2);
     regs << 2 << 2;
     it->orch->publishToolComnad(regs);
+    QTimer::singleShot(100, this, [this, id]() {
+        triggerByKey(id, "DI2", 500);
+    });
 
-    triggerByKey(id, "DI2", 500);
     emit logByRobot(id, QString("[RM] cmdSort_DettachTool triggered for %1").arg(id), Common::LogLevel::Info);
 }
 
@@ -800,8 +873,10 @@ void RobotManager::cmdSort_ChangeTool()
     regs.reserve(2);
     regs << 3 << 2;
     it->orch->publishToolComnad(regs);
+    QTimer::singleShot(100, this, [this, id]() {
+        triggerByKey(id, "DI2", 500);
+    });
 
-    triggerByKey(id, "DI2", 500);
     emit logByRobot(id, QString("[RM] cmdSort_ChangeTool triggered for %1").arg(id), Common::LogLevel::Info);
 }
 // 2. 피킹 촬상위치로 이동
@@ -842,16 +917,44 @@ else if(90 <= v[5] && v[5] <150)
     }
     /////////////////////////////////////////////////////////////////////
     // ✔ 테스트 체크박스(비전 모드)가 있다면: 켜짐=즉시 발행, 꺼짐=큐 적재 (선택)
-    if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
-
-        triggerByKey(id, "DI5", 500);
-        it->orch->publishSortPick(v,flip, offset, m_yawOffset, thick);
-
-        emit logByRobot(id, QString("[RM] cmdSort_DoPickup triggered for %1").arg(id), Common::LogLevel::Info);
-        if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
-    } else {
-        if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+    if (!visionMode(id)) {
+        if (it->model) it->model->add(pose);
+        return;
     }
+/*
+    // ✅ 1) 레지스터 생성 (통신 없음)
+    const QVector<quint16> regs =
+        Orchestrator::makeSortPickRegs(v, flip, offset, m_yawOffset, thick);
+    // ✅ 2) 주소 resolve (addr_.json 기준)
+    const auto holding = it->addr_.value("holding").toMap();
+    const auto coils   = it->addr_.value("coils").toMap();
+
+    const int basePick = holding.value("TARGET_POSE_PICK").toInt();
+    const int coilPick = coils.value("DI5").toInt();   // 기존 PICK 트리거
+    if (basePick <= 0 || coilPick <= 0) {
+        emit log("[RM] cmdSort_DoPickup: invalid addr", Common::LogLevel::Error);
+        return;
+    }
+    // ✅ 3) cmdq에 “write → pulse”를 하나의 시퀀스로
+    QList<RobotCommandQueue::Step> steps;
+    steps << stepWriteHoldingBlock(this, it->bus, basePick, regs);
+    steps << stepWriteCoil(this, it->bus, coilPick, true);
+    steps << stepDelay(this, 80);   // 80~150ms 권장
+    steps << stepWriteCoil(this, it->bus, coilPick, false);
+
+    it->cmdq->enqueue(steps);
+
+    emit logByRobot(id,
+                    QString("[RM] cmdSort_DoPickup queued (base=%1, coil=%2)")
+                        .arg(basePick).arg(coilPick),
+                    Common::LogLevel::Info);
+*/
+    triggerByKey(id, "DI5", 500);
+    it->orch->publishSortPick(v,flip, offset, m_yawOffset, thick);
+
+    emit logByRobot(id, QString("[RM] cmdSort_DoPickup triggered for %1").arg(id), Common::LogLevel::Info);
+    if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
+
     /// ///////////////////////////////////////////////////////////////////
 }
 // 4. 컨베이어 이동
@@ -876,8 +979,6 @@ void RobotManager::cmdSort_DoPlace(bool flip, int offset, int thick)
     }
     if (flip) {
         // flip 처리
-//        it->bus->writeCoil(110, true); // 110번 코일을 여닫기);
-//        it->orch->publishFlip_Offset(true, offset, m_yawOffset, thick);
     } else {
         // non-flip 처리
         it->orch->publishFlip_Offset(false, offset, m_yawOffset, thick);
@@ -895,12 +996,6 @@ void RobotManager::cmdSort_GentryTool(bool toggle)
         emit log(QString("[RM] trigger: no bus for %1").arg(id));
         return;
     }
-/*
-    it->bus->writeCoil(110, toggle); // 110번 코일을 여닫기);
-
-    triggerByKey(id, "DI7", 500);
-    emit logByRobot(id, QString("[RM] cmdSort_GentryTool %1 triggered for %2").arg(toggle?"ON":"OFF").arg(id), Common::LogLevel::Info);
-*/
 
     QPointer<ModbusClient> busPtr = it->bus;
     busPtr->writeCoil(303, false);
