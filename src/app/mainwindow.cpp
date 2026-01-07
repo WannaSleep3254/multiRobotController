@@ -24,7 +24,6 @@
 
 #include <QSplitter>
 
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -103,7 +102,7 @@ MainWindow::MainWindow(QWidget *parent)
                         m_sortingPlacePorcessActive=false;
                         m_gantryPickupState = false;
 
-                        QTimer::singleShot(100, this, [this]() {
+                        QTimer::singleShot(550, this, [this]() {
                             m_visionClient->sendWorkComplete("A", "sorting", "place", 0);
                             m_gentryMgr->doGentryReady();
                         });
@@ -418,6 +417,7 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
                 m_gentryMgr->startGantryMove();
                 int offset_mm = (m_sortingOffset>30)? (m_sortingOffset-30+10) : 0;
                 m_sortingShfit=m_sortingThick;
+
                 m_gentryMgr->doGentryPlace(m_sortingShfit, offset_mm);
 ////////////////////////////////////////////////////////////////
             } else {
@@ -513,8 +513,9 @@ void MainWindow::handleRobotB(const RobotCommand& cmd)
             // cmd.place 사용
             onLog(QString("로봇 B 얼라인 플레이스 처리 필요, pose: [%1,%2,%3] [%4,%5,%6]\r\n")
                            .arg(cmd.place.x).arg(cmd.place.y).arg(cmd.place.z).arg(cmd.place.rx).arg(cmd.place.ry).arg(cmd.place.rz));
+            int sequenceType = cmd.clampSequenceMode;
             m_visionClient->sendAck(cmd.seq, "ok", "align Place command received");
-            m_mgr->cmdAlign_DoPlace(cmd.place);
+            m_mgr->cmdAlign_DoPlace(cmd.place,sequenceType);
         }
         break;
     case CmdKind::Clamp: // 2025-12-11: desperate!

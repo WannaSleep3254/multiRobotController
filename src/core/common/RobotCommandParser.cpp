@@ -125,6 +125,10 @@ bool RobotCommandParser::parse(const QJsonObject& obj, RobotCommand& out)
             break;
         case CmdKind::Place:
             out.hasPlace = parsePoseObj(poseObj, out.place);
+            if(robotStr.toLower()=="b" && typeStr=="align" && kindStr=="place")
+            {
+                out.clampSequenceMode = obj.value("clamp_mode").toInt(0);
+            }
             break;
         default:
             // kind가 pick/place가 아니면, 필요에 맞게 처리

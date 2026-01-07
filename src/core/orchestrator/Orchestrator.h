@@ -69,7 +69,7 @@ public slots:
 
     void publishSortPick(const QVector<double>& pose, bool flip, int offset, float yaw, int thick);
     void publishAlignPick(const QVector<double>& pose);
-    void publishAlignPlace(const QVector<double>& pose);
+    void publishAlignPlace(const QVector<double>& pose, int clampSequenceMode =0 );
 
     void publishPoseWithKind(const QVector<double>& pose, int speedPct, const QString& kind);
     void publishBulkPoseWithKind(const QVector<double>& pose, const QString& kind);

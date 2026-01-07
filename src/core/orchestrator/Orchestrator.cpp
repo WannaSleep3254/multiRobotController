@@ -591,7 +591,7 @@ void Orchestrator::publishAlignPick(const QVector<double>& pose)
     });
 }
 
-void Orchestrator::publishAlignPlace(const QVector<double>& pose)
+void Orchestrator::publishAlignPlace(const QVector<double>& pose, int clampSequenceMode)
 {
     int base = A_TARGET_BASE_PLACE;
 
@@ -601,12 +601,20 @@ void Orchestrator::publishAlignPlace(const QVector<double>& pose)
     rotate_pose[4] = rpy.pitch;
     rotate_pose[5] = rpy.yaw;
 
-    QVector<quint16> regs; regs.reserve(12);
+    QVector<quint16> regs;
+    regs.reserve(14);
+
     for (int i=0;i<6;i++) {
         quint16 hi, lo;
         floatToRegs(float(rotate_pose[i]), hi, lo);
         regs << hi << lo;
     }
+    // 클램프 시퀀스 모드 추가
+    quint16 hi, lo;
+    floatToRegs(float(static_cast<float>(clampSequenceMode)), hi, lo);
+    regs << hi << lo;
+    qDebug()<<"SX-2: recv clamp_mode"<<clampSequenceMode<<", " <<float(static_cast<float>(clampSequenceMode));
+
     m_bus->writeHoldingBlock(base, regs);
 
     QTimer::singleShot(10, this, [this]{

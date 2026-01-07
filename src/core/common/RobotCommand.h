@@ -83,6 +83,8 @@ struct RobotCommand
 
     QString  clamp;             // "open"/"close"
 
+    int     clampSequenceMode{0};      // 0: unknown, 1: small, 2: large
+
     bool     hasPick{false};
     bool     hasPlace{false};
     Pose6D   pick{};

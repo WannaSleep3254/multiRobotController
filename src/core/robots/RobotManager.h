@@ -119,7 +119,7 @@ public:
     // 9. 피킹 동작 수행
     void cmdAlign_DoPickup(const Pose6D& pose);
     // 10. 플레이스 동작 수행
-    void cmdAlign_DoPlace(const Pose6D& pose);
+    void cmdAlign_DoPlace(const Pose6D& pose, int clampSequenceMode =0 );
     // 11. 클램프 동작 수행
     void cmdAlign_Clamp(bool open);
 

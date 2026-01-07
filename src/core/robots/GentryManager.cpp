@@ -49,7 +49,8 @@ GentryManager::GentryManager(QObject *parent)
 
 void GentryManager::setPort()
 {
-    motorController->setPort("COM10", "115200");
+//    motorController->setPort("COM10", "115200");
+    motorController->setPort("COM4", "115200");
 }
 
 void GentryManager::doConnect()
@@ -389,9 +390,11 @@ void GentryManager::gentry_motion()
         logMessage2("gentry move to Z place position");
         motorController->reqWritePos(3, -25020); //picker rotate -90 degree
         logMessage2("picker rotate -90 degree");
+
         //magnet Off
         //send motion done msg to M.C
         motion_seq = motion_done;
+
         break;
 
     case gty_home_pos: //gentry z axis move to home
@@ -423,7 +426,7 @@ void GentryManager::gentry_motion()
     case picker_0: //picker 0 degree rotate
         qDebug()<<QString("picker_0");
         motorController->reqWritePos(3, 0); //picker rotate 0 degree
-        // QThread::sleep(1000);
+        //QThread::sleep(1000);
         //msg send to robot for magnet On
         motion_seq = msg_rdy_1;
         break;

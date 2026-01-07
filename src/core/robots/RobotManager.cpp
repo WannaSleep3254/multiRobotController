@@ -1004,11 +1004,11 @@ void RobotManager::cmdSort_GentryTool(bool toggle)
         busPtr->writeCoil(303, false);  // Tool true
     });
 
-    QTimer::singleShot(100, this, [busPtr]{
+    QTimer::singleShot(50, this, [busPtr]{
         busPtr->writeCoil(303, true);   // Tool false
     });
 
-    QTimer::singleShot(1000, this, [busPtr]{
+    QTimer::singleShot(500, this, [busPtr]{
         busPtr->writeCoil(303, false);  // Tool true
     });
 }
@@ -1106,7 +1106,7 @@ void RobotManager::cmdAlign_DoPickup(const Pose6D& pose)
     /// ///////////////////////////////////////////////////////////////////
 }
 // 10. 플레이스 동작 수행
-void RobotManager::cmdAlign_DoPlace(const Pose6D& pose)
+void RobotManager::cmdAlign_DoPlace(const Pose6D& pose, int clampSequenceMode)
 {
     QString id("B");
     auto it = m_ctx.find(id);
@@ -1120,7 +1120,7 @@ void RobotManager::cmdAlign_DoPlace(const Pose6D& pose)
     if (visionMode(id)) {        // ← 이미 있는 함수면 그대로 사용
 //        it->orch->publishPoseWithKind(v, 50, "place");
         triggerByKey(id, "DI7", 500);
-        it->orch->publishAlignPlace(v);
+        it->orch->publishAlignPlace(v, clampSequenceMode);
         if (it->model) it->model->add(pose); // 필요 시 큐에 쌓고 나중에 실행
 
         emit logByRobot(id, QString("[RM] cmdAlign_DoPlace triggered for %1").arg(id), Common::LogLevel::Info);
