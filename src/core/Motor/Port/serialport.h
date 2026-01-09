@@ -14,8 +14,8 @@ namespace Serial
         int baudRate = QSerialPort::Baud19200;
         int dataBits = QSerialPort::Data8;
         int stopBits = QSerialPort::OneStop;
-        int responseTime = 1000;
-        int numberOfRetries = 3;
+        int responseTime = 100;//1000;
+        int numberOfRetries = 1;//3;
     };
 
     class SerialPort : public QObject

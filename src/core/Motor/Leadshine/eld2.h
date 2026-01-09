@@ -73,22 +73,21 @@ namespace Leadshine
             Config(int gear, int lead, uint16_t vel_1, uint16_t vel_2) : Gear(gear), Lead(lead), velJog(vel_1), velMove(vel_2) {}
         };
 
+        enum class PollKind { PrPos, Status };
     public:
         explicit ELD2(QObject *parent = nullptr);
         ~ELD2();
 
-        void setPort(const QString &, const QString &);
+        void setGantryPort(const QString& name, const QString& baud);
+        void setConvPort  (const QString& name, const QString& baud);
+
         void doConnect();
         void doDisConnect();
         void doConnect(bool &);
 
         // read
-        void reqReadCmdPos(const int &);
         void reqReadEncoder(const int&);
         void reqReadError(const int &);
-        void reqReadServo(const int &);
-        void reqReadState(const int &);
-        void reqReadVelocity(const int &);
         void reqReadVersion(const int&);
         // write
         void reqWriteJog(const int &, const int &);
@@ -97,11 +96,9 @@ namespace Leadshine
         void reqWriteServo(const int &, const bool &);
         void reqWriteShift(const int &, const int32_t &);
 
-        void reqMovePosition(const float &, const float &);
+//        void reqMovePosition(const float &, const float &);
         void reqMoveStop(const int &);
         void reqMoveStop();
-
-        void setConfig(QVector<QPoint>, QVector<QPoint>, QVector<QPoint>);
 
         float convertPulseToPos(const int &, const int32_t &);
         qint32 convertPosToPulse(const int &, const float &);
@@ -113,6 +110,7 @@ namespace Leadshine
         void errorState(const int&);
 
         void readVersion(const int&, const QString&);
+        void readReady(const int& , const bool&);
         void readServo(const int& , const bool&);
         void readState(const int&, const uint16_t&);
         void readEncoder(const int& , qint32& , const float&);
@@ -124,11 +122,27 @@ namespace Leadshine
         void readData(const int&, const int&, const QVector<quint16>&);
 
     private:
-        Com::Modbus *driver_;
-        QTimer *timer_;
+        enum class Phase { Status, Encoder };
+
+        struct PollCtx {
+            Com::Modbus* bus = nullptr;
+            QTimer*      timer = nullptr;
+            QVector<int> axes;
+            int          axisIdx = 0;
+            Phase        phase = Phase::Status;
+            int          tickMs = 10;
+        };
+
+        PollCtx gantry_;
+        PollCtx conv_;
+
+    private:
+//        Com::Modbus *driver_;
+//        QTimer *timer_;
 
         QVector<Config> config_;
         int pollAxis_ = Axis::AxisX;
+        PollKind pollKind_ = PollKind::PrPos;
         QVector<AxisRuntime> runtime_;
     };
 }

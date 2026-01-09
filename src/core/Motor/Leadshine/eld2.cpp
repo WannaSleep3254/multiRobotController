@@ -26,8 +26,8 @@ namespace Leadshine
 {
     ELD2::ELD2(QObject *parent)
         : QObject{parent}
-        , driver_(new Com::Modbus(this))
-        , timer_(new QTimer(this))
+//        , driver_(new Com::Modbus(this))
+//        , timer_(new QTimer(this))
     {
         // 0번은 dummy / 기본값
         config_.append(Config (1, 10, 100, 100)); // index 0: default
@@ -39,6 +39,95 @@ namespace Leadshine
 
         runtime_.resize(config_.size());
 
+        //bus 2개
+        gantry_.bus  = new Com::Modbus(this);
+        conv_.bus    = new Com::Modbus(this);
+
+        gantry_.timer = new QTimer(this);
+        conv_.timer   = new QTimer(this);
+
+        // 축 구성
+        gantry_.axes = {Axis::GantryX, Axis::GantryZ, Axis::GantryPicker};
+        conv_.axes   = {Axis::ConveyorAxis};
+
+        // 타이머 간격
+        gantry_.tickMs = 20;
+        conv_.tickMs   = 30;
+
+        QObject::connect(gantry_.bus, &Com::Modbus::comState, this, [=](int state){
+            /**
+            QModbusDevice::UnconnectedState	0	The device is disconnected.
+            QModbusDevice::ConnectingState	1	The device is being connected.
+            QModbusDevice::ConnectedState	2	The device is connected to the Modbus network.
+            QModbusDevice::ClosingState	    3	The device is being closed.
+            **/
+            switch(state)
+            {
+            case QModbusDevice::UnconnectedState:
+                //                qDebug()<<"state: "<<state;
+                break;
+            case QModbusDevice::ConnectingState:
+                //                qDebug()<<"state: "<<state;
+                break;
+            case QModbusDevice::ConnectedState:
+                gantry_.timer->start(25);
+                break;
+            case QModbusDevice::ClosingState:
+                gantry_.timer->stop();
+                for (int axis = Axis::AxisX; axis <= Axis::AxisC; ++axis)
+                    config_[axis].isConnect = false;
+                break;
+            }
+            emit comState(state);
+        });
+
+        QObject::connect(gantry_.bus, &Com::Modbus::errorState, this, [=](int error){
+            /**
+            QModbusDevice::NoError              0	No errors have occurred.
+            QModbusDevice::ReadError            1	An error occurred during a read operation.
+            QModbusDevice::WriteError           2	An error occurred during a write operation.
+            QModbusDevice::ConnectionError      3	An error occurred when attempting to open the backend.
+            QModbusDevice::ConfigurationError	4	An error occurred when attempting to set a configuration parameter.
+            QModbusDevice::TimeoutError         5	A timeout occurred during I/O. An I/O operation did not finish within a given time frame.
+            QModbusDevice::ProtocolError        6	A Modbus specific protocol error occurred.
+            QModbusDevice::ReplyAbortedError	7	The reply was aborted due to a disconnection of the device.
+            QModbusDevice::UnknownError         8	An unknown error occurred.
+            **/
+            emit errorState(error);
+        });
+
+        QObject::connect(gantry_.bus, &Com::Modbus::readData, this, &ELD2::readData);
+
+        pollAxis_ = Axis::AxisX;
+        QObject::connect(gantry_.timer, &QTimer::timeout, this, [=](){
+            int axis = pollAxis_;
+
+            if (config_[axis].isConnect)
+            {
+                // 통신되는 축이면 상태 폴링
+                if (pollKind_ == PollKind::PrPos)
+                {
+                    reqReadEncoder(axis);   // 0x602C
+                    pollKind_ = PollKind::Status;
+                }
+                else
+                {
+                    reqReadError(axis);     // 0x0B03
+                    pollKind_ = PollKind::PrPos;
+                }
+            }
+            else
+            {
+                // 아직 버전 못 읽은 축 → 버전 읽으면서 존재 확인
+                reqReadVersion(axis);
+            }
+            ++pollAxis_;
+            if (pollAxis_ > Axis::AxisZ)    //if (pollAxis_ > Axis::AxisC)
+                pollAxis_ = Axis::AxisX;
+
+        });
+
+#if false
         QObject::connect(driver_, &Com::Modbus::comState, this, [=](int state){
             /**
             QModbusDevice::UnconnectedState	0	The device is disconnected.
@@ -55,7 +144,7 @@ namespace Leadshine
 //                qDebug()<<"state: "<<state;
                 break;
             case QModbusDevice::ConnectedState:
-                timer_->start(50);
+                timer_->start(25);
                 break;
             case QModbusDevice::ClosingState:
                 timer_->stop();
@@ -89,9 +178,16 @@ namespace Leadshine
             if (config_[axis].isConnect)
             {
                 // 통신되는 축이면 상태 폴링
-                reqReadServo(axis);     // 0x0405
-                reqReadEncoder(axis);   // 0x602C
-                reqReadError(axis);     // 0x0B03
+                if (pollKind_ == PollKind::PrPos)
+                {
+                    reqReadEncoder(axis);   // 0x602C
+                    pollKind_ = PollKind::Status;
+                }
+                else
+                {
+                    reqReadError(axis);     // 0x0B03
+                    pollKind_ = PollKind::PrPos;
+                }
             }
             else
             {
@@ -99,10 +195,11 @@ namespace Leadshine
                 reqReadVersion(axis);
             }
             ++pollAxis_;
-            if (pollAxis_ > Axis::AxisC)
+            if (pollAxis_ > Axis::AxisZ)    //if (pollAxis_ > Axis::AxisC)
                 pollAxis_ = Axis::AxisX;
 
         });
+#endif
     }
 
     ELD2::~ELD2()
@@ -110,74 +207,66 @@ namespace Leadshine
 
     }
 
-    void ELD2::setPort(const QString &name, const QString &baud)
+    void ELD2::setGantryPort(const QString& name, const QString& baud)
     {
         Serial::SerialPort port;
         port.setPortName(name);
         port.setBaud(baud);
 
-        qDebug()<<name<<baud;
-        driver_->setPortSettings(port.settings());
+        gantry_.bus->setPortSettings(port.settings());
+    }
+
+    void ELD2::setConvPort  (const QString& name, const QString& baud)
+    {
+        Serial::SerialPort port;
+        port.setPortName(name);
+        port.setBaud(baud);
+
+        conv_.bus->setPortSettings(port.settings());
     }
 
     void ELD2::doConnect()
     {
-        driver_->doConnect();
+        gantry_.bus->doConnect();
+//        conv_.bus->doConnect();
     }
 
     void ELD2::doDisConnect()
     {
-        driver_->doDisConnect();
+        gantry_.bus->doDisConnect();
+//        conv_.bus->doDisConnect();
     }
 
     void ELD2::doConnect(bool &connect)
     {
         if(connect)
-            driver_->doConnect();
+        {
+            gantry_.bus->doConnect();
+//            conv_.bus->doConnect();
+        }
         else
-            driver_->doDisConnect();
+        {
+            gantry_.bus->doDisConnect();
+//            conv_.bus->doDisConnect();
+        }
     }
 
     void ELD2::reqReadEncoder(const int &id)
     {
         QModbusDataUnit encoderData(QModbusDataUnit::HoldingRegisters, 0x602C, 2);
-        driver_->readModbus(encoderData, id);
-    }
-
-    void ELD2::reqReadServo(const int &id)
-    {
-        QModbusDataUnit encoderData(QModbusDataUnit::HoldingRegisters, 0x0405, 1);
-        driver_->readModbus(encoderData, id);
-    }
-
-    void ELD2::reqReadState(const int &id)
-    {
-        QModbusDataUnit encoderData(QModbusDataUnit::HoldingRegisters, 0x0B05, 3);
-        driver_->readModbus(encoderData, id);
+        gantry_.bus->readModbus(encoderData, id);
     }
 
     void ELD2::reqReadVersion(const int &id)
     {
         QModbusDataUnit encoderData(QModbusDataUnit::HoldingRegisters, 0x0B00, 3);
-        driver_->readModbus(encoderData, id);
-    }
-
-    void ELD2::reqReadVelocity(const int &id)
-    {
-        QModbusDataUnit encoderData(QModbusDataUnit::HoldingRegisters, 0x0B09, 1);
-        driver_->readModbus(encoderData, id);
-    }
-
-    void ELD2::reqReadCmdPos(const int &id)
-    {
-        QModbusDataUnit encoderData(QModbusDataUnit::HoldingRegisters, 0x0B1A, 2);
-        driver_->readModbus(encoderData, id);
+        gantry_.bus->readModbus(encoderData, id);
     }
 
     void ELD2::reqReadError(const int &id)
     {
-        QModbusDataUnit encoderData(QModbusDataUnit::HoldingRegisters, 0x0B03, 7);//1);
-        driver_->readModbus(encoderData, id);
+        QModbusDataUnit encoderData(QModbusDataUnit::HoldingRegisters, 0x0B03, 7);
+        gantry_.bus->readModbus(encoderData, id);
     }
 
     void ELD2::reqWriteServo(const int &id, const bool &servo)
@@ -191,7 +280,7 @@ namespace Leadshine
         {
             servoData.setValue(0,0x03);
         }
-        driver_->writeModbus(servoData, id);
+        gantry_.bus->writeModbus(servoData, id);
     }
 
     void ELD2::reqWriteJog(const int &id, const int &dir)
@@ -227,7 +316,7 @@ namespace Leadshine
         QModbusDataUnit jogData(QModbusDataUnit::HoldingRegisters, 0x06200, 8);
         jogData.setValues(QVector<uint16_t>(send_buffer,send_buffer+8));
 //        qDebug()<<jogData.values();
-        driver_->writeModbus(jogData, id);
+        gantry_.bus->writeModbus(jogData, id);
     }
 
     void ELD2::reqWritePos(const int &id, const int32_t &pos)
@@ -255,7 +344,7 @@ namespace Leadshine
 
         QModbusDataUnit posData(QModbusDataUnit::HoldingRegisters, 0x6200, 8);
         posData.setValues(QVector<uint16_t>(send_buffer,send_buffer+8));
-        driver_->writeModbus(posData, id);
+        gantry_.bus->writeModbus(posData, id);
     }
 
     void ELD2::reqWriteShift(const int &id, const int32_t &pos)
@@ -284,7 +373,7 @@ namespace Leadshine
 
         QModbusDataUnit posData(QModbusDataUnit::HoldingRegisters, 0x6200, 8);
         posData.setValues(QVector<uint16_t>(send_buffer,send_buffer+8));
-        driver_->writeModbus(posData, id);
+        gantry_.bus->writeModbus(posData, id);
     }
 
     void ELD2::reqWriteLimit(const int &id, const int &dir)
@@ -292,7 +381,7 @@ namespace Leadshine
         qDebug()<<id<<dir;
 //        QModbusDataUnit limitData(QModbusDataUnit::HoldingRegisters, 0x0405, 1);
     }
-
+/*
     void ELD2::reqMovePosition(const float & goal_x, const float & goal_y)
     {
         int32_t pulse_x = convertPosToPulse(Axis::AxisX, goal_x);
@@ -301,7 +390,7 @@ namespace Leadshine
         reqWritePos(Axis::AxisX, pulse_x);
         reqWritePos(Axis::AxisY, pulse_y);
     }
-
+*/
     void ELD2::reqMoveStop(const int &id)
     {
         uint16_t velMove = config_.at(id).velMove;
@@ -320,37 +409,13 @@ namespace Leadshine
 
         QModbusDataUnit posData(QModbusDataUnit::HoldingRegisters, 0x6200, 8);
         posData.setValues(QVector<uint16_t>(send_buffer,send_buffer+8));
-        driver_->writeModbus(posData, id);
+        gantry_.bus->writeModbus(posData, id);
     }
 
     void ELD2::reqMoveStop()
     {
         for (int axis = Axis::AxisX; axis <= Axis::AxisC; ++axis)
             reqMoveStop(axis);
-    }
-
-    void ELD2::setConfig(QVector<QPoint> jogConfig, QVector<QPoint> posConfig, QVector<QPoint> limitConfig)
-    {
-        config_[Axis::AxisX].velJog = static_cast<uint16_t>(jogConfig.at(0).x());
-        config_[Axis::AxisY].velJog = static_cast<uint16_t>(jogConfig.at(0).y());
-        config_[Axis::AxisX].accelJog = static_cast<uint16_t>(jogConfig.at(1).x());
-        config_[Axis::AxisY].accelJog = static_cast<uint16_t>(jogConfig.at(1).y());
-        config_[Axis::AxisX].decelJog = static_cast<uint16_t>(jogConfig.at(2).x());
-        config_[Axis::AxisY].decelJog = static_cast<uint16_t>(jogConfig.at(2).y());
-
-        config_[Axis::AxisX].velMove = static_cast<uint16_t>(posConfig.at(0).x());
-        config_[Axis::AxisY].velMove = static_cast<uint16_t>(posConfig.at(0).y());
-        config_[Axis::AxisX].accelMove = static_cast<uint16_t>(posConfig.at(1).x());
-        config_[Axis::AxisY].accelMove = static_cast<uint16_t>(posConfig.at(1).y());
-        config_[Axis::AxisX].decelMove = static_cast<uint16_t>(posConfig.at(2).x());
-        config_[Axis::AxisY].decelMove = static_cast<uint16_t>(posConfig.at(2).y());
-        config_[Axis::AxisX].pauselMove = static_cast<uint16_t>(posConfig.at(3).x());
-        config_[Axis::AxisY].pauselMove = static_cast<uint16_t>(posConfig.at(3).y());
-
-        config_[Axis::AxisX].positveLimit = static_cast<uint16_t>(limitConfig.at(0).x());
-        config_[Axis::AxisY].positveLimit = static_cast<uint16_t>(limitConfig.at(0).y());
-        config_[Axis::AxisX].negativeLimit = static_cast<uint16_t>(limitConfig.at(1).x());
-        config_[Axis::AxisY].negativeLimit = static_cast<uint16_t>(limitConfig.at(1).y());
     }
 
     void ELD2::readData(const int &id, const int &addr, const QVector<quint16>&val)
@@ -374,38 +439,17 @@ namespace Leadshine
             break;
         }
 
-//        case 0x0B05: { //reqReadState 3
-//            uint16_t state = val.at(0);
-//            emit readState(id, state);
-/*
-            bool inPosition = state & (1 << 4);   // Bit 4
-            if(inPosition)
-                emit motionFinished(id, runtime_[id].targetPos);   // 새 signal
-*/
-//            break;
-//        }
-
-/*
-        case 0x0B09 : { //reqReadVelocity 1
-            emit readVelocity(id, static_cast<int16_t>(val.at(0)));
-            break;
-        }
-
-        case 0x0B1A : { //reqReadCmdPos 2
-            int32_t cmdVal = (val.at(0)<<16) + val.at(1);
-            qDebug()<<"reqReadCmdPos"<<id<<cmdVal;
-            break;
-        }*/
         case 0x0B03 : { //reqReadError 1
             emit readError(id, val.at(0));
 
             qint16 state = static_cast<int16_t>(val.at(2));
             qint16 vel = static_cast<int16_t>(val.at(6));
-//            qDebug()<<"Motor"<<id<<"Velocity:"<<vel;
-//            qDebug()<<static_cast<int16_t>(val.at(5));
             runtime_[id].lastVel = vel;
 //            emit readVelocity(id, vel);
-
+            bool rdy = state & (1<<0);
+            bool run = state & (1<<1);
+            emit readReady(id , rdy);
+            emit readServo(id , run);
             bool inPosition = state & (1 << 4);   // Bit 4
             if(inPosition)
             {

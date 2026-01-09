@@ -46,8 +46,8 @@ namespace Com
         modbusDevice_->setConnectionParameter(QModbusDevice::SerialDataBitsParameter, m_settings.dataBits);
         modbusDevice_->setConnectionParameter(QModbusDevice::SerialStopBitsParameter, m_settings.stopBits);
 
-        modbusDevice_->setTimeout(m_settings.responseTime);
-        modbusDevice_->setNumberOfRetries(m_settings.numberOfRetries);
+        modbusDevice_->setTimeout(m_settings.responseTime); // 80ms
+        modbusDevice_->setNumberOfRetries(m_settings.numberOfRetries);  // 1
 
         if (!modbusDevice_->connectDevice())
         {
@@ -61,6 +61,10 @@ namespace Com
 
     void Modbus::doDisConnect()
     {
+        // 연결 끊기면 큐/인플라이트 정리
+        inflight_ = false;
+        queue_.clear();
+        currentReply_.clear();
         modbusDevice_->disconnectDevice();
     }
 
@@ -68,7 +72,7 @@ namespace Com
     {
         if (!modbusDevice_)
             return;
-
+#if false
         if (auto *reply = modbusDevice_->sendWriteRequest(writeUnit, serverAddress))
         {
             if (!reply->isFinished())
@@ -93,18 +97,21 @@ namespace Com
         } else {
             qDebug()<<(QString("Write error: ")+ modbusDevice_->errorString());
         }
+#else
+        enqueueWrite(writeUnit, serverAddress);
+#endif
     }
 
     void Modbus::readModbus(const QModbusDataUnit &readUnit, const int &serverAddress)
     {
         if (!modbusDevice_)
             return;
-
+#if false
         if (auto *reply = modbusDevice_->sendReadRequest(readUnit, serverAddress))
         {
             if (!reply->isFinished())
             {
-                connect(reply, &QModbusReply::finished, this, &Modbus::onReadReady);
+//                connect(reply, &QModbusReply::finished, this, &Modbus::onReadReady);
             }
             else
             {   // 이미 완료된 경우
@@ -114,6 +121,9 @@ namespace Com
         {
             qDebug() << "읽기 요청 실패:" << modbusDevice_->errorString();
         }
+#else
+        enqueueRead(readUnit, serverAddress);
+#endif
     }
 
     Serial::Settings Modbus::portSettings() const
@@ -124,6 +134,97 @@ namespace Com
     void Modbus::setPortSettings(const Serial::Settings &settings)
     {
         m_settings = settings;
+    }
+
+    void Modbus::enqueueRead(const QModbusDataUnit& unit, int serverAddress)
+    {
+        queue_.enqueue(pendingRequest{ReqType::Read, unit, serverAddress});
+        kick();
+    }
+
+    void Modbus::enqueueWrite(const QModbusDataUnit& unit, int serverAddress)
+    {
+        queue_.enqueue(pendingRequest{ReqType::Write, unit, serverAddress});
+        kick();
+    }
+
+    void Modbus::kick()
+    {
+        if (!modbusDevice_) return;
+        if (modbusDevice_->state() != QModbusDevice::ConnectedState) return;
+        if (inflight_) return;
+        if (queue_.isEmpty()) return;
+
+        currentReq_ = queue_.dequeue();
+
+        QModbusReply* reply = nullptr;
+
+        // ✅ RTT 측정 시작
+        rttTimer_.restart();
+
+        if (currentReq_.type == ReqType::Read) {
+            reply = modbusDevice_->sendReadRequest(currentReq_.unit, currentReq_.serverAddress);
+        } else {
+            reply = modbusDevice_->sendWriteRequest(currentReq_.unit, currentReq_.serverAddress);
+        }
+
+        if (!reply) {
+            qDebug() << "Modbus request failed:" << modbusDevice_->errorString();
+            // 실패해도 다음 요청 진행
+            inflight_ = false;
+            kick();
+            return;
+        }
+
+        inflight_ = true;
+        currentReply_ = reply;
+
+        if (reply->isFinished()) {
+            // broadcast 등 즉시 종료 케이스
+            onReplyFinished();
+        } else {
+            connect(reply, &QModbusReply::finished, this, &Modbus::onReplyFinished);
+        }
+    }
+
+    void Modbus::onReplyFinished()
+    {
+        QModbusReply* reply = qobject_cast<QModbusReply*>(sender());
+        // sender()가 nullptr인 경우(즉시 종료) 대비
+        if (!reply) reply = currentReply_.data();
+
+        const qint64 rttMs = rttTimer_.elapsed();
+        if (reply) {
+            if (reply->error() == QModbusDevice::NoError) {
+                // ✅ RTT 로그
+                qDebug().noquote()
+                    << QString("[RTT] %1 addr=0x%2 id=%3 rtt=%4 ms")
+                           .arg(currentReq_.type == ReqType::Read ? "READ " : "WRITE")
+                           .arg(currentReq_.unit.startAddress(), 4, 16, QLatin1Char('0'))
+                           .arg(currentReq_.serverAddress)
+                           .arg(rttMs);
+                qDebug()<<queue_.size()<<"requests pending.";
+
+                // Read면 result()가 의미 있고, Write도 unit 정보는 currentReq_로 알 수 있음
+                if (currentReq_.type == ReqType::Read) {
+                    const QModbusDataUnit unit = reply->result();
+                    emit readData(currentReq_.serverAddress, unit.startAddress(), unit.values());
+                }
+            } else if (reply->error() == QModbusDevice::ProtocolError) {
+                qDebug() << "Modbus ProtocolError:" << reply->errorString()
+                << " exception:" << Qt::hex << reply->rawResult().exceptionCode();
+            } else {
+                qDebug() << "Modbus error:" << reply->error() << reply->errorString();
+            }
+
+            reply->deleteLater();
+        }
+
+        currentReply_.clear();
+        inflight_ = false;
+
+        // 다음 요청 실행
+        kick();
     }
 
     void Modbus::onModbusErrorOccurred(const QModbusDevice::Error &error)
@@ -178,8 +279,18 @@ namespace Com
         isConnect = (state != QModbusDevice::UnconnectedState);
         qDebug()<<"comState: "<<state;
 
+        // 연결이 끊기면 큐/인플라이트 정리
+        if (state == QModbusDevice::UnconnectedState || state == QModbusDevice::ClosingState) {
+            inflight_ = false;
+            queue_.clear();
+            currentReply_.clear();
+        } else if (state == QModbusDevice::ConnectedState) {
+            // 연결되자마자 대기중인 큐가 있으면 진행
+            kick();
+        }
         emit comState(state);
     }
+/*
     void Modbus::onReadReady()
     {
         auto reply = qobject_cast<QModbusReply *>(sender());
@@ -202,4 +313,5 @@ namespace Com
         }
         reply->deleteLater();
     }
+*/
 }

@@ -50,7 +50,7 @@ GentryManager::GentryManager(QObject *parent)
 void GentryManager::setPort()
 {
 //    motorController->setPort("COM10", "115200");
-    motorController->setPort("COM4", "115200");
+    motorController->setGantryPort("COM4", "115200");
 }
 
 void GentryManager::doConnect()
@@ -65,10 +65,10 @@ void GentryManager::doDisconnect()
 
 void GentryManager::doServoOn()
 {
-    motorController-> reqWriteServo(1, true);
-    motorController-> reqWriteServo(2, true);
-    motorController-> reqWriteServo(3, true);
-    motorController-> reqWriteServo(4, true);
+    if(m_servoReady[1]) motorController-> reqWriteServo(1, true);
+    if(m_servoReady[2]) motorController-> reqWriteServo(2, true);
+    if(m_servoReady[3]) motorController-> reqWriteServo(3, true);
+//    motorController-> reqWriteServo(4, true);
 }
 
 void GentryManager::doServoOff()
@@ -76,7 +76,7 @@ void GentryManager::doServoOff()
     motorController-> reqWriteServo(1, false);
     motorController-> reqWriteServo(2, false);
     motorController-> reqWriteServo(3, false);
-    motorController-> reqWriteServo(4, false);
+//    motorController-> reqWriteServo(4, false);
 }
 
 void GentryManager::setup_motorStateMonitoring()
@@ -99,7 +99,7 @@ void GentryManager::setup_motorStateMonitoring()
             emit motorComStatus(1, false);
             emit motorComStatus(2, false);
             emit motorComStatus(3, false);
-            emit motorComStatus(4, false);
+ //           emit motorComStatus(4, false);
             break;
         }
         case QModbusDevice::ConnectedState:
@@ -133,6 +133,9 @@ void GentryManager::setup_motorStateMonitoring()
         emit motorComStatus(id, true);
     });
     // 축별 서보 On/Off
+    QObject::connect(motorController, &Leadshine::ELD2::readReady,this,[=](int id, bool ready){
+        m_servoReady[id] = ready;
+    });
     QObject::connect(motorController, &Leadshine::ELD2::readServo,this,[=](int id, bool servo){
         emit motorServoStatus(id, servo);
 //        emit log(QString("%1번 모터 서보: %2").arg(id).arg(servo?"On":"Off"));

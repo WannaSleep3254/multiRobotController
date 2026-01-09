@@ -2201,3 +2201,45 @@
 [Warning]2026-01-07 18:32:41: (Client) Device is not connected
 [Debug]2026-01-07 18:32:41: "Device not connected."
 [Debug]2026-01-07 18:32:41: "Write error: Device not connected."
+[Debug]2026-01-07 18:36:22: "Create Modbus master."
+[Debug]2026-01-07 18:36:22: state:  QModbusDevice::UnconnectedState
+[Debug]2026-01-07 18:36:22: No manager or ID
+[Debug]2026-01-07 18:36:22: No manager or ID
+[Debug]2026-01-07 18:36:22: Binding model for robot "A"
+[Debug]2026-01-07 18:36:22: Binding model for robot "B"
+[Debug]2026-01-07 18:36:22: "COM10" "115200"
+[Debug]2026-01-07 18:36:22: comState:  QModbusDevice::ConnectingState
+[Debug]2026-01-07 18:36:22: "Referenced serial device does not exist."
+[Debug]2026-01-07 18:36:22: "지정된 파일을 찾을 수 없습니다."
+[Debug]2026-01-07 18:36:22: comState:  QModbusDevice::UnconnectedState
+[Debug]2026-01-07 18:36:22: connect: fail!!
+[Warning]2026-01-07 18:36:22: (Client) Device is not connected
+[Debug]2026-01-07 18:36:22: "Device not connected."
+[Debug]2026-01-07 18:36:22: "Write error: Device not connected."
+[Warning]2026-01-07 18:36:22: (Client) Device is not connected
+[Debug]2026-01-07 18:36:22: "Device not connected."
+[Debug]2026-01-07 18:36:22: "Write error: Device not connected."
+[Warning]2026-01-07 18:36:22: (Client) Device is not connected
+[Debug]2026-01-07 18:36:22: "Device not connected."
+[Debug]2026-01-07 18:36:22: "Write error: Device not connected."
+[Warning]2026-01-07 18:36:22: (Client) Device is not connected
+[Debug]2026-01-07 18:36:22: "Device not connected."
+[Debug]2026-01-07 18:36:22: "Write error: Device not connected."
+[Debug]2026-01-07 18:36:22: robots.json open
+[Debug]2026-01-07 18:36:22: robots.json parsed
+[Debug]2026-01-07 18:36:22: Address map loaded from ":/map/AddressMap_A.json"
+[Debug]2026-01-07 18:36:22: Address map loaded from ":/map/AddressMap_B.json"
+[Debug]2026-01-07 18:37:57: "Create Modbus master."
+[Debug]2026-01-07 18:37:57: state:  QModbusDevice::UnconnectedState
+[Debug]2026-01-07 18:37:57: No manager or ID
+[Debug]2026-01-07 18:37:57: No manager or ID
+[Debug]2026-01-07 18:37:57: Binding model for robot "A"
+[Debug]2026-01-07 18:37:57: Binding model for robot "B"
+[Debug]2026-01-07 18:37:57: "COM4" "115200"
+[Debug]2026-01-07 18:37:57: comState:  QModbusDevice::ConnectingState
+[Debug]2026-01-07 18:37:57: comState:  QModbusDevice::ConnectedState
+[Debug]2026-01-07 18:37:57: connect: succed!!
+[Debug]2026-01-07 18:37:57: robots.json open
+[Debug]2026-01-07 18:37:57: robots.json parsed
+[Debug]2026-01-07 18:37:57: Address map loaded from ":/map/AddressMap_A.json"
+[Debug]2026-01-07 18:37:57: Address map loaded from ":/map/AddressMap_B.json"

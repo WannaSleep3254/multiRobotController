@@ -86,6 +86,8 @@ private:
     QHash<int, float> m_targetPos;      // axis → target position
     int m_targetGentryX{0};
     int m_targetGentryZ{0};
+
+    bool m_servoReady[4] = {false, false, false, false};
 };
 
 #endif // GENTRYMANAGER_H

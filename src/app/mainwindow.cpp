@@ -146,7 +146,9 @@ MainWindow::MainWindow(QWidget *parent)
     QTimer::singleShot(0, this, [this]{ loadRobotsFromConfig(); });
 
     m_motorPanel->onConnect();
-    m_motorPanel->onServoOn();
+    QTimer::singleShot(500, this, [this]{
+        m_motorPanel->onServoOn();
+    });
 }
 
 MainWindow::~MainWindow()
