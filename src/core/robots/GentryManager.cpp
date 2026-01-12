@@ -42,48 +42,51 @@ GantryPose stringToGantryPose(const QString& s)
 GentryManager::GentryManager(QObject *parent)
     : QObject{parent}
 {
-    motorController = new Leadshine::ELD2();
+    m_gantryDriver_ = new Leadshine::Eld2Gantry(this);
+    m_conveyorDriver_ = new Leadshine::Eld2Conveyor(this);
 
     setup_motorStateMonitoring();
 }
 
 void GentryManager::setPort()
 {
-//    motorController->setPort("COM10", "115200");
-    motorController->setGantryPort("COM4", "115200");
+    m_gantryDriver_->setPort("COM4", "115200");
+    m_conveyorDriver_->setPort("COM5", "115200");
 }
 
 void GentryManager::doConnect()
 {
-    motorController->doConnect();
+    m_gantryDriver_->doConnect();
+    m_conveyorDriver_->doConnect();
 }
 
 void GentryManager::doDisconnect()
 {
-    motorController->doDisConnect();
+    m_gantryDriver_->doDisConnect();
+    m_conveyorDriver_->doDisConnect();
 }
 
 void GentryManager::doServoOn()
 {
-    if(m_servoReady[1]) motorController-> reqWriteServo(1, true);
-    if(m_servoReady[2]) motorController-> reqWriteServo(2, true);
-    if(m_servoReady[3]) motorController-> reqWriteServo(3, true);
-//    motorController-> reqWriteServo(4, true);
+    if(m_servoReady[1]) m_gantryDriver_-> reqWriteServo(1, true);
+    if(m_servoReady[2]) m_gantryDriver_-> reqWriteServo(2, true);
+    if(m_servoReady[3]) m_gantryDriver_-> reqWriteServo(3, true);
+    if(m_servoReady[4]) m_conveyorDriver_-> reqWriteServo(4, true);
 }
 
 void GentryManager::doServoOff()
 {
-    motorController-> reqWriteServo(1, false);
-    motorController-> reqWriteServo(2, false);
-    motorController-> reqWriteServo(3, false);
-//    motorController-> reqWriteServo(4, false);
+    m_gantryDriver_-> reqWriteServo(1, false);
+    m_gantryDriver_-> reqWriteServo(2, false);
+    m_gantryDriver_-> reqWriteServo(3, false);
+    m_conveyorDriver_-> reqWriteServo(4, false);
 }
 
 void GentryManager::setup_motorStateMonitoring()
 {
     QStringList stateMotorCom;
     stateMotorCom<<"Unconnected"<<"Connecting"<<"Connected"<<"Closing";
-    QObject::connect(motorController, &Leadshine::ELD2::comState, this, [=](int state){
+    QObject::connect(m_gantryDriver_, &Leadshine::Eld2Gantry::comState, this, [=](int state){
         // 통신 상태
         /**
             QModbusDevice::UnconnectedState	0	The device is disconnected.
@@ -99,7 +102,7 @@ void GentryManager::setup_motorStateMonitoring()
             emit motorComStatus(1, false);
             emit motorComStatus(2, false);
             emit motorComStatus(3, false);
- //           emit motorComStatus(4, false);
+            emit motorComStatus(4, false);
             break;
         }
         case QModbusDevice::ConnectedState:
@@ -112,7 +115,7 @@ void GentryManager::setup_motorStateMonitoring()
     stateMotorError<<"NoError"<<"ReadError"<<"WriteError"<<"ConnectionError"<<"ConfigurationError"
                     <<"TimeoutError"<<"ProtocolError"<<"ReplyAbortedError"<<"UnknownError";
 
-    QObject::connect(motorController, &Leadshine::ELD2::errorState, this, [=](int state){
+    QObject::connect(m_gantryDriver_, &Leadshine::Eld2Gantry::errorState, this, [=](int state){
         // 에러 상태
         /**
         QModbusDevice::NoError              0	No errors have occurred.
@@ -128,20 +131,28 @@ void GentryManager::setup_motorStateMonitoring()
         emit log("모터 에러: "+stateMotorError[state]);
     });
     // 축별 통신/버전 정보
-    QObject::connect(motorController, &Leadshine::ELD2::readVersion,this,[=](int id, QString version){
-//        emit log(QString("%1번 모터 SW_Version: %2").arg(id).arg(version));
+    QObject::connect(m_gantryDriver_, &Leadshine::Eld2Gantry::readVersion,this,[=](int id, QString version){
         emit motorComStatus(id, true);
     });
-    // 축별 서보 On/Off
-    QObject::connect(motorController, &Leadshine::ELD2::readReady,this,[=](int id, bool ready){
+    QObject::connect(m_conveyorDriver_, &Leadshine::Eld2Conveyor::readVersion,this,[=](int id, QString version){
+        emit motorComStatus(id, true);
+    });
+    // 축별 ready
+    QObject::connect(m_gantryDriver_, &Leadshine::Eld2Gantry::readReady,this,[=](int id, bool ready){
         m_servoReady[id] = ready;
     });
-    QObject::connect(motorController, &Leadshine::ELD2::readServo,this,[=](int id, bool servo){
+    QObject::connect(m_conveyorDriver_, &Leadshine::Eld2Conveyor::readReady,this,[=](int id, bool ready){
+        m_servoReady[id] = ready;
+    });
+    // 축별 서보
+    QObject::connect(m_gantryDriver_, &Leadshine::Eld2Gantry::readServo,this,[=](int id, bool servo){
         emit motorServoStatus(id, servo);
-//        emit log(QString("%1번 모터 서보: %2").arg(id).arg(servo?"On":"Off"));
+    });
+    QObject::connect(m_conveyorDriver_, &Leadshine::Eld2Conveyor::readServo,this,[=](int id, bool servo){
+        emit motorServoStatus(id, servo);
     });
     // 축별 상태
-    QObject::connect(motorController, &Leadshine::ELD2::readState,this,[=](int id, uint16_t state){
+    QObject::connect(m_gantryDriver_, &Leadshine::Eld2Gantry::readState,this,[=](int id, uint16_t state){
         // 상태 코드: bit_0: RDY, bit_1: RUN, bit_2: ERR, bit_3: HOME_OK, bit_4: INPOS, bit_5: AT-SPEED
         bool rdy = state & (1 << 0);       // Bit 0
         bool run = state & (1 << 1);      // Bit 1
@@ -149,29 +160,50 @@ void GentryManager::setup_motorStateMonitoring()
         bool homeOk = state & (1 << 3);   // Bit 3
         bool inPosition = state & (1 << 4);   // Bit 4
         bool AtSpeed = state & (1 << 5);      // Bit 5
-
-        if(id==4)
-        {
-            qDebug()<<QString("%1번 모터 상태: RDY=%2, RUN=%3, ERR=%4, HOME_OK=%5, INPOS=%6, AT-SPEED=%7")
-                          .arg(id).arg(rdy).arg(run).arg(err).arg(homeOk).arg(inPosition).arg(AtSpeed);
-        }
+        //emit motorState(id, state);
+    });
+    QObject::connect(m_conveyorDriver_, &Leadshine::Eld2Conveyor::readState,this,[=](int id, uint16_t state){
+        // 상태 코드: bit_0: RDY, bit_1: RUN, bit_2: ERR, bit_3: HOME_OK, bit_4: INPOS, bit_5: AT-SPEED
+        bool rdy = state & (1 << 0);       // Bit 0
+        bool run = state & (1 << 1);      // Bit 1
+        bool err = state & (1 << 2);      // Bit 2
+        bool homeOk = state & (1 << 3);   // Bit 3
+        bool inPosition = state & (1 << 4);   // Bit 4
+        bool AtSpeed = state & (1 << 5);      // Bit 5
         //emit motorState(id, state);
     });
     // 축별 엔코더
-    QObject::connect(motorController, &Leadshine::ELD2::readEncoder,this,[=](int id, int32_t pulse, float pos){
+    QObject::connect(m_gantryDriver_, &Leadshine::Eld2Gantry::readEncoder,this,[=](int id, int32_t pulse, float pos){
+        //qDebug()<<QString("%1번 모터 엔코더: %2 pulse, %3 mm").arg(id).arg(pulse).arg(pos);
+        // emit log(QString("%1번 모터 엔코더: %2 pulse, %3 mm").arg(id).arg(pulse).arg(pos));
+    });
+    QObject::connect(m_conveyorDriver_, &Leadshine::Eld2Conveyor::readEncoder,this,[=](int id, int32_t pulse, float pos){
         //qDebug()<<QString("%1번 모터 엔코더: %2 pulse, %3 mm").arg(id).arg(pulse).arg(pos);
         // emit log(QString("%1번 모터 엔코더: %2 pulse, %3 mm").arg(id).arg(pulse).arg(pos));
     });
     // 축별 속도
-    QObject::connect(motorController, &Leadshine::ELD2::readVelocity,this,[=](int id, int16_t velocity){
+    QObject::connect(m_gantryDriver_, &Leadshine::Eld2Gantry::readVelocity,this,[=](int id, int16_t velocity){
+        // emit log(QString("%1번 모터 속도: %2 rpm").arg(id).arg(velocity));
+    });
+    QObject::connect(m_conveyorDriver_, &Leadshine::Eld2Conveyor::readVelocity,this,[=](int id, int16_t velocity){
         // emit log(QString("%1번 모터 속도: %2 rpm").arg(id).arg(velocity));
     });
     // 축별 에러
-    QObject::connect(motorController, &Leadshine::ELD2::readError,this,[=](int id, uint16_t error_code){
+    QObject::connect(m_gantryDriver_, &Leadshine::Eld2Gantry::readError,this,[=](int id, uint16_t error_code){
         if(error_code != 0)
             emit log(QString("%1번 모터 에러 코드: %2").arg(id).arg(error_code));
     });
-    QObject::connect(motorController, &Leadshine::ELD2::motionFinished,this,[=](int id, float targetPos){
+    QObject::connect(m_conveyorDriver_, &Leadshine::Eld2Conveyor::readError,this,[=](int id, uint16_t error_code){
+        if(error_code != 0)
+            emit log(QString("%1번 모터 에러 코드: %2").arg(id).arg(error_code));
+    });
+
+    QObject::connect(m_gantryDriver_, &Leadshine::Eld2Gantry::motionFinished,this,[=](int id, float targetPos){
+        emit log(QString("%1번 모터 이동 완료: %2").arg(id).arg(targetPos));
+        m_targetPos[id] = targetPos;
+        onAxisFinished(id, 0, true);
+    });
+    QObject::connect(m_conveyorDriver_, &Leadshine::Eld2Conveyor::motionFinished,this,[=](int id, float targetPos){
         emit log(QString("%1번 모터 이동 완료: %2").arg(id).arg(targetPos));
         m_targetPos[id] = targetPos;
         onAxisFinished(id, 0, true);
@@ -182,28 +214,28 @@ void GentryManager::doGentryPlace(int offset_x, int offset_z)
 {
     // offset_x: 플래이스 시 X축 추가 이동거리 (mm)
     m_targetGentryX = 0+2000*offset_x;                //37; // TK-1: 74000;
-    motorController->reqWritePos(1, m_targetGentryX); //gentry x move 37mm
+    m_gantryDriver_->reqWritePos(1, m_targetGentryX); //gentry x move 37mm
     // offset_z: 플래이스 시 Z축 추가 이동거리 (mm)
     m_targetGentryZ = -250000+2000*offset_z;
-    motorController->reqWritePos(2, m_targetGentryZ); //gentry z move -125mm: 1mm per 2000 pulse
+    m_gantryDriver_->reqWritePos(2, m_targetGentryZ); //gentry z move -125mm: 1mm per 2000 pulse
     //picker rotate -90 degree
-    motorController->reqWritePos(3, -25020);
+    m_gantryDriver_->reqWritePos(3, -25020);
 
     logMessage2(QString("gentry move to X:%1 mm, Z:%2 mm position").arg(m_targetGentryX/2000).arg(m_targetGentryZ/2000));
 }
 
 void GentryManager::doGentryReady()
 {
-    motorController->reqWritePos(1, -260000); //gentry x move -130mm
-    motorController->reqWritePos(2, 0); //gentry z move 0mm
-    motorController->reqWritePos(3, -25020); //picker rotate -90 degree
+    m_gantryDriver_->reqWritePos(1, -260000); //gentry x move -130mm
+    m_gantryDriver_->reqWritePos(2, 0); //gentry z move 0mm
+    m_gantryDriver_->reqWritePos(3, -25020); //picker rotate -90 degree
 
     logMessage2("gentry move to ready position");
 }
 
 void GentryManager::doConveyorForwardOneStep()
 {
-    motorController->reqWriteShift(4, -402220);// conveyor 260mm shift
+    m_conveyorDriver_->reqWriteShift(4, -402220);// conveyor 260mm shift
 
     logMessage2("conveyor move fwd one step");
 }
@@ -340,7 +372,7 @@ void GentryManager::gentry_motion()
     case conveyor_step_pos: //conveyor next 1 step move
         //qDebug()<<QString("conveyor_step_pos");
         //motorController->reqWriteShift(4, -464100);// conveyor 300mm shift
-        motorController->reqWriteShift(4, -402220);// conveyor 260mm shift
+        m_conveyorDriver_->reqWriteShift(4, -402220);// conveyor 260mm shift
         logMessage2("conveyor move fwd one step");
 #if false
         motorController->reqWritePos(1, 260000); //gentry x move 130mm
@@ -366,19 +398,19 @@ void GentryManager::gentry_motion()
         break;
 
     case gty_x_home_pos: //gentry return to home position
-        motorController->reqWritePos(1, -260000); //gentry x move -130mm
+        m_gantryDriver_->reqWritePos(1, -260000); //gentry x move -130mm
         logMessage2("gentry move to home position\r\n");
         //send motion done msg to M.C
         motion_seq = motion_done;
         break;
 
     case gty_x_docking_pos: //gentry & robot x docking position
-        motorController->reqWritePos(1, 0); //gentry x move 0mm
+        m_gantryDriver_->reqWritePos(1, 0); //gentry x move 0mm
         logMessage2("gentry move to X docking position");
         //motorController->reqWritePos(2, 0); //gentry z move 0mm
-        motorController->reqWritePos(2, -14000); //gentry z move -7mm
+        m_gantryDriver_->reqWritePos(2, -14000); //gentry z move -7mm
         logMessage2("gentry move to Z docking position");
-        motorController->reqWritePos(3, 0); //picker rotate 0 degree
+        m_gantryDriver_->reqWritePos(3, 0); //picker rotate 0 degree
         logMessage2("picker rotate 0 degree");
         //magnet On
         //send motion done msg to M.C
@@ -387,11 +419,11 @@ void GentryManager::gentry_motion()
 
     case gty_place_pos: //gentry move to braket place
         //motorController->reqWritePos(1, 260000); //gentry x move 130mm
-        motorController->reqWritePos(1, 0); //gentry x move 0mm
+        m_gantryDriver_->reqWritePos(1, 0); //gentry x move 0mm
         logMessage2("gentry move to X place position");
-        motorController->reqWritePos(2, -130000); //gentry z move -65mm
+        m_gantryDriver_->reqWritePos(2, -130000); //gentry z move -65mm
         logMessage2("gentry move to Z place position");
-        motorController->reqWritePos(3, -25020); //picker rotate -90 degree
+        m_gantryDriver_->reqWritePos(3, -25020); //picker rotate -90 degree
         logMessage2("picker rotate -90 degree");
 
         //magnet Off
@@ -401,26 +433,26 @@ void GentryManager::gentry_motion()
         break;
 
     case gty_home_pos: //gentry z axis move to home
-        motorController->reqWritePos(1, -260000); //gentry x move -130mm
+        m_gantryDriver_->reqWritePos(1, -260000); //gentry x move -130mm
         logMessage2("gentry move to X home position");
-        motorController->reqWritePos(2, 0); //gentry z move 0mm
+        m_gantryDriver_->reqWritePos(2, 0); //gentry z move 0mm
         logMessage2("gentry move to Z home position");
-        motorController->reqWritePos(3, -25020); //picker rotate -90 degree
+        m_gantryDriver_->reqWritePos(3, -25020); //picker rotate -90 degree
         logMessage2("picker rotate 0 degree");
         //send motion done msg to M.C
         motion_seq = motion_done;
         break;
 
     case gty_z_place_pos: //gentry z axis move to braket place
-        motorController->reqWritePos(2, -130000); //gentry z move -65mm
+        m_gantryDriver_->reqWritePos(2, -130000); //gentry z move -65mm
         logMessage2("gentry move to X place position");
-        motorController->reqWritePos(3, -25020); //picker rotate -90 degree
+        m_gantryDriver_->reqWritePos(3, -25020); //picker rotate -90 degree
         logMessage2("gentry move to Z place position");
         break;
 
     case picker_90: //picker -90 degree rotate
         qDebug()<<QString("picker_90");
-        motorController->reqWritePos(3, -25020); //picker rotate -90 degree
+        m_gantryDriver_->reqWritePos(3, -25020); //picker rotate -90 degree
         motion_seq = gty_z_place_pos;
         //magnet Off msg to robot
         motion_seq = msg_rdy_2;
@@ -428,7 +460,7 @@ void GentryManager::gentry_motion()
 
     case picker_0: //picker 0 degree rotate
         qDebug()<<QString("picker_0");
-        motorController->reqWritePos(3, 0); //picker rotate 0 degree
+        m_gantryDriver_->reqWritePos(3, 0); //picker rotate 0 degree
         //QThread::sleep(1000);
         //msg send to robot for magnet On
         motion_seq = msg_rdy_1;
@@ -436,17 +468,17 @@ void GentryManager::gentry_motion()
 
     case motion_done:
 
-        if(motorController->isMotionDone(4)){
+        if(m_conveyorDriver_->isMotionDone(4)){
             logMessage2("conveyor move done");
             qDebug()<<QString("conveyor move done");
         }
-        else if(motorController->isMotionDone(1)){
+        else if(m_gantryDriver_->isMotionDone(1)){
             logMessage2("X move done\r\n");
         }
-        else if(motorController->isMotionDone(2)){
+        else if(m_gantryDriver_->isMotionDone(2)){
             logMessage2("Z move done\r\n");
         }
-        else if(motorController->isMotionDone(3)){
+        else if(m_gantryDriver_->isMotionDone(3)){
             logMessage2("Picker move done\r\n");
         }
 
@@ -476,7 +508,7 @@ void GentryManager::gentry_motion()
 
     case gentry_rdy:
         logMessage2("gentry ready");
-        if(motorController->isMotionDone(4)){
+        if(m_conveyorDriver_->isMotionDone(4)){
             logMessage2("conveyor move done");
 
             logMessage2("send motion done msg to server");

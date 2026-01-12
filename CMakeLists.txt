@@ -23,6 +23,7 @@ add_library(multiRobotController_core STATIC
     src/core/modbus/ModbusClient.h
 
     src/core/common/LogLevel.h
+    src/core/common/convert.h
     src/core/common/RobotCommand.h
     src/core/common/RobotCommandParser.cpp
     src/core/common/RobotCommandParser.h
@@ -51,8 +52,12 @@ add_library(multiRobotController_core STATIC
 
     src/core/Motor/Com/modbus.cpp
     src/core/Motor/Com/modbus.h
-    src/core/Motor/Leadshine/eld2.cpp
-    src/core/Motor/Leadshine/eld2.h
+#    src/core/Motor/Leadshine/eld2.cpp
+#    src/core/Motor/Leadshine/eld2.h
+    src/core/Motor/Leadshine/Eld2Gantry.cpp
+    src/core/Motor/Leadshine/Eld2Gantry.h
+    src/core/Motor/Leadshine/Eld2Conveyor.cpp
+    src/core/Motor/Leadshine/Eld2Conveyor.h
 
     src/core/Motor/Leadshine/parameter.cpp
     src/core/Motor/Leadshine/parameter.h

@@ -4,7 +4,8 @@
 #include <QObject>
 #include <QSet>
 
-#include "eld2.h"
+#include "Eld2Gantry.h"
+#include "Eld2Conveyor.h"
 
 enum class GantryPose {
     None,
@@ -68,7 +69,8 @@ public:
 
 private:
     qint8 motion_seq;
-    Leadshine::ELD2 *motorController = nullptr;
+    Leadshine::Eld2Gantry *m_gantryDriver_ = nullptr;
+    Leadshine::Eld2Conveyor *m_conveyorDriver_ = nullptr;
 
     struct PendingGroup {
         QSet<int> pendingAxes;  // 아직 안 끝난 축들
@@ -87,7 +89,7 @@ private:
     int m_targetGentryX{0};
     int m_targetGentryZ{0};
 
-    bool m_servoReady[4] = {false, false, false, false};
+    bool m_servoReady[5] = {false, false, false, false, false};
 };
 
 #endif // GENTRYMANAGER_H
