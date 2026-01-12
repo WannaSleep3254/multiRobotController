@@ -5,6 +5,7 @@
 #include <QPointer>
 #include "LogLevel.h"
 #include "vision/VisionClient.h"
+#include "GentryManager.h"
 
 class RobotManager;
 class GentryManager;
@@ -88,5 +89,7 @@ private:
     int  m_sortingThick{0};
     int  m_sortingShfit{0};
     bool m_gantryPickupState{false};
+
+    GantryPose lastPose = GantryPose::None;
 };
 #endif // MAINWINDOW_H

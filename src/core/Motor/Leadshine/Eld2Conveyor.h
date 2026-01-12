@@ -50,6 +50,8 @@ namespace Leadshine
             float targetPos    = 0.0f;
             float lastPos      = 0.0f;
             qint16 lastVel     = 0;
+            bool targetInposition = false;
+            bool lastInposition = false;
         };
 
         struct Config

@@ -4,6 +4,7 @@
 #include <QTimer>
 #include <QPoint>
 #include <QDebug>
+#include <QDateTime>
 
 #include "modbus.h"
 #include "serialport.h"
@@ -27,7 +28,7 @@ namespace Leadshine
         gantry_.bus  = new Com::Modbus(this);
         gantry_.timer = new QTimer(this);
         gantry_.axes = {Axis::GantryX, Axis::GantryZ, Axis::GantryPicker};
-        gantry_.tickMs = 20;
+        gantry_.tickMs = 15;
 
         QObject::connect(gantry_.bus, &Com::Modbus::comState, this, [=](int state){
             /**
@@ -82,7 +83,8 @@ namespace Leadshine
                 // 통신되는 축이면 상태 폴링
                 if (pollKind_ == PollKind::PrPos)
                 {
-                    reqReadEncoder(axis);   // 0x602C
+//                    reqReadEncoder(axis);   // 0x602C
+                    reqReadError(axis);     // 0x0B03
                     pollKind_ = PollKind::Status;
                 }
                 else
@@ -335,9 +337,12 @@ namespace Leadshine
             emit readReady(id , rdy);
             emit readServo(id , run);
             bool inPosition = state & (1 << 4);   // Bit 4
+            runtime_[id].lastInposition = runtime_[id].targetInposition;
+            runtime_[id].targetInposition = inPosition;
             if(inPosition)
             {
                 if (isMotionDone(id)) {
+                    qDebug()<<QDateTime::currentDateTime()<<QString("%1번 모터 이동 완료: 목표 %2 pulse").arg(id).arg(runtime_[id].targetPos);
                     runtime_[id].moving = false;
                     emit motionFinished(id, runtime_[id].targetPos);   // 새 signal
                 }
@@ -345,7 +350,6 @@ namespace Leadshine
             break;
         }
         }
-
     }
 
     bool Eld2Gantry::isMotionDone(int id) const
@@ -353,7 +357,7 @@ namespace Leadshine
         const auto &rt = runtime_.at(id);
         if (!rt.moving)
             return false;
-
+/*
         // 예: 위치 오차 ±0.01mm, 속도 0 근처
         const float posTol = 5.0f;
         const int   velTol = 3;  // 1pulse/s or 1rpm 등
@@ -363,6 +367,10 @@ namespace Leadshine
         {
             return true;
         }
+*/
+        if(!rt.lastInposition&&rt.targetInposition)
+            return true;
+
         return false;
     }
 

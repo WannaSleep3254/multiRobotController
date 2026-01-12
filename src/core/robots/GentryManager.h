@@ -43,6 +43,9 @@ public:
     void setFalgs(bool conveyor_fwd, bool flip_fwd, bool flip_rev, bool gty_place, bool gty_home_place);
     void gentry_motion();
 
+    void requestGentryPose();
+    void updatePositions(int axis);
+
     void doGentryPlace(int offset_x=37, int offset_z=0);
     void doGentryReady();
 
@@ -53,7 +56,7 @@ public:
 
     void onAxisFinished(int axis, int seq, bool ok);
 
-        void logMessage2(const QString& msg);
+    void logMessage2(const QString& msg);
 signals:
     void log(const QString& msg);
 
@@ -86,6 +89,9 @@ private:
     QSet<int> m_conveyorPendingAxes;
 
     QHash<int, float> m_targetPos;      // axis → target position
+    QHash<int, float> m_currentPos;      // axis → target position
+
+
     int m_targetGentryX{0};
     int m_targetGentryZ{0};
 

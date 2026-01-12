@@ -1,6 +1,7 @@
 #include "GentryManager.h"
 #include <qdebug.h>
 #include <QModbusDevice>
+#include <QDateTime>
 
 #define Flip_False 1
 #define Flip_True 2
@@ -175,11 +176,14 @@ void GentryManager::setup_motorStateMonitoring()
     // 축별 엔코더
     QObject::connect(m_gantryDriver_, &Leadshine::Eld2Gantry::readEncoder,this,[=](int id, int32_t pulse, float pos){
         //qDebug()<<QString("%1번 모터 엔코더: %2 pulse, %3 mm").arg(id).arg(pulse).arg(pos);
-        // emit log(QString("%1번 모터 엔코더: %2 pulse, %3 mm").arg(id).arg(pulse).arg(pos));
+        m_currentPos[id] = pulse;
+        qDebug()<<QString("Gantry %1 current pos: %2, %3").arg(id).arg(pos).arg(pulse);
+        updatePositions(id);
     });
     QObject::connect(m_conveyorDriver_, &Leadshine::Eld2Conveyor::readEncoder,this,[=](int id, int32_t pulse, float pos){
         //qDebug()<<QString("%1번 모터 엔코더: %2 pulse, %3 mm").arg(id).arg(pulse).arg(pos);
-        // emit log(QString("%1번 모터 엔코더: %2 pulse, %3 mm").arg(id).arg(pulse).arg(pos));
+        m_currentPos[id] = pulse;
+//        onAxisFinished(id, 0, true);
     });
     // 축별 속도
     QObject::connect(m_gantryDriver_, &Leadshine::Eld2Gantry::readVelocity,this,[=](int id, int16_t velocity){
@@ -208,6 +212,61 @@ void GentryManager::setup_motorStateMonitoring()
         m_targetPos[id] = targetPos;
         onAxisFinished(id, 0, true);
     });
+}
+
+void GentryManager::requestGentryPose()
+{
+    // 현재 위치 갱신
+    m_gantryPendingAxes = QSet<int>({1,2,3});
+    m_gantryDriver_->reqReadEncoder(1); //gentry x
+    m_gantryDriver_->reqReadEncoder(2); //gentry z
+    m_gantryDriver_->reqReadEncoder(3); //picker rotate
+}
+
+void GentryManager::updatePositions(int axis)
+{
+    auto near = [](int a, int b, int tol){
+        return std::abs(a - b) <= tol;
+    };
+
+    if (axis >= 1 && axis <= 3) {
+        m_gantryPendingAxes.remove(axis);
+
+        if (m_gantryPendingAxes.isEmpty()) {
+            const float xPos        = m_currentPos.value(1, 0.0f);
+            const float zPos        = m_currentPos.value(2, 0.0f);
+            const float pickerAngle = m_currentPos.value(3, 0.0f);
+            /////////////////////////////////////////////////////////////////////
+            if( near(xPos,0,10) &&
+                near(zPos,-14000,10) &&//near(zPos,0,10) &&
+                near(pickerAngle,0,10))
+            {   // docking
+                currentPose = GantryPose::Docking;
+            }
+            else if(near(xPos,m_targetGentryX,10) && // near(xPos,m_targetGentryX,10)
+                     near(zPos, m_targetGentryZ,10) && //near(zPos,-250000,10) &&
+                     near(pickerAngle,-25020,10))
+            {   // place
+                currentPose = GantryPose::Place;
+            }
+            else if(near(xPos,-260000,10) &&
+                     near(zPos,0,10) &&
+                     near(pickerAngle, -25020,10))
+            {   // stand-by
+                currentPose = GantryPose::Standby;
+            }
+            else
+            {
+                qDebug()<<"Gentry position unknown:"
+                         <<QString("X:%1, Z:%2, P:%3, place_cmd: 74000, %4 , -25020")
+                                .arg(xPos).arg(zPos).arg(pickerAngle).arg(m_targetGentryZ);
+                currentPose = GantryPose::None;
+            }
+            /////////////////////////////////////////////////////////////////////
+            qDebug()<<QDateTime::currentDateTime()<<QString("Gentry currentPose=%1").arg(gantryPoseToString(currentPose));
+            emit gantryCommandFinished(false, currentPose);
+        }
+    }
 }
 
 void GentryManager::doGentryPlace(int offset_x, int offset_z)
@@ -309,7 +368,7 @@ void GentryManager::onAxisFinished(int axis, int seq, bool ok)
                 currentPose = GantryPose::None;
             }
 /////////////////////////////////////////////////////////////////////
-            qDebug()<<QString("Gentry currentPose=%1").arg(gantryPoseToString(currentPose));
+            qDebug()<<QDateTime::currentDateTime()<<QString("Gentry currentPose=%1").arg(gantryPoseToString(currentPose));
             emit gantryCommandFinished(m_gantryOk, currentPose);
             m_gantryOk = true;
         }

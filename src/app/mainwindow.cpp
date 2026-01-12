@@ -96,20 +96,19 @@ MainWindow::MainWindow(QWidget *parent)
                     }
                     else if(flip&& pose==GantryPose::Place){
                         // 겐트리 Tool Off
-                        qDebug()<<"Gentry place pose"<<gantryPoseToString(pose)<<ok;
+                        qDebug()<<QDateTime::currentDateTime()<<"Gentry place pose"<<gantryPoseToString(pose)<<ok;
                         m_mgr->cmdSort_GentryTool(false);
 
                         m_sortingPlacePorcessActive=false;
                         m_gantryPickupState = false;
 
-                        QTimer::singleShot(550, this, [this]() {
+                        QTimer::singleShot(400, this, [this]() {
                             m_visionClient->sendWorkComplete("A", "sorting", "place", 0);
                             m_gentryMgr->doGentryReady();
                         });
-
                     }
                 }
-
+                lastPose = pose;
             });
 
 
@@ -148,6 +147,12 @@ MainWindow::MainWindow(QWidget *parent)
     m_motorPanel->onConnect();
     QTimer::singleShot(500, this, [this]{
         m_motorPanel->onServoOn();
+    });
+    QTimer::singleShot(1000, this, [this]{
+        m_gentryMgr->doGentryReady();
+    });
+    QTimer::singleShot(1500, this, [this]{
+        m_gentryMgr->requestGentryPose();
     });
 }
 
@@ -434,10 +439,22 @@ void MainWindow::handleRobotA(const RobotCommand& cmd)
                 m_sortingOffset=cmd.sortOffset.height;//cmd.offset;
                 m_sortingThick=cmd.sortOffset.thickness;
 //                m_sortingShfit = cmd.sortOffset.shift;
+                if(lastPose==GantryPose::Standby)
+                {
+                    //TODO robot->place
+                    qDebug()<<"Robot place without flip"<<gantryPoseToString(lastPose);
+                    m_mgr->cmdSort_DoPlace(false, m_sortingOffset, m_sortingThick);
+                }
+                else
+                {
+                    m_gentryMgr->startGantryMove();
+                    m_gentryMgr->setFalgs(false, true, false, false, false);
+                    m_gentryMgr->gentry_motion();
 
-                m_gentryMgr->startGantryMove();
-                m_gentryMgr->setFalgs(false, true, false, false, false);
-                m_gentryMgr->gentry_motion();
+                    QTimer::singleShot(500, this, [this]() {
+                        m_gentryMgr->requestGentryPose();
+                    });
+                }
 ////////////////////////////////////////////////////////////////
             }
             break;

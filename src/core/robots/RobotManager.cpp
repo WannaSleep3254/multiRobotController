@@ -1001,14 +1001,17 @@ void RobotManager::cmdSort_GentryTool(bool toggle)
     if (!busPtr) return;
 
     QTimer::singleShot(10, this, [busPtr]{
+        if (!busPtr) return;
         busPtr->writeCoil(303, false);  // Tool true
     });
 
     QTimer::singleShot(50, this, [busPtr]{
+        if (!busPtr) return;
         busPtr->writeCoil(303, true);   // Tool false
     });
 
     QTimer::singleShot(500, this, [busPtr]{
+        if (!busPtr) return;
         busPtr->writeCoil(303, false);  // Tool true
     });
 }

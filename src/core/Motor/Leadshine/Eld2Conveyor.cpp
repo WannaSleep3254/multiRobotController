@@ -328,6 +328,8 @@ namespace Leadshine
             emit readReady(id , rdy);
             emit readServo(id , run);
             bool inPosition = state & (1 << 4);   // Bit 4
+            runtime_[id].lastInposition = runtime_[id].targetInposition;
+            runtime_[id].targetInposition = inPosition;
             if(inPosition)
             {
                 if (isMotionDone(id)) {
@@ -347,7 +349,7 @@ namespace Leadshine
         if (!rt.moving)
             return false;
 
-        if(id==4)
+        if(!rt.lastInposition&&rt.targetInposition)
             return true;
 
         return false;

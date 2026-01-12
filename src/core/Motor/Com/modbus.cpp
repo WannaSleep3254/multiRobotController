@@ -197,6 +197,7 @@ namespace Com
         if (reply) {
             if (reply->error() == QModbusDevice::NoError) {
                 // ✅ RTT 로그
+#if false
                 qDebug().noquote()
                     << QString("[RTT] %1 addr=0x%2 id=%3 rtt=%4 ms")
                            .arg(currentReq_.type == ReqType::Read ? "READ " : "WRITE")
@@ -204,7 +205,7 @@ namespace Com
                            .arg(currentReq_.serverAddress)
                            .arg(rttMs);
                 qDebug()<<queue_.size()<<"requests pending.";
-
+#endif
                 // Read면 result()가 의미 있고, Write도 unit 정보는 currentReq_로 알 수 있음
                 if (currentReq_.type == ReqType::Read) {
                     const QModbusDataUnit unit = reply->result();
