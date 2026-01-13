@@ -1,0 +1,497 @@
+[Debug]2026-01-13 11:21:56: "Create Modbus master."
+[Debug]2026-01-13 11:21:56: state:  QModbusDevice::UnconnectedState
+[Debug]2026-01-13 11:21:56: "Create Modbus master."
+[Debug]2026-01-13 11:21:56: state:  QModbusDevice::UnconnectedState
+[Debug]2026-01-13 11:21:56: No manager or ID
+[Debug]2026-01-13 11:21:56: No manager or ID
+[Debug]2026-01-13 11:21:56: Binding model for robot "A"
+[Debug]2026-01-13 11:21:56: Binding model for robot "B"
+[Debug]2026-01-13 11:21:56: comState:  QModbusDevice::ConnectingState
+[Debug]2026-01-13 11:21:56: comState:  QModbusDevice::ConnectedState
+[Debug]2026-01-13 11:21:56: connect: succed!!
+[Debug]2026-01-13 11:21:56: comState:  QModbusDevice::ConnectingState
+[Debug]2026-01-13 11:21:56: comState:  QModbusDevice::ConnectedState
+[Debug]2026-01-13 11:21:56: connect: succed!!
+[Debug]2026-01-13 11:21:56: robots.json open
+[Debug]2026-01-13 11:21:56: robots.json parsed
+[Debug]2026-01-13 11:21:56: Address map loaded from ":/map/AddressMap_A.json"
+[Debug]2026-01-13 11:21:56: Address map loaded from ":/map/AddressMap_B.json"
+[Debug]2026-01-13 11:21:57: QDateTime(2026-01-13 11:21:57.804 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 -260000 pulse"
+[Debug]2026-01-13 11:21:57: Gentry position unknown: "X:-260000, Z:0, P:0, place_cmd: 74000, 0 , -25020"
+[Debug]2026-01-13 11:21:57: QDateTime(2026-01-13 11:21:57.812 GMT+9 Qt::LocalTime) "Gentry currentPose=none"
+[Debug]2026-01-13 11:21:57: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:21:58: "Gantry 1 current pos: -130, -260001"
+[Debug]2026-01-13 11:21:58: "Gantry 2 current pos: -0.0185, -37"
+[Debug]2026-01-13 11:21:58: "Gantry 3 current pos: -2.5021, -25021"
+[Debug]2026-01-13 11:21:58: Gentry position unknown: "X:-260001, Z:-37, P:-25021, place_cmd: 74000, 0 , -25020"
+[Debug]2026-01-13 11:21:58: QDateTime(2026-01-13 11:21:58.087 GMT+9 Qt::LocalTime) "Gentry currentPose=none"
+[Debug]2026-01-13 11:21:58: "Gentry gantry command finished: FAIL"
+[Debug]2026-01-13 11:21:58: Binding model for robot "A"
+[Debug]2026-01-13 11:21:58: QDateTime(2026-01-13 11:21:58.871 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:21:58: Gentry position unknown: "X:-260000, Z:0, P:0, place_cmd: 74000, 0 , -25020"
+[Debug]2026-01-13 11:21:58: QDateTime(2026-01-13 11:21:58.871 GMT+9 Qt::LocalTime) "Gentry currentPose=none"
+[Debug]2026-01-13 11:21:58: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:21:59: RobotPanel::onStart() for robot "A"
+[Debug]2026-01-13 11:22:20: Binding model for robot "A"
+[Debug]2026-01-13 11:22:21: RobotPanel::onStart() for robot "A"
+[Debug]2026-01-13 11:23:33: QDateTime(2026-01-13 11:23:33.527 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":false,\"kind\":\"pick\",\"offset\":{\"height\":20,\"thickness\":37},\"pose\":{\"rx\":-172.94698371863487,\"ry\":-2.2315047832907235,\"rz\":104.40641784667969,\"x\":292.30278945783436,\"y\":253.11859916864069,\"z\":-7.810258493201275},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:20:15Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:23:33: parse
+[Debug]2026-01-13 11:23:33: Input Euler Angles (ZYX) in degrees: -172.947 -2.2315 104.406
+[Debug]2026-01-13 11:23:33: Updated Euler Angles (ZYX) in degrees: 164.443 -7.22263 -178.404
+[Debug]2026-01-13 11:23:33: Normalized Euler Angles (ZYX) in degrees: -178.404 -7.22263 164.443
+[Info]2026-01-13 11:23:33: QDateTime(2026-01-13 11:23:33.634 GMT+9 Qt::LocalTime) :  command Start
+[Info]2026-01-13 11:23:44: QDateTime(2026-01-13 11:23:44.593 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:23:44: RobotManager::processPulse PICK nonflip key= "A_pick_nonFlip"
+[Info]2026-01-13 11:23:44: QDateTime(2026-01-13 11:23:44.595 GMT+9 Qt::LocalTime) :  Sort Pick_non-Flip Complete
+[Debug]2026-01-13 11:23:44: QDateTime(2026-01-13 11:23:44.606 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:23:44: QDateTime(2026-01-13 11:23:44.609 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:23:44: RobotManager::processPulse PICK complete key= "A_pick_nonFlip"
+[Debug]2026-01-13 11:23:45: QDateTime(2026-01-13 11:23:45.124 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":false,\"kind\":\"place\",\"offset\":{\"height\":20,\"thickness\":37},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:20:27Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:23:45: parse
+[Debug]2026-01-13 11:23:45: "Gantry 1 current pos: -130, -260000"
+[Debug]2026-01-13 11:23:45: "Gantry 2 current pos: -0.0005, -1"
+[Debug]2026-01-13 11:23:45: "Gantry 3 current pos: -2.5021, -25021"
+[Debug]2026-01-13 11:23:45: QDateTime(2026-01-13 11:23:45.646 GMT+9 Qt::LocalTime) "Gentry currentPose=standby"
+[Debug]2026-01-13 11:23:45: "Gentry gantry command finished: FAIL"
+[Debug]2026-01-13 11:23:45: Robot place without flip "standby" false
+[Info]2026-01-13 11:23:45: QDateTime(2026-01-13 11:23:45.718 GMT+9 Qt::LocalTime) :  command Start
+[Info]2026-01-13 11:23:56: QDateTime(2026-01-13 11:23:56.280 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:23:56: QDateTime(2026-01-13 11:23:56.281 GMT+9 Qt::LocalTime) :  Sort Place Complete
+[Debug]2026-01-13 11:23:56: QDateTime(2026-01-13 11:23:56.292 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:23:56: QDateTime(2026-01-13 11:23:56.292 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 93 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:23:56: QDateTime(2026-01-13 11:23:56.302 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:23:56: QDateTime(2026-01-13 11:23:56.302 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:23:56: QDateTime(2026-01-13 11:23:56.917 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":false,\"kind\":\"pick\",\"offset\":{\"height\":20,\"thickness\":37},\"pose\":{\"rx\":-172.34600963941458,\"ry\":-1.1185214676221709,\"rz\":113.02273559570312,\"x\":357.6385368355671,\"y\":-104.3722708968462,\"z\":-8.472651104310614},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:20:39Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:23:56: parse
+[Debug]2026-01-13 11:23:56: Input Euler Angles (ZYX) in degrees: -172.346 -1.11852 113.023
+[Debug]2026-01-13 11:23:56: Updated Euler Angles (ZYX) in degrees: 172.917 -7.18564 -177.13
+[Debug]2026-01-13 11:23:56: Normalized Euler Angles (ZYX) in degrees: -177.13 -7.18564 172.917
+[Debug]2026-01-13 11:23:56: QDateTime(2026-01-13 11:23:56.921 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"forward\",\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:20:39Z\",\"type\":\"conveyor\"}"
+[Debug]2026-01-13 11:23:56: parse
+[Info]2026-01-13 11:23:56: QDateTime(2026-01-13 11:23:56.923 GMT+9 Qt::LocalTime) KJW Robot A Conveyor Forward command received
+[Info]2026-01-13 11:23:57: QDateTime(2026-01-13 11:23:57.009 GMT+9 Qt::LocalTime) :  command Start
+[Info]2026-01-13 11:23:59: QDateTime(2026-01-13 11:23:59.287 GMT+9 Qt::LocalTime) KJW "Conveyor command finished: OK"
+[Info]2026-01-13 11:24:06: QDateTime(2026-01-13 11:24:06.780 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:24:06: RobotManager::processPulse PICK nonflip key= "A_pick_nonFlip"
+[Info]2026-01-13 11:24:06: QDateTime(2026-01-13 11:24:06.782 GMT+9 Qt::LocalTime) :  Sort Pick_non-Flip Complete
+[Debug]2026-01-13 11:24:06: QDateTime(2026-01-13 11:24:06.793 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:06: QDateTime(2026-01-13 11:24:06.794 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:06: RobotManager::processPulse PICK complete key= "A_pick_nonFlip"
+[Debug]2026-01-13 11:24:07: QDateTime(2026-01-13 11:24:07.305 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":false,\"kind\":\"place\",\"offset\":{\"height\":20,\"thickness\":37},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:20:49Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:07: parse
+[Debug]2026-01-13 11:24:07: Robot place without flip "standby"
+[Info]2026-01-13 11:24:07: QDateTime(2026-01-13 11:24:07.384 GMT+9 Qt::LocalTime) :  command Start
+[Info]2026-01-13 11:24:16: QDateTime(2026-01-13 11:24:16.343 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:24:16: QDateTime(2026-01-13 11:24:16.344 GMT+9 Qt::LocalTime) :  Sort Place Complete
+[Debug]2026-01-13 11:24:16: QDateTime(2026-01-13 11:24:16.355 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:16: QDateTime(2026-01-13 11:24:16.356 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 93 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:16: QDateTime(2026-01-13 11:24:16.365 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:16: QDateTime(2026-01-13 11:24:16.367 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:16: QDateTime(2026-01-13 11:24:16.966 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"forward\",\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:20:59Z\",\"type\":\"conveyor\"}"
+[Debug]2026-01-13 11:24:16: parse
+[Info]2026-01-13 11:24:16: QDateTime(2026-01-13 11:24:16.967 GMT+9 Qt::LocalTime) KJW Robot A Conveyor Forward command received
+[Debug]2026-01-13 11:24:17: QDateTime(2026-01-13 11:24:17.101 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"pick\",\"offset\":{\"height\":20,\"thickness\":37},\"pose\":{\"rx\":-153.0425606294442,\"ry\":3.7492965951056423,\"rz\":-160.4581756591797,\"x\":219.3993912908009,\"y\":60.65771569255196,\"z\":-5.86851442468469},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:20:59Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:17: parse
+[Debug]2026-01-13 11:24:17: Input Euler Angles (ZYX) in degrees: -153.043 3.7493 -160.458
+[Debug]2026-01-13 11:24:17: Updated Euler Angles (ZYX) in degrees: 19.5418 176.251 26.9574
+[Debug]2026-01-13 11:24:17: Normalized Euler Angles (ZYX) in degrees: -153.043 3.7493 -160.458
+[Info]2026-01-13 11:24:17: QDateTime(2026-01-13 11:24:17.217 GMT+9 Qt::LocalTime) :  command Start
+[Debug]2026-01-13 11:24:17: QDateTime(2026-01-13 11:24:17.926 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:24:18: QDateTime(2026-01-13 11:24:18.146 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 0 pulse"
+[Info]2026-01-13 11:24:19: QDateTime(2026-01-13 11:24:19.350 GMT+9 Qt::LocalTime) KJW "Conveyor command finished: OK"
+[Debug]2026-01-13 11:24:19: QDateTime(2026-01-13 11:24:19.395 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -14000 pulse"
+[Debug]2026-01-13 11:24:19: QDateTime(2026-01-13 11:24:19.397 GMT+9 Qt::LocalTime) "Gentry currentPose=docking"
+[Debug]2026-01-13 11:24:19: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:24:41: RobotManager::processPulse PICK key= "A_pick"
+[Info]2026-01-13 11:24:41: QDateTime(2026-01-13 11:24:41.156 GMT+9 Qt::LocalTime) :  Sort Pick_Flip Complete
+[Debug]2026-01-13 11:24:41: QDateTime(2026-01-13 11:24:41.167 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:41: QDateTime(2026-01-13 11:24:41.167 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:41: RobotManager::processPulse PICK complete key= "A_pick"
+[Debug]2026-01-13 11:24:41: QDateTime(2026-01-13 11:24:41.678 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"place\",\"offset\":{\"height\":20,\"thickness\":37},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:21:24Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:41: parse
+[Debug]2026-01-13 11:24:42: QDateTime(2026-01-13 11:24:42.239 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 74000 pulse"
+[Debug]2026-01-13 11:24:42: QDateTime(2026-01-13 11:24:42.395 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 -25020 pulse"
+[Debug]2026-01-13 11:24:43: QDateTime(2026-01-13 11:24:43.395 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -250000 pulse"
+[Debug]2026-01-13 11:24:43: QDateTime(2026-01-13 11:24:43.396 GMT+9 Qt::LocalTime) "Gentry currentPose=place"
+[Debug]2026-01-13 11:24:43: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:24:43: QDateTime(2026-01-13 11:24:43.398 GMT+9 Qt::LocalTime) Gentry place pose "place" true
+[Debug]2026-01-13 11:24:43: QDateTime(2026-01-13 11:24:43.799 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:43: QDateTime(2026-01-13 11:24:43.801 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 93 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:44: QDateTime(2026-01-13 11:24:44.421 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"forward\",\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:21:26Z\",\"type\":\"conveyor\"}"
+[Debug]2026-01-13 11:24:44: parse
+[Info]2026-01-13 11:24:44: QDateTime(2026-01-13 11:24:44.422 GMT+9 Qt::LocalTime) KJW Robot A Conveyor Forward command received
+[Debug]2026-01-13 11:24:44: QDateTime(2026-01-13 11:24:44.958 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 -260000 pulse"
+[Debug]2026-01-13 11:24:44: Gentry position unknown: "X:-260000, Z:-250000, P:-25020, place_cmd: 74000, -250000 , -25020"
+[Debug]2026-01-13 11:24:44: QDateTime(2026-01-13 11:24:44.960 GMT+9 Qt::LocalTime) "Gentry currentPose=none"
+[Debug]2026-01-13 11:24:44: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:24:45: QDateTime(2026-01-13 11:24:45.739 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:24:45: QDateTime(2026-01-13 11:24:45.740 GMT+9 Qt::LocalTime) "Gentry currentPose=standby"
+[Debug]2026-01-13 11:24:45: "Gentry gantry command finished: OK"
+[Info]2026-01-13 11:24:46: QDateTime(2026-01-13 11:24:46.655 GMT+9 Qt::LocalTime) :  IDLE  Complete
+[Debug]2026-01-13 11:24:46: QDateTime(2026-01-13 11:24:46.665 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:46: QDateTime(2026-01-13 11:24:46.665 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Info]2026-01-13 11:24:46: QDateTime(2026-01-13 11:24:46.787 GMT+9 Qt::LocalTime) KJW "Conveyor command finished: OK"
+[Debug]2026-01-13 11:24:47: QDateTime(2026-01-13 11:24:47.279 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"pick\",\"offset\":{\"height\":20,\"thickness\":37},\"pose\":{\"rx\":-152.26279104660395,\"ry\":2.7519761091909993,\"rz\":-94.91621398925781,\"x\":361.27086822406443,\"y\":139.2482976081916,\"z\":-3.693622513083767},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:21:29Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:24:47: parse
+[Debug]2026-01-13 11:24:47: Input Euler Angles (ZYX) in degrees: -152.263 2.75198 -94.9162
+[Debug]2026-01-13 11:24:47: Updated Euler Angles (ZYX) in degrees: 85.0838 177.248 27.7372
+[Debug]2026-01-13 11:24:47: Normalized Euler Angles (ZYX) in degrees: -152.263 2.75198 -94.9162
+[Debug]2026-01-13 11:24:47: QDateTime(2026-01-13 11:24:47.614 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -14000 pulse"
+[Debug]2026-01-13 11:24:48: QDateTime(2026-01-13 11:24:48.114 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:24:48: QDateTime(2026-01-13 11:24:48.239 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:24:48: QDateTime(2026-01-13 11:24:48.240 GMT+9 Qt::LocalTime) "Gentry currentPose=docking"
+[Debug]2026-01-13 11:24:48: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:25:10: RobotManager::processPulse PICK key= "A_pick"
+[Info]2026-01-13 11:25:10: QDateTime(2026-01-13 11:25:10.093 GMT+9 Qt::LocalTime) :  Sort Pick_Flip Complete
+[Debug]2026-01-13 11:25:10: QDateTime(2026-01-13 11:25:10.104 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:25:10: QDateTime(2026-01-13 11:25:10.104 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:25:10: RobotManager::processPulse PICK complete key= "A_pick"
+[Debug]2026-01-13 11:25:10: QDateTime(2026-01-13 11:25:10.619 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"place\",\"offset\":{\"height\":20,\"thickness\":37},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:21:53Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:25:10: parse
+[Debug]2026-01-13 11:25:11: QDateTime(2026-01-13 11:25:11.114 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 74000 pulse"
+[Debug]2026-01-13 11:25:11: QDateTime(2026-01-13 11:25:11.364 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 -25020 pulse"
+[Debug]2026-01-13 11:25:12: QDateTime(2026-01-13 11:25:12.364 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -250000 pulse"
+[Debug]2026-01-13 11:25:12: QDateTime(2026-01-13 11:25:12.365 GMT+9 Qt::LocalTime) "Gentry currentPose=place"
+[Debug]2026-01-13 11:25:12: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:25:12: QDateTime(2026-01-13 11:25:12.366 GMT+9 Qt::LocalTime) Gentry place pose "place" true
+[Debug]2026-01-13 11:25:12: QDateTime(2026-01-13 11:25:12.768 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:25:12: QDateTime(2026-01-13 11:25:12.769 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 93 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:25:13: QDateTime(2026-01-13 11:25:13.927 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 -260000 pulse"
+[Debug]2026-01-13 11:25:13: Gentry position unknown: "X:-260000, Z:-250000, P:-25020, place_cmd: 74000, -250000 , -25020"
+[Debug]2026-01-13 11:25:13: QDateTime(2026-01-13 11:25:13.929 GMT+9 Qt::LocalTime) "Gentry currentPose=none"
+[Debug]2026-01-13 11:25:13: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:25:14: QDateTime(2026-01-13 11:25:14.614 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:25:14: QDateTime(2026-01-13 11:25:14.615 GMT+9 Qt::LocalTime) "Gentry currentPose=standby"
+[Debug]2026-01-13 11:25:14: "Gentry gantry command finished: OK"
+[Info]2026-01-13 11:25:15: QDateTime(2026-01-13 11:25:15.592 GMT+9 Qt::LocalTime) :  IDLE  Complete
+[Debug]2026-01-13 11:25:15: QDateTime(2026-01-13 11:25:15.603 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:25:15: QDateTime(2026-01-13 11:25:15.603 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:25:16: QDateTime(2026-01-13 11:25:16.213 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"change\",\"robot\":\"a\",\"seq\":0,\"tool\":{\"from\":\"sorting\",\"to\":\"bulk\"},\"ts\":\"2026-01-13T02:21:58Z\",\"type\":\"tool\"}"
+[Debug]2026-01-13 11:25:16: parse
+[Info]2026-01-13 11:25:20: QDateTime(2026-01-13 11:25:20.280 GMT+9 Qt::LocalTime) :  CAPTURE 2 Complete
+[Debug]2026-01-13 11:25:20: QDateTime(2026-01-13 11:25:20.780 GMT+9 Qt::LocalTime) "VisionClient::sendFeedbackPose json: {\"dir\":11,\"kind\":\"moving\",\"robot\":\"a\",\"seq\":0,\"tool\":{\"from\":\"sorting\",\"to\":\"bulk\"},\"type\":\"tool\"}"
+[Debug]2026-01-13 11:25:20: QDateTime(2026-01-13 11:25:20.780 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 99 bytes: {\"dir\":11,\"kind\":\"moving\",\"robot\":\"a\",\"seq\":0,\"tool\":{\"from\":\"sorting\",\"to\":\"bulk\"},\"type\":\"tool\"}"
+[Info]2026-01-13 11:25:56: QDateTime(2026-01-13 11:25:56.655 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:25:56: QDateTime(2026-01-13 11:25:56.656 GMT+9 Qt::LocalTime) :  Tool Complete
+[Debug]2026-01-13 11:25:56: QDateTime(2026-01-13 11:25:56.667 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 129 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"change\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"tool\":{\"from\":\"sorting\",\"to\":\"bulk\"},\"type\":\"tool\"}"
+[Debug]2026-01-13 11:25:57: QDateTime(2026-01-13 11:25:57.177 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"pick\",\"pose\":{\"rx\":180,\"ry\":0,\"rz\":0.5,\"x\":212.3147,\"y\":593.99,\"z\":-14.5406},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:22:39Z\",\"type\":\"bulk\"}"
+[Debug]2026-01-13 11:25:57: parse
+[Debug]2026-01-13 11:25:57: [RM] cmdBulk_DoPickup pose: 212.315 593.99 -14.5406 180 0 0.5
+[Info]2026-01-13 11:25:57: QDateTime(2026-01-13 11:25:57.230 GMT+9 Qt::LocalTime) :  command Start
+[Info]2026-01-13 11:26:11: QDateTime(2026-01-13 11:26:11.970 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:26:11: QDateTime(2026-01-13 11:26:11.971 GMT+9 Qt::LocalTime) :  Bulk Pick Complete
+[Debug]2026-01-13 11:26:11: QDateTime(2026-01-13 11:26:11.982 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"bulk\"}"
+[Debug]2026-01-13 11:26:11: QDateTime(2026-01-13 11:26:11.982 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 89 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"bulk\"}"
+[Debug]2026-01-13 11:26:12: QDateTime(2026-01-13 11:26:12.493 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"place\",\"pose\":{\"rx\":180,\"ry\":0,\"rz\":-90,\"x\":216.2559,\"y\":38.0576,\"z\":230.5459},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:22:54Z\",\"type\":\"bulk\"}"
+[Debug]2026-01-13 11:26:12: parse
+[Debug]2026-01-13 11:26:12: [RM] cmdBulk_DoPlace pose: 216.256 38.0576 230.546 180 0 -90
+[Info]2026-01-13 11:26:12: QDateTime(2026-01-13 11:26:12.546 GMT+9 Qt::LocalTime) :  command Start
+[Info]2026-01-13 11:26:26: QDateTime(2026-01-13 11:26:26.467 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:26:26: QDateTime(2026-01-13 11:26:26.468 GMT+9 Qt::LocalTime) :  Bulk Place Complete
+[Debug]2026-01-13 11:26:26: QDateTime(2026-01-13 11:26:26.479 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"bulk\"}"
+[Debug]2026-01-13 11:26:26: QDateTime(2026-01-13 11:26:26.480 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 90 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"bulk\"}"
+[Debug]2026-01-13 11:26:29: QDateTime(2026-01-13 11:26:29.902 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"change\",\"robot\":\"a\",\"seq\":0,\"tool\":{\"from\":\"bulk\",\"to\":\"sorting\"},\"ts\":\"2026-01-13T02:23:12Z\",\"type\":\"tool\"}"
+[Debug]2026-01-13 11:26:29: parse
+[Info]2026-01-13 11:26:30: QDateTime(2026-01-13 11:26:30.218 GMT+9 Qt::LocalTime) :  command Start
+[Info]2026-01-13 11:26:30: QDateTime(2026-01-13 11:26:30.405 GMT+9 Qt::LocalTime) :  CAPTURE 1 Complete
+[Debug]2026-01-13 11:26:30: QDateTime(2026-01-13 11:26:30.906 GMT+9 Qt::LocalTime) "VisionClient::sendFeedbackPose json: {\"dir\":11,\"kind\":\"moving\",\"robot\":\"a\",\"seq\":0,\"tool\":{\"from\":\"bulk\",\"to\":\"sorting\"},\"type\":\"tool\"}"
+[Debug]2026-01-13 11:26:30: QDateTime(2026-01-13 11:26:30.906 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 99 bytes: {\"dir\":11,\"kind\":\"moving\",\"robot\":\"a\",\"seq\":0,\"tool\":{\"from\":\"bulk\",\"to\":\"sorting\"},\"type\":\"tool\"}"
+[Info]2026-01-13 11:27:05: QDateTime(2026-01-13 11:27:05.217 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:27:05: QDateTime(2026-01-13 11:27:05.218 GMT+9 Qt::LocalTime) :  Tool Complete
+[Debug]2026-01-13 11:27:05: QDateTime(2026-01-13 11:27:05.229 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 129 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"change\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"tool\":{\"from\":\"bulk\",\"to\":\"sorting\"},\"type\":\"tool\"}"
+[Debug]2026-01-13 11:27:07: QDateTime(2026-01-13 11:27:07.250 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":false,\"kind\":\"pick\",\"offset\":{\"height\":20,\"thickness\":37},\"pose\":{\"rx\":-172.8163535377348,\"ry\":-2.110707688413599,\"rz\":105.6308822631836,\"x\":292.41398024261554,\"y\":254.8471903599309,\"z\":-7.697031415425499},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:23:49Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:07: parse
+[Debug]2026-01-13 11:27:07: Input Euler Angles (ZYX) in degrees: -172.816 -2.11071 105.631
+[Debug]2026-01-13 11:27:07: Updated Euler Angles (ZYX) in degrees: 165.651 -7.27537 -178.233
+[Debug]2026-01-13 11:27:07: Normalized Euler Angles (ZYX) in degrees: -178.233 -7.27537 165.651
+[Info]2026-01-13 11:27:07: QDateTime(2026-01-13 11:27:07.343 GMT+9 Qt::LocalTime) :  command Start
+[Info]2026-01-13 11:27:18: QDateTime(2026-01-13 11:27:18.718 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:27:18: RobotManager::processPulse PICK nonflip key= "A_pick_nonFlip"
+[Info]2026-01-13 11:27:18: QDateTime(2026-01-13 11:27:18.720 GMT+9 Qt::LocalTime) :  Sort Pick_non-Flip Complete
+[Debug]2026-01-13 11:27:18: QDateTime(2026-01-13 11:27:18.731 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:18: QDateTime(2026-01-13 11:27:18.732 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:18: RobotManager::processPulse PICK complete key= "A_pick_nonFlip"
+[Debug]2026-01-13 11:27:19: QDateTime(2026-01-13 11:27:19.247 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":false,\"kind\":\"place\",\"offset\":{\"height\":20,\"thickness\":37},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:24:01Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:19: parse
+[Debug]2026-01-13 11:27:19: Robot place without flip "standby"
+[Info]2026-01-13 11:27:19: QDateTime(2026-01-13 11:27:19.342 GMT+9 Qt::LocalTime) :  command Start
+[Info]2026-01-13 11:27:29: QDateTime(2026-01-13 11:27:29.905 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:27:29: QDateTime(2026-01-13 11:27:29.906 GMT+9 Qt::LocalTime) :  Sort Place Complete
+[Debug]2026-01-13 11:27:29: QDateTime(2026-01-13 11:27:29.917 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:29: QDateTime(2026-01-13 11:27:29.918 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 93 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:29: QDateTime(2026-01-13 11:27:29.927 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:29: QDateTime(2026-01-13 11:27:29.927 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:30: QDateTime(2026-01-13 11:27:30.530 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"forward\",\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:24:12Z\",\"type\":\"conveyor\"}"
+[Debug]2026-01-13 11:27:30: parse
+[Info]2026-01-13 11:27:30: QDateTime(2026-01-13 11:27:30.532 GMT+9 Qt::LocalTime) KJW Robot A Conveyor Forward command received
+[Debug]2026-01-13 11:27:30: QDateTime(2026-01-13 11:27:30.533 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":false,\"kind\":\"pick\",\"offset\":{\"height\":20,\"thickness\":37},\"pose\":{\"rx\":-172.48687626172716,\"ry\":-0.28101874338617405,\"rz\":109.69410705566406,\"x\":357.0549682345441,\"y\":-103.28139411059601,\"z\":-8.394481715448364},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:24:12Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:30: parse
+[Debug]2026-01-13 11:27:30: Input Euler Angles (ZYX) in degrees: -172.487 -0.281019 109.694
+[Debug]2026-01-13 11:27:30: Updated Euler Angles (ZYX) in degrees: 169.508 -6.64323 -176.472
+[Debug]2026-01-13 11:27:30: Normalized Euler Angles (ZYX) in degrees: -176.472 -6.64323 169.508
+[Info]2026-01-13 11:27:30: QDateTime(2026-01-13 11:27:30.592 GMT+9 Qt::LocalTime) :  command Start
+[Info]2026-01-13 11:27:32: QDateTime(2026-01-13 11:27:32.850 GMT+9 Qt::LocalTime) KJW "Conveyor command finished: OK"
+[Info]2026-01-13 11:27:40: QDateTime(2026-01-13 11:27:40.343 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:27:40: RobotManager::processPulse PICK nonflip key= "A_pick_nonFlip"
+[Info]2026-01-13 11:27:40: QDateTime(2026-01-13 11:27:40.345 GMT+9 Qt::LocalTime) :  Sort Pick_non-Flip Complete
+[Debug]2026-01-13 11:27:40: QDateTime(2026-01-13 11:27:40.356 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:40: QDateTime(2026-01-13 11:27:40.357 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:40: RobotManager::processPulse PICK complete key= "A_pick_nonFlip"
+[Debug]2026-01-13 11:27:40: QDateTime(2026-01-13 11:27:40.871 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":false,\"kind\":\"place\",\"offset\":{\"height\":20,\"thickness\":37},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:24:23Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:40: parse
+[Debug]2026-01-13 11:27:40: Robot place without flip "standby"
+[Info]2026-01-13 11:27:40: QDateTime(2026-01-13 11:27:40.967 GMT+9 Qt::LocalTime) :  command Start
+[Info]2026-01-13 11:27:49: QDateTime(2026-01-13 11:27:49.905 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:27:49: QDateTime(2026-01-13 11:27:49.906 GMT+9 Qt::LocalTime) :  Sort Place Complete
+[Debug]2026-01-13 11:27:49: QDateTime(2026-01-13 11:27:49.917 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:49: QDateTime(2026-01-13 11:27:49.917 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 93 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:49: QDateTime(2026-01-13 11:27:49.927 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:49: QDateTime(2026-01-13 11:27:49.927 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:50: QDateTime(2026-01-13 11:27:50.535 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"forward\",\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:24:32Z\",\"type\":\"conveyor\"}"
+[Debug]2026-01-13 11:27:50: parse
+[Info]2026-01-13 11:27:50: QDateTime(2026-01-13 11:27:50.536 GMT+9 Qt::LocalTime) KJW Robot A Conveyor Forward command received
+[Debug]2026-01-13 11:27:50: QDateTime(2026-01-13 11:27:50.537 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"pick\",\"offset\":{\"height\":20,\"thickness\":37},\"pose\":{\"rx\":-152.34948287606082,\"ry\":3.060887370212215,\"rz\":-95.88492584228516,\"x\":361.0497318409788,\"y\":139.7630424928002,\"z\":-3.9538426317441804},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:24:32Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:27:50: parse
+[Debug]2026-01-13 11:27:50: Input Euler Angles (ZYX) in degrees: -152.349 3.06089 -95.8849
+[Debug]2026-01-13 11:27:50: Updated Euler Angles (ZYX) in degrees: 84.1151 176.939 27.6505
+[Debug]2026-01-13 11:27:50: Normalized Euler Angles (ZYX) in degrees: -152.349 3.06089 -95.8849
+[Info]2026-01-13 11:27:50: QDateTime(2026-01-13 11:27:50.655 GMT+9 Qt::LocalTime) :  command Start
+[Debug]2026-01-13 11:27:50: QDateTime(2026-01-13 11:27:50.896 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -14000 pulse"
+[Debug]2026-01-13 11:27:51: QDateTime(2026-01-13 11:27:51.302 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:27:51: QDateTime(2026-01-13 11:27:51.520 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:27:51: QDateTime(2026-01-13 11:27:51.521 GMT+9 Qt::LocalTime) "Gentry currentPose=docking"
+[Debug]2026-01-13 11:27:51: "Gentry gantry command finished: OK"
+[Info]2026-01-13 11:27:52: QDateTime(2026-01-13 11:27:52.849 GMT+9 Qt::LocalTime) KJW "Conveyor command finished: OK"
+[Debug]2026-01-13 11:28:14: RobotManager::processPulse PICK key= "A_pick"
+[Info]2026-01-13 11:28:14: QDateTime(2026-01-13 11:28:14.843 GMT+9 Qt::LocalTime) :  Sort Pick_Flip Complete
+[Debug]2026-01-13 11:28:14: QDateTime(2026-01-13 11:28:14.854 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:28:14: QDateTime(2026-01-13 11:28:14.854 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:28:14: RobotManager::processPulse PICK complete key= "A_pick"
+[Debug]2026-01-13 11:28:15: QDateTime(2026-01-13 11:28:15.369 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"place\",\"offset\":{\"height\":20,\"thickness\":37},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:24:57Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:28:15: parse
+[Debug]2026-01-13 11:28:15: QDateTime(2026-01-13 11:28:15.895 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 74000 pulse"
+[Debug]2026-01-13 11:28:16: QDateTime(2026-01-13 11:28:16.146 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 -25020 pulse"
+[Debug]2026-01-13 11:28:17: QDateTime(2026-01-13 11:28:17.051 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -250000 pulse"
+[Debug]2026-01-13 11:28:17: QDateTime(2026-01-13 11:28:17.052 GMT+9 Qt::LocalTime) "Gentry currentPose=place"
+[Debug]2026-01-13 11:28:17: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:28:17: QDateTime(2026-01-13 11:28:17.053 GMT+9 Qt::LocalTime) Gentry place pose "place" true
+[Debug]2026-01-13 11:28:17: QDateTime(2026-01-13 11:28:17.455 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:28:17: QDateTime(2026-01-13 11:28:17.456 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 93 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:28:18: QDateTime(2026-01-13 11:28:18.081 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"forward\",\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:25:00Z\",\"type\":\"conveyor\"}"
+[Debug]2026-01-13 11:28:18: parse
+[Info]2026-01-13 11:28:18: QDateTime(2026-01-13 11:28:18.082 GMT+9 Qt::LocalTime) KJW Robot A Conveyor Forward command received
+[Debug]2026-01-13 11:28:18: QDateTime(2026-01-13 11:28:18.614 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 -260000 pulse"
+[Debug]2026-01-13 11:28:18: Gentry position unknown: "X:-260000, Z:-250000, P:-25020, place_cmd: 74000, -250000 , -25020"
+[Debug]2026-01-13 11:28:18: QDateTime(2026-01-13 11:28:18.616 GMT+9 Qt::LocalTime) "Gentry currentPose=none"
+[Debug]2026-01-13 11:28:18: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:28:19: QDateTime(2026-01-13 11:28:19.301 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:28:19: QDateTime(2026-01-13 11:28:19.302 GMT+9 Qt::LocalTime) "Gentry currentPose=standby"
+[Debug]2026-01-13 11:28:19: "Gentry gantry command finished: OK"
+[Info]2026-01-13 11:28:20: QDateTime(2026-01-13 11:28:20.405 GMT+9 Qt::LocalTime) :  IDLE  Complete
+[Debug]2026-01-13 11:28:20: QDateTime(2026-01-13 11:28:20.416 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:28:20: QDateTime(2026-01-13 11:28:20.416 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Info]2026-01-13 11:28:20: QDateTime(2026-01-13 11:28:20.537 GMT+9 Qt::LocalTime) KJW "Conveyor command finished: OK"
+[Debug]2026-01-13 11:28:21: QDateTime(2026-01-13 11:28:21.028 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"pick\",\"offset\":{\"height\":20,\"thickness\":37},\"pose\":{\"rx\":-153.0722072214746,\"ry\":3.6758738356986744,\"rz\":-160.17794799804688,\"x\":220.04488309746085,\"y\":61.72738196888179,\"z\":-6.127539106651511},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:25:03Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:28:21: parse
+[Debug]2026-01-13 11:28:21: Input Euler Angles (ZYX) in degrees: -153.072 3.67587 -160.178
+[Debug]2026-01-13 11:28:21: Updated Euler Angles (ZYX) in degrees: 19.8221 176.324 26.9278
+[Debug]2026-01-13 11:28:21: Normalized Euler Angles (ZYX) in degrees: -153.072 3.67587 -160.178
+[Debug]2026-01-13 11:28:21: QDateTime(2026-01-13 11:28:21.364 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -14000 pulse"
+[Debug]2026-01-13 11:28:21: QDateTime(2026-01-13 11:28:21.864 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:28:21: QDateTime(2026-01-13 11:28:21.989 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:28:21: QDateTime(2026-01-13 11:28:21.990 GMT+9 Qt::LocalTime) "Gentry currentPose=docking"
+[Debug]2026-01-13 11:28:21: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:28:43: RobotManager::processPulse PICK key= "A_pick"
+[Info]2026-01-13 11:28:43: QDateTime(2026-01-13 11:28:43.906 GMT+9 Qt::LocalTime) :  Sort Pick_Flip Complete
+[Debug]2026-01-13 11:28:43: QDateTime(2026-01-13 11:28:43.917 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:28:43: QDateTime(2026-01-13 11:28:43.917 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:28:43: RobotManager::processPulse PICK complete key= "A_pick"
+[Debug]2026-01-13 11:28:44: QDateTime(2026-01-13 11:28:44.430 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"place\",\"offset\":{\"height\":20,\"thickness\":37},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:25:26Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:28:44: parse
+[Debug]2026-01-13 11:28:44: QDateTime(2026-01-13 11:28:44.958 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 74000 pulse"
+[Debug]2026-01-13 11:28:45: QDateTime(2026-01-13 11:28:45.208 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 -25020 pulse"
+[Debug]2026-01-13 11:28:46: QDateTime(2026-01-13 11:28:46.114 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -250000 pulse"
+[Debug]2026-01-13 11:28:46: QDateTime(2026-01-13 11:28:46.115 GMT+9 Qt::LocalTime) "Gentry currentPose=place"
+[Debug]2026-01-13 11:28:46: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:28:46: QDateTime(2026-01-13 11:28:46.116 GMT+9 Qt::LocalTime) Gentry place pose "place" true
+[Debug]2026-01-13 11:28:46: QDateTime(2026-01-13 11:28:46.518 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:28:46: QDateTime(2026-01-13 11:28:46.519 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 93 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:28:47: QDateTime(2026-01-13 11:28:47.676 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 -260000 pulse"
+[Debug]2026-01-13 11:28:47: Gentry position unknown: "X:-260000, Z:-250000, P:-25020, place_cmd: 74000, -250000 , -25020"
+[Debug]2026-01-13 11:28:47: QDateTime(2026-01-13 11:28:47.678 GMT+9 Qt::LocalTime) "Gentry currentPose=none"
+[Debug]2026-01-13 11:28:47: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:28:48: QDateTime(2026-01-13 11:28:48.364 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:28:48: QDateTime(2026-01-13 11:28:48.366 GMT+9 Qt::LocalTime) "Gentry currentPose=standby"
+[Debug]2026-01-13 11:28:48: "Gentry gantry command finished: OK"
+[Info]2026-01-13 11:28:49: QDateTime(2026-01-13 11:28:49.405 GMT+9 Qt::LocalTime) :  IDLE  Complete
+[Debug]2026-01-13 11:28:49: QDateTime(2026-01-13 11:28:49.416 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:28:49: QDateTime(2026-01-13 11:28:49.416 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:28:50: QDateTime(2026-01-13 11:28:50.028 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"change\",\"robot\":\"a\",\"seq\":0,\"tool\":{\"from\":\"sorting\",\"to\":\"bulk\"},\"ts\":\"2026-01-13T02:25:32Z\",\"type\":\"tool\"}"
+[Debug]2026-01-13 11:28:50: parse
+[Info]2026-01-13 11:28:54: QDateTime(2026-01-13 11:28:54.155 GMT+9 Qt::LocalTime) :  CAPTURE 2 Complete
+[Debug]2026-01-13 11:28:54: QDateTime(2026-01-13 11:28:54.656 GMT+9 Qt::LocalTime) "VisionClient::sendFeedbackPose json: {\"dir\":11,\"kind\":\"moving\",\"robot\":\"a\",\"seq\":0,\"tool\":{\"from\":\"sorting\",\"to\":\"bulk\"},\"type\":\"tool\"}"
+[Debug]2026-01-13 11:28:54: QDateTime(2026-01-13 11:28:54.657 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 99 bytes: {\"dir\":11,\"kind\":\"moving\",\"robot\":\"a\",\"seq\":0,\"tool\":{\"from\":\"sorting\",\"to\":\"bulk\"},\"type\":\"tool\"}"
+[Info]2026-01-13 11:29:30: QDateTime(2026-01-13 11:29:30.530 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:29:30: QDateTime(2026-01-13 11:29:30.531 GMT+9 Qt::LocalTime) :  Tool Complete
+[Debug]2026-01-13 11:29:30: QDateTime(2026-01-13 11:29:30.542 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 129 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"change\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"tool\":{\"from\":\"sorting\",\"to\":\"bulk\"},\"type\":\"tool\"}"
+[Debug]2026-01-13 11:29:31: QDateTime(2026-01-13 11:29:31.050 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"pick\",\"pose\":{\"rx\":180,\"ry\":0,\"rz\":-90,\"x\":288.7891,\"y\":791.2875,\"z\":-31.3411},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:26:13Z\",\"type\":\"bulk\"}"
+[Debug]2026-01-13 11:29:31: parse
+[Debug]2026-01-13 11:29:31: [RM] cmdBulk_DoPickup pose: 288.789 791.288 -31.3411 180 0 -90
+[Info]2026-01-13 11:29:31: QDateTime(2026-01-13 11:29:31.103 GMT+9 Qt::LocalTime) :  command Start
+[Info]2026-01-13 11:29:46: QDateTime(2026-01-13 11:29:46.592 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:29:46: QDateTime(2026-01-13 11:29:46.593 GMT+9 Qt::LocalTime) :  Bulk Pick Complete
+[Debug]2026-01-13 11:29:46: QDateTime(2026-01-13 11:29:46.604 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"bulk\"}"
+[Debug]2026-01-13 11:29:46: QDateTime(2026-01-13 11:29:46.605 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 89 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"bulk\"}"
+[Debug]2026-01-13 11:29:47: QDateTime(2026-01-13 11:29:47.114 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"place\",\"pose\":{\"rx\":180,\"ry\":0,\"rz\":-90,\"x\":216.2559,\"y\":38.0576,\"z\":230.5459},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:26:29Z\",\"type\":\"bulk\"}"
+[Debug]2026-01-13 11:29:47: parse
+[Debug]2026-01-13 11:29:47: [RM] cmdBulk_DoPlace pose: 216.256 38.0576 230.546 180 0 -90
+[Info]2026-01-13 11:29:47: QDateTime(2026-01-13 11:29:47.167 GMT+9 Qt::LocalTime) :  command Start
+[Info]2026-01-13 11:30:02: QDateTime(2026-01-13 11:30:02.217 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:30:02: QDateTime(2026-01-13 11:30:02.218 GMT+9 Qt::LocalTime) :  Bulk Place Complete
+[Debug]2026-01-13 11:30:02: QDateTime(2026-01-13 11:30:02.229 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"bulk\"}"
+[Debug]2026-01-13 11:30:02: QDateTime(2026-01-13 11:30:02.230 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 90 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"bulk\"}"
+[Debug]2026-01-13 11:30:05: QDateTime(2026-01-13 11:30:05.490 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"change\",\"robot\":\"a\",\"seq\":0,\"tool\":{\"from\":\"bulk\",\"to\":\"sorting\"},\"ts\":\"2026-01-13T02:26:47Z\",\"type\":\"tool\"}"
+[Debug]2026-01-13 11:30:05: parse
+[Info]2026-01-13 11:30:05: QDateTime(2026-01-13 11:30:05.718 GMT+9 Qt::LocalTime) :  command Start
+[Info]2026-01-13 11:30:05: QDateTime(2026-01-13 11:30:05.967 GMT+9 Qt::LocalTime) :  CAPTURE 1 Complete
+[Debug]2026-01-13 11:30:06: QDateTime(2026-01-13 11:30:06.468 GMT+9 Qt::LocalTime) "VisionClient::sendFeedbackPose json: {\"dir\":11,\"kind\":\"moving\",\"robot\":\"a\",\"seq\":0,\"tool\":{\"from\":\"bulk\",\"to\":\"sorting\"},\"type\":\"tool\"}"
+[Debug]2026-01-13 11:30:06: QDateTime(2026-01-13 11:30:06.468 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 99 bytes: {\"dir\":11,\"kind\":\"moving\",\"robot\":\"a\",\"seq\":0,\"tool\":{\"from\":\"bulk\",\"to\":\"sorting\"},\"type\":\"tool\"}"
+[Info]2026-01-13 11:30:40: QDateTime(2026-01-13 11:30:40.718 GMT+9 Qt::LocalTime) :  command Complete
+[Info]2026-01-13 11:30:40: QDateTime(2026-01-13 11:30:40.719 GMT+9 Qt::LocalTime) :  Tool Complete
+[Debug]2026-01-13 11:30:40: QDateTime(2026-01-13 11:30:40.730 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 129 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"change\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"tool\":{\"from\":\"bulk\",\"to\":\"sorting\"},\"type\":\"tool\"}"
+[Debug]2026-01-13 11:30:42: QDateTime(2026-01-13 11:30:42.830 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"pick\",\"offset\":{\"height\":20,\"thickness\":37},\"pose\":{\"rx\":-151.7950932809918,\"ry\":2.0840107952812934,\"rz\":-73.10540771484375,\"x\":303.1379817549787,\"y\":237.7475253062521,\"z\":-3.702360702482224},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:27:25Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:30:42: parse
+[Debug]2026-01-13 11:30:42: Input Euler Angles (ZYX) in degrees: -151.795 2.08401 -73.1054
+[Debug]2026-01-13 11:30:42: Updated Euler Angles (ZYX) in degrees: 106.895 177.916 28.2049
+[Debug]2026-01-13 11:30:42: Normalized Euler Angles (ZYX) in degrees: -151.795 2.08401 -73.1054
+[Info]2026-01-13 11:30:42: QDateTime(2026-01-13 11:30:42.905 GMT+9 Qt::LocalTime) :  command Start
+[Debug]2026-01-13 11:30:43: QDateTime(2026-01-13 11:30:43.208 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -14000 pulse"
+[Debug]2026-01-13 11:30:43: QDateTime(2026-01-13 11:30:43.614 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:30:43: QDateTime(2026-01-13 11:30:43.832 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:30:43: QDateTime(2026-01-13 11:30:43.833 GMT+9 Qt::LocalTime) "Gentry currentPose=docking"
+[Debug]2026-01-13 11:30:43: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:31:07: RobotManager::processPulse PICK key= "A_pick"
+[Info]2026-01-13 11:31:07: QDateTime(2026-01-13 11:31:07.468 GMT+9 Qt::LocalTime) :  Sort Pick_Flip Complete
+[Debug]2026-01-13 11:31:07: QDateTime(2026-01-13 11:31:07.479 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:31:07: QDateTime(2026-01-13 11:31:07.480 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:31:07: RobotManager::processPulse PICK complete key= "A_pick"
+[Debug]2026-01-13 11:31:07: QDateTime(2026-01-13 11:31:07.996 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"place\",\"offset\":{\"height\":20,\"thickness\":37},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:27:50Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:31:07: parse
+[Debug]2026-01-13 11:31:08: QDateTime(2026-01-13 11:31:08.583 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 74000 pulse"
+[Debug]2026-01-13 11:31:08: QDateTime(2026-01-13 11:31:08.833 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 -25020 pulse"
+[Debug]2026-01-13 11:31:09: QDateTime(2026-01-13 11:31:09.739 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -250000 pulse"
+[Debug]2026-01-13 11:31:09: QDateTime(2026-01-13 11:31:09.740 GMT+9 Qt::LocalTime) "Gentry currentPose=place"
+[Debug]2026-01-13 11:31:09: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:31:09: QDateTime(2026-01-13 11:31:09.741 GMT+9 Qt::LocalTime) Gentry place pose "place" true
+[Debug]2026-01-13 11:31:10: QDateTime(2026-01-13 11:31:10.143 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:31:10: QDateTime(2026-01-13 11:31:10.144 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 93 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:31:10: QDateTime(2026-01-13 11:31:10.758 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"forward\",\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:27:53Z\",\"type\":\"conveyor\"}"
+[Debug]2026-01-13 11:31:10: parse
+[Info]2026-01-13 11:31:10: QDateTime(2026-01-13 11:31:10.760 GMT+9 Qt::LocalTime) KJW Robot A Conveyor Forward command received
+[Debug]2026-01-13 11:31:11: QDateTime(2026-01-13 11:31:11.302 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 -260000 pulse"
+[Debug]2026-01-13 11:31:11: Gentry position unknown: "X:-260000, Z:-250000, P:-25020, place_cmd: 74000, -250000 , -25020"
+[Debug]2026-01-13 11:31:11: QDateTime(2026-01-13 11:31:11.304 GMT+9 Qt::LocalTime) "Gentry currentPose=none"
+[Debug]2026-01-13 11:31:11: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:31:11: QDateTime(2026-01-13 11:31:11.989 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:31:11: QDateTime(2026-01-13 11:31:11.990 GMT+9 Qt::LocalTime) "Gentry currentPose=standby"
+[Debug]2026-01-13 11:31:11: "Gentry gantry command finished: OK"
+[Info]2026-01-13 11:31:12: QDateTime(2026-01-13 11:31:12.967 GMT+9 Qt::LocalTime) :  IDLE  Complete
+[Debug]2026-01-13 11:31:12: QDateTime(2026-01-13 11:31:12.978 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:31:12: QDateTime(2026-01-13 11:31:12.978 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Info]2026-01-13 11:31:13: QDateTime(2026-01-13 11:31:13.224 GMT+9 Qt::LocalTime) KJW "Conveyor command finished: OK"
+[Debug]2026-01-13 11:31:13: QDateTime(2026-01-13 11:31:13.587 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"pick\",\"offset\":{\"height\":20,\"thickness\":37},\"pose\":{\"rx\":-153.14920025104578,\"ry\":4.369056244918018,\"rz\":-160.7680206298828,\"x\":220.4190040641742,\"y\":60.250736306751264,\"z\":-5.568562504003694},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:27:55Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:31:13: parse
+[Debug]2026-01-13 11:31:13: Input Euler Angles (ZYX) in degrees: -153.149 4.36906 -160.768
+[Debug]2026-01-13 11:31:13: Updated Euler Angles (ZYX) in degrees: 19.232 175.631 26.8508
+[Debug]2026-01-13 11:31:13: Normalized Euler Angles (ZYX) in degrees: -153.149 4.36906 -160.768
+[Debug]2026-01-13 11:31:13: QDateTime(2026-01-13 11:31:13.957 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -14000 pulse"
+[Debug]2026-01-13 11:31:14: QDateTime(2026-01-13 11:31:14.364 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:31:14: QDateTime(2026-01-13 11:31:14.583 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:31:14: QDateTime(2026-01-13 11:31:14.584 GMT+9 Qt::LocalTime) "Gentry currentPose=docking"
+[Debug]2026-01-13 11:31:14: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:31:36: RobotManager::processPulse PICK key= "A_pick"
+[Info]2026-01-13 11:31:36: QDateTime(2026-01-13 11:31:36.468 GMT+9 Qt::LocalTime) :  Sort Pick_Flip Complete
+[Debug]2026-01-13 11:31:36: QDateTime(2026-01-13 11:31:36.479 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:31:36: QDateTime(2026-01-13 11:31:36.480 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:31:36: RobotManager::processPulse PICK complete key= "A_pick"
+[Debug]2026-01-13 11:31:36: QDateTime(2026-01-13 11:31:36.990 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"place\",\"offset\":{\"height\":20,\"thickness\":37},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:28:19Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:31:36: parse
+[Debug]2026-01-13 11:31:37: QDateTime(2026-01-13 11:31:37.551 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 74000 pulse"
+[Debug]2026-01-13 11:31:37: QDateTime(2026-01-13 11:31:37.802 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 -25020 pulse"
+[Debug]2026-01-13 11:31:38: QDateTime(2026-01-13 11:31:38.708 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -250000 pulse"
+[Debug]2026-01-13 11:31:38: QDateTime(2026-01-13 11:31:38.709 GMT+9 Qt::LocalTime) "Gentry currentPose=place"
+[Debug]2026-01-13 11:31:38: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:31:38: QDateTime(2026-01-13 11:31:38.711 GMT+9 Qt::LocalTime) Gentry place pose "place" true
+[Debug]2026-01-13 11:31:39: QDateTime(2026-01-13 11:31:39.112 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:31:39: QDateTime(2026-01-13 11:31:39.113 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 93 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:31:39: QDateTime(2026-01-13 11:31:39.728 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"forward\",\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:28:22Z\",\"type\":\"conveyor\"}"
+[Debug]2026-01-13 11:31:39: parse
+[Info]2026-01-13 11:31:39: QDateTime(2026-01-13 11:31:39.729 GMT+9 Qt::LocalTime) KJW Robot A Conveyor Forward command received
+[Debug]2026-01-13 11:31:40: QDateTime(2026-01-13 11:31:40.270 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 -260000 pulse"
+[Debug]2026-01-13 11:31:40: Gentry position unknown: "X:-260000, Z:-250000, P:-25020, place_cmd: 74000, -250000 , -25020"
+[Debug]2026-01-13 11:31:40: QDateTime(2026-01-13 11:31:40.272 GMT+9 Qt::LocalTime) "Gentry currentPose=none"
+[Debug]2026-01-13 11:31:40: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:31:40: QDateTime(2026-01-13 11:31:40.958 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:31:40: QDateTime(2026-01-13 11:31:40.959 GMT+9 Qt::LocalTime) "Gentry currentPose=standby"
+[Debug]2026-01-13 11:31:40: "Gentry gantry command finished: OK"
+[Info]2026-01-13 11:31:41: QDateTime(2026-01-13 11:31:41.967 GMT+9 Qt::LocalTime) :  IDLE  Complete
+[Debug]2026-01-13 11:31:41: QDateTime(2026-01-13 11:31:41.978 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:31:41: QDateTime(2026-01-13 11:31:41.978 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Info]2026-01-13 11:31:42: QDateTime(2026-01-13 11:31:42.099 GMT+9 Qt::LocalTime) KJW "Conveyor command finished: OK"
+[Debug]2026-01-13 11:31:42: QDateTime(2026-01-13 11:31:42.592 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"pick\",\"offset\":{\"height\":20,\"thickness\":37},\"pose\":{\"rx\":-152.37562949121138,\"ry\":3.427243813116081,\"rz\":-94.22306060791016,\"x\":366.0111566892132,\"y\":138.95736195516292,\"z\":-4.2584060713376175},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:28:24Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:31:42: parse
+[Debug]2026-01-13 11:31:42: Input Euler Angles (ZYX) in degrees: -152.376 3.42724 -94.2231
+[Debug]2026-01-13 11:31:42: Updated Euler Angles (ZYX) in degrees: 85.7769 176.573 27.6244
+[Debug]2026-01-13 11:31:42: Normalized Euler Angles (ZYX) in degrees: -152.376 3.42724 -94.2231
+[Debug]2026-01-13 11:31:42: QDateTime(2026-01-13 11:31:42.927 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -14000 pulse"
+[Debug]2026-01-13 11:31:43: QDateTime(2026-01-13 11:31:43.427 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:31:43: QDateTime(2026-01-13 11:31:43.551 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:31:43: QDateTime(2026-01-13 11:31:43.552 GMT+9 Qt::LocalTime) "Gentry currentPose=docking"
+[Debug]2026-01-13 11:31:43: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:32:05: RobotManager::processPulse PICK key= "A_pick"
+[Info]2026-01-13 11:32:05: QDateTime(2026-01-13 11:32:05.469 GMT+9 Qt::LocalTime) :  Sort Pick_Flip Complete
+[Debug]2026-01-13 11:32:05: QDateTime(2026-01-13 11:32:05.480 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:32:05: QDateTime(2026-01-13 11:32:05.481 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:32:05: RobotManager::processPulse PICK complete key= "A_pick"
+[Debug]2026-01-13 11:32:05: QDateTime(2026-01-13 11:32:05.991 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"place\",\"offset\":{\"height\":20,\"thickness\":37},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:28:48Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:32:05: parse
+[Debug]2026-01-13 11:32:06: QDateTime(2026-01-13 11:32:06.520 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 74000 pulse"
+[Debug]2026-01-13 11:32:06: QDateTime(2026-01-13 11:32:06.770 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 -25020 pulse"
+[Debug]2026-01-13 11:32:07: QDateTime(2026-01-13 11:32:07.677 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -250000 pulse"
+[Debug]2026-01-13 11:32:07: QDateTime(2026-01-13 11:32:07.679 GMT+9 Qt::LocalTime) "Gentry currentPose=place"
+[Debug]2026-01-13 11:32:07: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:32:07: QDateTime(2026-01-13 11:32:07.680 GMT+9 Qt::LocalTime) Gentry place pose "place" true
+[Debug]2026-01-13 11:32:08: QDateTime(2026-01-13 11:32:08.082 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:32:08: QDateTime(2026-01-13 11:32:08.083 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 93 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"place\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:32:08: QDateTime(2026-01-13 11:32:08.701 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"kind\":\"forward\",\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:28:51Z\",\"type\":\"conveyor\"}"
+[Debug]2026-01-13 11:32:08: parse
+[Info]2026-01-13 11:32:08: QDateTime(2026-01-13 11:32:08.702 GMT+9 Qt::LocalTime) KJW Robot A Conveyor Forward command received
+[Debug]2026-01-13 11:32:09: QDateTime(2026-01-13 11:32:09.240 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 -260000 pulse"
+[Debug]2026-01-13 11:32:09: Gentry position unknown: "X:-260000, Z:-250000, P:-25020, place_cmd: 74000, -250000 , -25020"
+[Debug]2026-01-13 11:32:09: QDateTime(2026-01-13 11:32:09.242 GMT+9 Qt::LocalTime) "Gentry currentPose=none"
+[Debug]2026-01-13 11:32:09: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:32:09: QDateTime(2026-01-13 11:32:09.927 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:32:09: QDateTime(2026-01-13 11:32:09.928 GMT+9 Qt::LocalTime) "Gentry currentPose=standby"
+[Debug]2026-01-13 11:32:09: "Gentry gantry command finished: OK"
+[Info]2026-01-13 11:32:10: QDateTime(2026-01-13 11:32:10.967 GMT+9 Qt::LocalTime) :  IDLE  Complete
+[Debug]2026-01-13 11:32:10: QDateTime(2026-01-13 11:32:10.978 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:32:10: QDateTime(2026-01-13 11:32:10.979 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Info]2026-01-13 11:32:11: QDateTime(2026-01-13 11:32:11.037 GMT+9 Qt::LocalTime) KJW "Conveyor command finished: OK"
+[Debug]2026-01-13 11:32:11: QDateTime(2026-01-13 11:32:11.588 GMT+9 Qt::LocalTime) VisionClient line received: "{\"dir\":1,\"flip\":true,\"kind\":\"pick\",\"offset\":{\"height\":20,\"thickness\":37},\"pose\":{\"rx\":-152.14419279093974,\"ry\":2.9692692685839517,\"rz\":-101.36522674560547,\"x\":328.37529057510847,\"y\":-44.24967096526643,\"z\":-5.171235654849738},\"robot\":\"a\",\"seq\":0,\"ts\":\"2026-01-13T02:28:53Z\",\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:32:11: parse
+[Debug]2026-01-13 11:32:11: Input Euler Angles (ZYX) in degrees: -152.144 2.96927 -101.365
+[Debug]2026-01-13 11:32:11: Updated Euler Angles (ZYX) in degrees: 78.6348 177.031 27.8558
+[Debug]2026-01-13 11:32:11: Normalized Euler Angles (ZYX) in degrees: -152.144 2.96927 -101.365
+[Debug]2026-01-13 11:32:12: QDateTime(2026-01-13 11:32:12.396 GMT+9 Qt::LocalTime) "3번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:32:12: QDateTime(2026-01-13 11:32:12.614 GMT+9 Qt::LocalTime) "1번 모터 이동 완료: 목표 0 pulse"
+[Debug]2026-01-13 11:32:13: QDateTime(2026-01-13 11:32:13.489 GMT+9 Qt::LocalTime) "2번 모터 이동 완료: 목표 -14000 pulse"
+[Debug]2026-01-13 11:32:13: QDateTime(2026-01-13 11:32:13.491 GMT+9 Qt::LocalTime) "Gentry currentPose=docking"
+[Debug]2026-01-13 11:32:13: "Gentry gantry command finished: OK"
+[Debug]2026-01-13 11:32:35: RobotManager::processPulse PICK key= "A_pick"
+[Info]2026-01-13 11:32:35: QDateTime(2026-01-13 11:32:35.281 GMT+9 Qt::LocalTime) :  Sort Pick_Flip Complete
+[Debug]2026-01-13 11:32:35: QDateTime(2026-01-13 11:32:35.292 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:32:35: QDateTime(2026-01-13 11:32:35.292 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"pick\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:32:35: RobotManager::processPulse PICK complete key= "A_pick"
+[Info]2026-01-13 11:32:40: QDateTime(2026-01-13 11:32:40.843 GMT+9 Qt::LocalTime) :  IDLE  Complete
+[Debug]2026-01-13 11:32:40: QDateTime(2026-01-13 11:32:40.853 GMT+9 Qt::LocalTime) "VisionClient::sendWorkComplete json: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
+[Debug]2026-01-13 11:32:40: QDateTime(2026-01-13 11:32:40.853 GMT+9 Qt::LocalTime) "VisionClient::onTxJson sent 92 bytes: {\"dir\":11,\"error_code\":0,\"kind\":\"idle\",\"robot\":\"a\",\"seq\":0,\"success\":true,\"type\":\"sorting\"}"
