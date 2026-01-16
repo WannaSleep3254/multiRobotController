@@ -169,6 +169,11 @@ private:
 
     QMap<QString, bool> m_workCompleteSent;
 
+    int old_Run_[2]{0,0};
+    bool old_Limit_[2]{false,false};
+    bool old_Collision_[2]{false,false};
+    int old_MainError_[2]{0,0};
+    int old_SubError_[2]{0,0};
 };
 
 #endif // ROBOTMANAGER_H

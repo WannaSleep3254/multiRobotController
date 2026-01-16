@@ -87,6 +87,7 @@ signals:
     void currentRowChanged(int row);
     void finishedCurrentCycle();
     void processPulse(const QString& robotId, int idx); // idx: 0→DO3, 1→DO4, 2→DO5
+    void stateFeedback(const RobotStateFeedback& st);
 
 private slots:
     void cycle();
@@ -176,6 +177,11 @@ private:
 
     quint16 m_seq{0};
     float m_yawOffset{0.0f};
+
+private:
+    bool flag_state {false};
+    RobotStateFeedback st_;
+
 private:
     // 상태 전용 헬퍼: 여기서만 상태를 바꾸고, 시그널/로그를 함께 처리
     void setState(State s);

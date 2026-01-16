@@ -341,6 +341,60 @@ void RobotManager::hookSignals(const QString& id, ModbusClient* bus, Orchestrato
         emit log(QString("%1 (%2)").arg(line,id), lv);              // ★ 전체용
     });
 
+    connect(orch, &Orchestrator::stateFeedback, this, [this, id](const RobotStateFeedback& st) {
+/*
+        bool enabled = st.enabled;
+        int mode = st.mode;
+
+        int tool = st.toolNumber;
+*/
+        int run = st.runningState;
+
+        //int st.workpieceNumber  ;
+//        bool emg = st.emergencyStop;
+        bool limit = st.softLimitExceeded;
+        int mainError = st.mainError;
+        int subError = st.subError;
+        bool collision = st.collision;
+        //st.motionArrive     ;
+//        bool SI0 = st.safetyStopSI0;
+//        bool SI1 = st.safetyStopSI1;
+
+        int index=0;
+        if (id.toLower()=="a") index=0;
+        else if (id.toLower()=="b") index=1;
+
+        if(!old_Limit_[index] && limit)
+        {
+            m_vsrv->sendError(id,"limit", mainError, subError);
+        }
+        else if(!old_Collision_[index] && collision)
+        {
+            m_vsrv->sendError(id,"collision", mainError, subError);
+        }
+        else if((old_MainError_[index]==0)&& (mainError!=0))
+        {
+            if(mainError==1 && subError==22) // 긴급정지
+                m_vsrv->sendError(id,"limit", mainError, subError);
+            else
+                m_vsrv->sendError(id,QString::number(mainError),mainError, subError);
+        }
+        else if((old_SubError_[index]==0)&& (subError!=0))
+        {
+            m_vsrv->sendError(id,QString::number(subError), mainError, subError);
+        }
+        else if( (old_Run_[index]==2)&&(run==1) )
+        {
+            m_vsrv->sendError(id,"unreachable", mainError, subError);
+        }
+
+        old_Run_[index] = run;
+        old_Limit_[index] = limit;
+        old_Collision_[index] = collision;
+        old_MainError_[index] = mainError;
+        old_SubError_[index] = subError;
+    });
+
     connect(orch, &Orchestrator::processPulse, this, [this, id](const QString& rid, int idx){
         if (!m_vsrv) return;
         emit logByRobot(id, QString("[RM] processPulse from %1 idx=%2").arg(rid).arg(idx), Common::LogLevel::Info);
@@ -704,8 +758,8 @@ void RobotManager::triggerByKey(const QString& id, const QString& coilKey, int p
     steps << stepDelay(owner, pulseMs);
     steps << stepWriteCoil(owner, bus, addr, false);
     it->cmdq->enqueue(steps);
-*/
 
+*/
     QPointer<ModbusClient> busPtr = it->bus;
     busPtr->writeCoil(addr, true);
     QTimer::singleShot(pulseMs, this, [busPtr, addr]{
@@ -999,7 +1053,7 @@ void RobotManager::cmdSort_GentryTool(bool toggle)
 
     QPointer<ModbusClient> busPtr = it->bus;
     if (!busPtr) return;
-
+#if true
     QTimer::singleShot(10, this, [busPtr]{
         if (!busPtr) return;
         busPtr->writeCoil(303, false);  // Tool true
@@ -1014,6 +1068,21 @@ void RobotManager::cmdSort_GentryTool(bool toggle)
         if (!busPtr) return;
         busPtr->writeCoil(303, false);  // Tool true
     });
+#else
+    MbOp op1; op1.kind = MbOp::Kind::DelayMs; op1.delayMs = 10;
+    MbOp op2; op2.kind = MbOp::Kind::WriteCoil; op2.start = 303; op2.coilValue = false;
+    MbOp op3; op3.kind = MbOp::Kind::DelayMs; op3.delayMs = 40;
+    MbOp op4; op4.kind = MbOp::Kind::WriteCoil; op4.start = 303; op4.coilValue = true;
+    MbOp op5; op5.kind = MbOp::Kind::DelayMs; op5.delayMs = 450;
+    MbOp op6; op6.kind = MbOp::Kind::WriteCoil; op6.start = 303; op6.coilValue = false;
+
+    busPtr->enqueue(op1);
+    busPtr->enqueue(op2);
+    busPtr->enqueue(op3);
+    busPtr->enqueue(op4);
+    busPtr->enqueue(op5);
+    busPtr->enqueue(op6);
+#endif
 }
 
 void RobotManager::cmdSort_Arrange(const Pose6D &origin, const Pose6D &dest)

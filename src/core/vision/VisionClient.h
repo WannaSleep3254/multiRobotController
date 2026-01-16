@@ -27,6 +27,7 @@ public:
     void sendWorkComplete(const QString& robot, const QString& type, const QString& kind, quint32 seq, bool clampState = false);
     void sendToolComplete(const QString& robot, quint32 seq, bool state);
 
+    void sendError(const QString& robot, QString error, int code1=0, int code2=0);
     void enqueueJson(const QByteArray& json);
 
 signals:
@@ -58,6 +59,10 @@ private:
     QQueue<QByteArray> m_jsonQueue;
     QTimer m_jsonTimer;
     int m_jsonIntervalMs{1};
+
+private:
+    RobotCommand lasCmd_[2];
+    bool isMotion_[2];
 };
 
 #endif // VISIONCLIENT_H

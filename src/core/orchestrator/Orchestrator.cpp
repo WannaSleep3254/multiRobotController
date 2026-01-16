@@ -11,34 +11,35 @@
 #define DEG2RAD(deg) ((deg) * M_PI / 180.0)  // 도 → 라디안 변환
 #define RAD2DEG(rad) ((rad) * 180.0 / M_PI)  // 라디안 → 도 변환
 
-/////////////////////////////
- /*
-#include <cmath>
-constexpr double center = 90.0;   // 기준 yaw
-constexpr double range  = 60.0;   // 적용 범위 ±60°
-constexpr double maxOffset = 60.0;
-
-float getYawOffset(float rz)
+//////////////////////////////////
+// ✅ Modbus 펄스/딜레이를 "큐 체인"으로 구성하기 위한 헬퍼
+// (QTimer::singleShot으로 코일 ON/OFF를 날리면 Poll/Write와 interleave되어 펄스가 씹힐 수 있음)
+static MbOp DelayOp(int ms)
 {
-    float diff = rz-center;
-    if(std::abs(diff) > range)
-        return 0.0f;
-
-    double ratio = std::cos((diff / range) * M_PI_2); // 1 → 0
-    float m_yawOffset = maxOffset * ratio;
-
-    // 좌우 방향 부호
-    if (rz > center)
-        m_yawOffset = -m_yawOffset;
-
-    return m_yawOffset;
+    MbOp o;
+    o.kind    = MbOp::Kind::DelayMs;
+    o.delayMs = ms;
+    return o;
 }
 
-*/
+static MbOp CoilOp(int addr, bool v)
+{
+    MbOp o;
+    o.kind      = MbOp::Kind::WriteCoil;
+    o.start     = addr;
+    o.coilValue = v;
+    return o;
+}
 
-/////////////////////////////
-
-
+static MbOp HoldBlockOp(int base, const QVector<quint16>& regs)
+{
+    MbOp o;
+    o.kind        = MbOp::Kind::WriteHoldingBlock;
+    o.start       = base;
+    o.blockValues = regs;
+    return o;
+}
+//////////////////////////////////
 struct EulerZYX {
     double roll;
     double pitch;
@@ -148,7 +149,7 @@ static inline float regsToFloat(quint16 hi, quint16 lo) {
 Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* parent)
     : QObject(parent), m_bus(bus), m_model(model), m_cycleTimer(new QTimer(this))
 {
-    m_cycleTimer->setInterval(50);
+    m_cycleTimer->setInterval(25);
     connect(m_cycleTimer, &QTimer::timeout, this, &Orchestrator::cycle);
 
     // READY/DONE/BUSY 읽기 및 에지 처리
@@ -276,31 +277,31 @@ Orchestrator::Orchestrator(ModbusClient* bus, PickListModel* model, QObject* par
         if (data.isEmpty()) return;
 
         if(start==310 && data.size()>=13) {
-            RobotStateFeedback st;
+            st_.enabled          = (data[0] == 1);
+            st_.mode             = data[1];
+            st_.runningState     = data[2];
+            st_.toolNumber       = data[3];
+            st_.workpieceNumber  = data[4];
+            st_.emergencyStop    = (data[5] == 1);
+            st_.softLimitExceeded= (data[6] == 1);
+            st_.mainError        = static_cast<int>(data[7]);
+            st_.subError         = static_cast<int>(data[8]);
+            st_.collision        = (data[9] == 1);
+            st_.motionArrive     = (data[10] == 1);
+            st_.safetyStopSI0    = (data[11] == 1);
+            st_.safetyStopSI1    = (data[12] == 1);
 
-            st.enabled          = (data[0] == 1);
-            st.mode             = data[1];
-            st.runningState     = data[2];
-            st.toolNumber       = data[3];
-            st.workpieceNumber  = data[4];
-            st.emergencyStop    = (data[5] == 1);
-            st.softLimitExceeded= (data[6] == 1);
-            st.mainError        = data[7];
-            st.subError         = data[8];
-            st.collision        = (data[9] == 1);
-            st.motionArrive     = (data[10] == 1);
-            st.safetyStopSI0    = (data[11] == 1);
-            st.safetyStopSI1    = (data[12] == 1);
+            emit stateFeedback(st_);
 /*
             qDebug()<<"[RobotStateFeedback]"
-                    <<"enabled:"<<st.enabled
-                    <<"mode:"<<st.mode
-                    <<"runningState:"<<st.runningState
-                    <<"toolNumber:"<<st.toolNumber
-                    <<"workpieceNumber:"<<st.workpieceNumber
-                    <<"emergencyStop:"<<st.emergencyStop
-                    <<"softLimitExceeded:"<<st.softLimitExceeded
-                    <<"mainError:"<<st.mainError;
+                    <<"enabled:"<<st_.enabled
+                    <<"mode:"<<st_.mode
+                    <<"runningState:"<<st_.runningState
+                    <<"toolNumber:"<<st_.toolNumber
+                    <<"workpieceNumber:"<<st_.workpieceNumber
+                    <<"emergencyStop:"<<st_.emergencyStop
+                    <<"softLimitExceeded:"<<st_.softLimitExceeded
+                    <<"mainError:"<<st_.mainError;
 */
         }
         // 예: 주소 340부터 12개 레지스터 읽기
@@ -347,6 +348,12 @@ void Orchestrator::start()
     setState(State::WaitRobotReady);
     m_cycleTimer->start();
     m_stateTick.restart();
+
+    QVector<quint16> init;
+    init.resize(15);
+    init.fill(0);
+    m_bus->writeCoilBlock(A_PUBLISH_PICK, init);
+
 }
 
 void Orchestrator::stop()
@@ -420,25 +427,26 @@ void Orchestrator::applyAddressMap(const QVariantMap& m)
 
 void Orchestrator::cycle()
 {
-    // 상태 레지스터 주기적 읽기
-//    m_bus->readInputs(310, 13);
-#if false
-    // 조인트 값 읽기
-    if(IR_JOINT_BASE > 0)
-        m_bus->readInputs(IR_JOINT_BASE, IR_WORD_PER_POSE);
-    // TCP 값 읽기
-    if(IR_TCP_BASE > 0)
-        m_bus->readInputs(IR_TCP_BASE, IR_WORD_PER_POSE);
-#endif
-    m_bus->readDiscreteInputs(A_ROBOT_READY, 15);
-/*
+    if(flag_state)
+    {   // State_Feedback
+        m_bus->readInputs(310, 13);
+        flag_state=false;
+    }
+    else
+    {
+#if true
+        // Program_Status
+        m_bus->readDiscreteInputs(A_ROBOT_READY, 15);
+#else
     MbOp op;
     op.kind = MbOp::Kind::ReadDiscreteInputs;
     op.start = 100;
     op.count = 15;
     op.key = "poll:DI:100:15";
     m_bus->enqueue(op);
-*/
+#endif
+        flag_state=true;
+    }
 }
 
 QString Orchestrator::stateName(Orchestrator::State s)
@@ -484,6 +492,7 @@ void Orchestrator::publishPickPlacePoses(const QVector<double>& pick, const QVec
         floatToRegs(float(pick[i]), hi, lo);
         pick_regs << hi << lo;
     }
+#if true
     m_bus->writeHoldingBlock(pick_base, pick_regs);
     QTimer::singleShot(50, this, [this]{
         m_bus->writeCoil(A_PUBLISH_PICK, true);
@@ -491,7 +500,14 @@ void Orchestrator::publishPickPlacePoses(const QVector<double>& pick, const QVec
     QTimer::singleShot(200, this, [this]{
         m_bus->writeCoil(A_PUBLISH_PICK, false);
     });
-
+#else
+    // ✅ write → delay → ON → delay → OFF (큐에서 순서 보장)
+    m_bus->enqueue(HoldBlockOp(pick_base, pick_regs));
+    m_bus->enqueue(DelayOp(50));
+    m_bus->enqueue(CoilOp(A_PUBLISH_PICK, true));
+    m_bus->enqueue(DelayOp(150));
+    m_bus->enqueue(CoilOp(A_PUBLISH_PICK, false));
+#endif
     QVector<quint16> place_regs;
     place_regs.reserve(12);
     for (int i=0;i<6;i++) {
@@ -499,6 +515,7 @@ void Orchestrator::publishPickPlacePoses(const QVector<double>& pick, const QVec
         floatToRegs(float(place[i]), hi, lo);
         place_regs << hi << lo;
     }
+#if true
     m_bus->writeHoldingBlock(place_base, place_regs);
     QTimer::singleShot(50, this, [this]{
         m_bus->writeCoil(A_PUBLISH_PLACE, true);
@@ -506,6 +523,13 @@ void Orchestrator::publishPickPlacePoses(const QVector<double>& pick, const QVec
     QTimer::singleShot(200, this, [this]{
         m_bus->writeCoil(A_PUBLISH_PLACE, false);
     });
+#else
+    m_bus->enqueue(HoldBlockOp(place_base, place_regs));
+    m_bus->enqueue(DelayOp(50));
+    m_bus->enqueue(CoilOp(A_PUBLISH_PLACE, true));
+    m_bus->enqueue(DelayOp(150));
+    m_bus->enqueue(CoilOp(A_PUBLISH_PLACE, false));
+#endif
 }
 
 void Orchestrator::publishToolComnad(const QVector<quint16>& cmds)
@@ -556,13 +580,19 @@ void Orchestrator::publishSortPick(const QVector<double>& pose, bool flip, int o
     }
 
     m_bus->writeHoldingBlock(base, regs);
-
+#if true
     QTimer::singleShot(10, this, [this]{
         m_bus->writeCoil(A_PUBLISH_PICK, true);
     });
     QTimer::singleShot(500, this, [this]{
         m_bus->writeCoil(A_PUBLISH_PICK, false);
     });
+#else
+    m_bus->enqueue(DelayOp(10));
+    m_bus->enqueue(CoilOp(A_PUBLISH_PICK, true));
+    m_bus->enqueue(DelayOp(490));
+    m_bus->enqueue(CoilOp(A_PUBLISH_PICK, false));
+#endif
 }
 
 void Orchestrator::publishAlignPick(const QVector<double>& pose)
@@ -582,13 +612,19 @@ void Orchestrator::publishAlignPick(const QVector<double>& pose)
         regs << hi << lo;
     }
     m_bus->writeHoldingBlock(base, regs);
-
+#if true
     QTimer::singleShot(10, this, [this]{
         m_bus->writeCoil(A_PUBLISH_PICK, true);
     });
     QTimer::singleShot(500, this, [this]{
         m_bus->writeCoil(A_PUBLISH_PICK, false);
     });
+#else
+    m_bus->enqueue(DelayOp(10));
+    m_bus->enqueue(CoilOp(A_PUBLISH_PICK, true));
+    m_bus->enqueue(DelayOp(490));
+    m_bus->enqueue(CoilOp(A_PUBLISH_PICK, false));
+#endif
 }
 
 void Orchestrator::publishAlignPlace(const QVector<double>& pose, int clampSequenceMode)
@@ -616,13 +652,19 @@ void Orchestrator::publishAlignPlace(const QVector<double>& pose, int clampSeque
     qDebug()<<"SX-2: recv clamp_mode"<<clampSequenceMode<<", " <<float(static_cast<float>(clampSequenceMode));
 
     m_bus->writeHoldingBlock(base, regs);
-
+#if true
     QTimer::singleShot(10, this, [this]{
         m_bus->writeCoil(A_PUBLISH_PLACE, true);
     });
     QTimer::singleShot(500, this, [this]{
         m_bus->writeCoil(A_PUBLISH_PLACE, false);
     });
+#else
+    m_bus->enqueue(DelayOp(10));
+    m_bus->enqueue(CoilOp(A_PUBLISH_PLACE, true));
+    m_bus->enqueue(DelayOp(490));
+    m_bus->enqueue(CoilOp(A_PUBLISH_PLACE, false));
+#endif
 }
 
 void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct, const QString& kind)
@@ -688,21 +730,35 @@ void Orchestrator::publishPoseWithKind(const QVector<double>& pose, int speedPct
     // kind에 따라 coil 분기
     if (!kind.compare("place", Qt::CaseInsensitive) && A_PUBLISH_PLACE > 0)
     {   // kind가 "place"이고 A_PUBLISH_PLACE >= 0이면 해당 주소 사용
+#if true
         QTimer::singleShot(50, this, [this]{
             m_bus->writeCoil(A_PUBLISH_PLACE, true);
         });
         QTimer::singleShot(200, this, [this]{
             m_bus->writeCoil(A_PUBLISH_PLACE, false);
         });
+#else
+        m_bus->enqueue(DelayOp(50));
+        m_bus->enqueue(CoilOp(A_PUBLISH_PLACE, true));
+        m_bus->enqueue(DelayOp(150));
+        m_bus->enqueue(CoilOp(A_PUBLISH_PLACE, false));
+#endif
     }
     else if (!kind.compare("pick", Qt::CaseInsensitive) && A_PUBLISH_PICK >= 0)
     {   // kind가 "pick"이고 A_PUBLISH_PICK >= 0이면 해당 주소 사용
+#if true
         QTimer::singleShot(50, this, [this]{
             m_bus->writeCoil(A_PUBLISH_PICK, true);
         });
         QTimer::singleShot(200, this, [this]{
             m_bus->writeCoil(A_PUBLISH_PICK, false);
         });
+#else
+        m_bus->enqueue(DelayOp(50));
+        m_bus->enqueue(CoilOp(A_PUBLISH_PICK, true));
+        m_bus->enqueue(DelayOp(150));
+        m_bus->enqueue(CoilOp(A_PUBLISH_PICK, false));
+#endif
     }
 }
 
@@ -738,21 +794,35 @@ void Orchestrator::publishBulkPoseWithKind(const QVector<double>& pose, const QS
 
     if (!kind.compare("place", Qt::CaseInsensitive) && A_PUBLISH_PLACE > 0)
     {   // kind가 "place"이고 A_PUBLISH_PLACE >= 0이면 해당 주소 사용
+#if true
         QTimer::singleShot(50, this, [this]{
             m_bus->writeCoil(A_PUBLISH_PLACE, true);
         });
         QTimer::singleShot(200, this, [this]{
             m_bus->writeCoil(A_PUBLISH_PLACE, false);
         });
+#else
+        m_bus->enqueue(DelayOp(50));
+        m_bus->enqueue(CoilOp(A_PUBLISH_PLACE, true));
+        m_bus->enqueue(DelayOp(150));
+        m_bus->enqueue(CoilOp(A_PUBLISH_PLACE, false));
+#endif
     }
     else if (!kind.compare("pick", Qt::CaseInsensitive) && A_PUBLISH_PICK >= 0)
     {   // kind가 "pick"이고 A_PUBLISH_PICK >= 0이면 해당 주소 사용
+#if true
         QTimer::singleShot(50, this, [this]{
             m_bus->writeCoil(A_PUBLISH_PICK, true);
         });
         QTimer::singleShot(200, this, [this]{
             m_bus->writeCoil(A_PUBLISH_PICK, false);
         });
+#else
+        m_bus->enqueue(DelayOp(50));
+        m_bus->enqueue(CoilOp(A_PUBLISH_PICK, true));
+        m_bus->enqueue(DelayOp(150));
+        m_bus->enqueue(CoilOp(A_PUBLISH_PICK, false));
+#endif
     }
 }
 
@@ -826,12 +896,20 @@ void Orchestrator::publishArrangePoses(const QVector<double>& pick, const QVecto
         place_regs << hi << lo;
     }
     m_bus->writeHoldingBlock(place_base, place_regs);
+
+#if true
     QTimer::singleShot(50, this, [this]{
         m_bus->writeCoil(A_PUBLISH_PICK, true);
     });
     QTimer::singleShot(200, this, [this]{
         m_bus->writeCoil(A_PUBLISH_PICK, false);
     });
+#else
+    m_bus->enqueue(DelayOp(50));
+    m_bus->enqueue(CoilOp(A_PUBLISH_PICK, true));
+    m_bus->enqueue(DelayOp(150));
+    m_bus->enqueue(CoilOp(A_PUBLISH_PICK, false));
+#endif
 }
 
 void Orchestrator::publishBulkMode(const int &mode)

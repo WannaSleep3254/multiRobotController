@@ -15,8 +15,11 @@ class QTimer;
 
 struct MbOp {
     enum class Kind {
+//        ReadCoils, ReadHolding, ReadInputs, ReadDiscreteInputs,
+//        WriteCoil, WriteHolding, WriteHoldingBlock
         ReadCoils, ReadHolding, ReadInputs, ReadDiscreteInputs,
-        WriteCoil, WriteHolding, WriteHoldingBlock
+        WriteCoil, WriteCoilBlock, WriteHolding, WriteHoldingBlock,
+        DelayMs
     } kind;
 
     QUuid id;
@@ -29,6 +32,7 @@ struct MbOp {
     QVector<quint16> blockValues;
 
     // coalescing 키(폴링 중복 제거용)
+    int delayMs = 0; // DelayMs용
     QString key; // 예: "poll:DI:310:32"
 };
 
@@ -49,6 +53,7 @@ public:
     void readDiscreteInputs(int start, int count);
 
     void writeCoil(int addr, bool value);
+    void writeCoilBlock(int start, const QVector<quint16> &values);
     void writeHolding(int addr, quint16 value);
     void writeHoldingBlock(int start, const QVector<quint16>& values);
 

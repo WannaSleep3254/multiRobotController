@@ -294,8 +294,10 @@ void GentryManager::doGentryReady()
 
 void GentryManager::doConveyorForwardOneStep()
 {
-    m_conveyorDriver_->reqWriteShift(4, -402220);// conveyor 260mm shift
-
+//    m_conveyorDriver_->reqWriteShift(4, -402220);// conveyor 260mm shift
+    //m_conveyorDriver_->reqWriteShift(4, -397220);  // -402220+5000
+    m_conveyorDriver_->reqWriteShift(4, -395220);  // -402220+5000+2000
+    //26-01-16: -397220 --> -395220
     logMessage2("conveyor move fwd one step");
 }
 

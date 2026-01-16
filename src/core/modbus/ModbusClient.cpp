@@ -86,6 +86,7 @@ void ModbusClient::onTimeoutPing()
 
 void ModbusClient::readCoils(int start, int count)
 {
+#if false
     auto *reply = m_client->sendReadRequest(QModbusDataUnit(QModbusDataUnit::Coils, start, count), 1);
     if(!reply) return;
     connect(reply, &QModbusReply::finished, this, [this, reply, start]{
@@ -100,10 +101,19 @@ void ModbusClient::readCoils(int start, int count)
         emit coilsRead(start, data);
         reply->deleteLater();
     });
+#else
+    MbOp op;
+    op.kind  = MbOp::Kind::ReadCoils;
+    op.start = start;
+    op.count = count;
+    op.key   = QString("poll:CO:%1:%2").arg(start).arg(count); // 폴링이면 coalescing
+    enqueue(op);
+#endif
 }
 
 void ModbusClient::readHolding(int start, int count)
 {
+#if false
     auto *reply = m_client->sendReadRequest(QModbusDataUnit(QModbusDataUnit::HoldingRegisters, start, count), 1);
     if(!reply) {
         return;
@@ -121,10 +131,19 @@ void ModbusClient::readHolding(int start, int count)
         emit holdingRead(start, data);
         reply->deleteLater();
     });
+#else
+    MbOp op;
+    op.kind  = MbOp::Kind::ReadHolding;
+    op.start = start;
+    op.count = count;
+    op.key   = QString("poll:DI:%1:%2").arg(start).arg(count);
+    enqueue(op);
+#endif
 }
 
 void ModbusClient::readInputs(int start, int count)
 {
+#if false
     auto *reply = m_client->sendReadRequest(
         QModbusDataUnit(QModbusDataUnit::InputRegisters, start, count), 1);
     if (!reply)
@@ -143,10 +162,19 @@ void ModbusClient::readInputs(int start, int count)
         emit inputRead(start, data);
         reply->deleteLater();
     });
+#else
+    MbOp op;
+    op.kind  = MbOp::Kind::ReadInputs;
+    op.start = start;
+    op.count = count;
+    op.key   = QString("poll:DI:%1:%2").arg(start).arg(count);
+    enqueue(op);
+#endif
 }
 
 void ModbusClient:: readDiscreteInputs(int start, int count)
 {
+#if false
 //    qDebug()<<start<<count;
     auto *reply = m_client->sendReadRequest(
         QModbusDataUnit(QModbusDataUnit::DiscreteInputs, start, count), 1);
@@ -165,20 +193,59 @@ void ModbusClient:: readDiscreteInputs(int start, int count)
         emit discreteInputsRead(start, data);
         reply->deleteLater();
     });
+
+#else
+    MbOp op;
+    op.kind  = MbOp::Kind::ReadDiscreteInputs;
+    op.start = start;
+    op.count = count;
+    op.key   = QString("poll:DI:%1:%2").arg(start).arg(count);
+    enqueue(op);
+#endif
 }
 
 void ModbusClient::writeCoil(int addr, bool value)
 {
+#if false
     auto unit = QModbusDataUnit(QModbusDataUnit::Coils, addr, 1);
     unit.setValue(0, value);
     auto *reply = m_client->sendWriteRequest(unit, 1);
     if (reply) {
         connect(reply, &QModbusReply::finished, reply, &QObject::deleteLater);
     }
+#else
+    MbOp op;
+    op.kind      = MbOp::Kind::WriteCoil;
+    op.start     = addr;
+    op.coilValue = value;
+    enqueue(op);
+#endif
+}
+
+void ModbusClient::writeCoilBlock(int start, const QVector<quint16>& values)
+{
+#if false
+    auto unit = QModbusDataUnit(QModbusDataUnit::Coils, start, values.size());
+    for (int i=0;i<values.size();++i) {
+        unit.setValue(i, values[i]);
+    }
+
+    auto *reply = m_client->sendWriteRequest(unit, 1);
+    if (reply) {
+        connect(reply, &QModbusReply::finished, reply, &QObject::deleteLater);
+    }
+#else
+    MbOp op;
+    op.kind        = MbOp::Kind::WriteCoilBlock;
+    op.start       = start;
+    op.blockValues = values;
+    enqueue(op);
+#endif
 }
 
 void ModbusClient::writeHolding(int addr, quint16 value)
 {
+#if false
     auto unit = QModbusDataUnit(QModbusDataUnit::HoldingRegisters, addr, 1);
     unit.setValue(0, value);
 
@@ -186,10 +253,18 @@ void ModbusClient::writeHolding(int addr, quint16 value)
     if (reply) {
         connect(reply, &QModbusReply::finished, reply, &QObject::deleteLater);
     }
+#else
+    MbOp op;
+    op.kind         = MbOp::Kind::WriteHolding;
+    op.start        = addr;
+    op.holdingValue = value;
+    enqueue(op);
+#endif
 }
 
 void ModbusClient::writeHoldingBlock(int start, const QVector<quint16>& values)
 {
+#if false
     auto unit = QModbusDataUnit(QModbusDataUnit::HoldingRegisters, start, values.size());
     for (int i=0;i<values.size();++i) {
         unit.setValue(i, values[i]);
@@ -199,6 +274,13 @@ void ModbusClient::writeHoldingBlock(int start, const QVector<quint16>& values)
     if (reply) {
         connect(reply, &QModbusReply::finished, reply, &QObject::deleteLater);
     }
+#else
+    MbOp op;
+    op.kind        = MbOp::Kind::WriteHoldingBlock;
+    op.start       = start;
+    op.blockValues = values;
+    enqueue(op);
+#endif
 }
 
 bool ModbusClient::isConnected() const {
@@ -250,9 +332,24 @@ void ModbusClient::startOp(const MbOp& op)
         if (!op.key.isEmpty()) m_pendingByKey.remove(op.key);
     };
 
+    if (op.kind == MbOp::Kind::DelayMs) {
+        QTimer::singleShot(qMax(0, op.delayMs), this, [this, op, clearKey](){
+            clearKey();
+            m_inFlight = false;
+            emit opFinished(op.id, true, "");
+            if (!m_pumpTimer.isActive()) m_pumpTimer.start(0);
+        });
+        return;
+    }
+
     QModbusReply* reply = nullptr;
 
     switch (op.kind) {
+    case MbOp::Kind::ReadCoils:
+        reply = m_client->sendReadRequest(
+            QModbusDataUnit(QModbusDataUnit::Coils, op.start, op.count), 1);
+        break;
+
     case MbOp::Kind::ReadDiscreteInputs:
         reply = m_client->sendReadRequest(
             QModbusDataUnit(QModbusDataUnit::DiscreteInputs, op.start, op.count), 1);
@@ -271,6 +368,12 @@ void ModbusClient::startOp(const MbOp& op)
     case MbOp::Kind::WriteCoil: {
         QModbusDataUnit u(QModbusDataUnit::Coils, op.start, 1);
         u.setValue(0, op.coilValue);
+        reply = m_client->sendWriteRequest(u, 1);
+        break;
+    }
+    case MbOp::Kind::WriteCoilBlock: {
+        QModbusDataUnit u(QModbusDataUnit::Coils, op.start, op.blockValues.size());
+        for (int i=0;i<op.blockValues.size();++i) u.setValue(i, op.blockValues[i]);
         reply = m_client->sendWriteRequest(u, 1);
         break;
     }
@@ -306,7 +409,12 @@ void ModbusClient::startOp(const MbOp& op)
 
         if (ok) {
             const auto u = reply->result();
-            if (op.kind == MbOp::Kind::ReadDiscreteInputs) {
+            if (op.kind == MbOp::Kind::ReadCoils) {
+                QVector<bool> data; data.reserve(u.valueCount());
+                for (uint i=0;i<u.valueCount();++i) data.push_back(u.value(i));
+                emit coilsRead(op.start, data);
+            }
+            else if (op.kind == MbOp::Kind::ReadDiscreteInputs) {
                 QVector<bool> data; data.reserve(u.valueCount());
                 for (uint i=0;i<u.valueCount();++i) data.push_back(u.value(i));
                 emit discreteInputsRead(op.start, data);

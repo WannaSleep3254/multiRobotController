@@ -6,6 +6,35 @@
 
 #include "RobotCommandParser.h"
 
+static QString cmdTypeToString(CmdType t)
+{
+    switch (t) {
+    case CmdType::Tool:  return "tool";
+    case CmdType::Bulk:  return "bulk";
+    case CmdType::Sorting:  return "sorting";
+    case CmdType::Conveyor: return "conveyor";
+    case CmdType::Align:    return "align";
+    default: return "";
+    }
+}
+
+static QString cmdKindToString(CmdKind k)
+{
+    switch (k) {
+    case CmdKind::Ready:        return "standby";
+    case CmdKind::Pick:         return "pick";
+    case CmdKind::Place:        return "place";
+    case CmdKind::Clamp:        return "clamp";
+    case CmdKind::Init:         return "init";
+    case CmdKind::Assy:         return "assy";
+    case CmdKind::Forward:      return "forward";
+    case CmdKind::Tool_Mount:   return "mount";
+    case CmdKind::Tool_UnMount: return "unmount";
+    case CmdKind::Tool_Change:  return "change";
+    default: return "";
+    }
+}
+
 VisionClient::VisionClient(QObject* parent)
     : QObject(parent)
     , m_sock(new QTcpSocket(this))
@@ -114,6 +143,14 @@ void VisionClient::sendWorkComplete(const QString& robot, const QString& type, c
     qDebug()<<QDateTime::currentDateTime()<<QString("VisionClient::sendWorkComplete json: %1").arg(QString::fromUtf8(json).trimmed());
 
     enqueueJson(json);
+    if(robot.toLower()=="a")
+    {
+        isMotion_[0]=false;
+    }
+    else if(robot.toLower()=="b")
+    {
+        isMotion_[1]=false;
+    }
 }
 
 void VisionClient::sendToolComplete(const QString& robot, quint32 seq, bool state)
@@ -149,6 +186,58 @@ void VisionClient::sendToolComplete(const QString& robot, quint32 seq, bool stat
         {"tool", toolObj},
         {"success", true},
         {"error_code", 0},
+        {"seq", static_cast<int>(seq)},
+        {"dir",  11}
+    };
+    const QByteArray json = QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
+    enqueueJson(json);
+    if(robot.toLower()=="a")
+    {
+        isMotion_[0]=false;
+    }
+    else if(robot.toLower()=="b")
+    {
+        isMotion_[1]=false;
+    }
+}
+
+void VisionClient::sendError(const QString& robot, QString error, int code1, int code2)
+{
+    if (robot.isEmpty())
+        return;
+
+    QString type, kind;
+    quint32 seq{0};
+
+
+    if(robot.toLower()=="a")
+    {
+        type = cmdTypeToString(lasCmd_[0].type);
+        kind = cmdKindToString(lasCmd_[0].kind);
+        seq = lasCmd_[0].seq;
+
+        if(error=="unreachable"&&!isMotion_[0])
+                return;
+    }
+    else if(robot.toLower()=="b")
+    {
+        type = cmdTypeToString(lasCmd_[1].type);
+        kind = cmdKindToString(lasCmd_[1].kind);
+        seq = lasCmd_[1].seq;
+
+        if(error=="unreachable"&&!isMotion_[1])
+            return;
+    }
+    QJsonObject o{
+        {"robot", robot.toLower()},
+        {"type", type},
+        {"kind", kind},
+        {"error_code", 1},
+        {"error", QJsonObject {
+            {"error", error},
+            {"main", code1},
+            {"sub", code2}
+        }},
         {"seq", static_cast<int>(seq)},
         {"dir",  11}
     };
@@ -270,6 +359,18 @@ void VisionClient::onReadyRead()
                 m_lastCmdKind = cmd.kind;
                 m_lastToolCmd = cmd.toolCmd;
             }
+            if(cmd.robot == RobotId::A)
+            {
+                isMotion_[0]=true;
+                lasCmd_[0] = cmd;
+            }
+            else if(cmd.robot == RobotId::B)
+            {
+                isMotion_[1]=true;
+                lasCmd_[1] = cmd;
+            }
+
+
             emit commandReceived(cmd);
         }
     }
